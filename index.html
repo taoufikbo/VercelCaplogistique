@@ -213,6 +213,18 @@ body.comfort .tn,body.comfort .ans,body.comfort .jq,body.comfort .ja{font-size:1
   body.nav-open #side{transform:none}
   body.nav-open #scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:35}
 }
+/* humeur, conseil, badges */
+.moods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mb{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:68px;padding:8px 4px;border-radius:14px;background:#fff;border:2px solid #E4DCC5;font-weight:700;font-size:15px}
+.mb span{font-size:32px;line-height:1}
+.mb:hover{border-color:#2B2B2B}
+.mmsg{background:#FFF6CC;border-left:6px solid var(--yel);border-radius:10px;padding:8px 10px;font-size:16px;margin:0}
+.fine{font-size:13px;color:#555;margin:0}
+.tipd{font-size:19px;margin:0;flex:1}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.bd{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#fff;border:2px solid var(--c,#E4DCC5);font-size:15px;font-weight:700}
+.bd.lock{opacity:.55;font-weight:400;border-style:dashed;border-color:#b9b4a4}
+.newbd{background:#FFF6CC;border:2px solid var(--yel);border-radius:14px;padding:10px 12px;margin:10px 0;font-weight:700}
 @media(prefers-reduced-motion:reduce){#side,#side .chev{transition:none}}
 </style>
 </head>
@@ -995,6 +1007,62 @@ function updBar(){
 }
 function tog(k){S[k]=!S[k];save();updBar();if(k==='auto'&&!S.auto)stopSay();if(k==='fx'&&S.fx)beepOk()}
 
+/* ---------- humeur, conseil du jour, badges ---------- */
+const dayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+const MOODS=[
+ {v:'bien',i:'😀',t:'Ça va bien',m:'Super ! Profite de cette bonne énergie : un petit jeu pour démarrer ?'},
+ {v:'bof',i:'😐',t:'Bof',m:'Ça arrive, c’est normal. Commence par un jeu de 2 minutes, tu verras comment tu te sens après.'},
+ {v:'pas',i:'😟',t:'Pas top',m:'Merci de l’avoir dit. Va doucement aujourd’hui : un seul jeu, c’est déjà bien. Et tu peux en parler à un adulte de confiance.'}
+];
+function moodHtml(){
+  const cur=S.mood&&S.mood.d===dayKey()?MOODS.find(x=>x.v===S.mood.v):null;
+  if(cur)return `<span class="lab">💬 Mon humeur du jour</span><div class="jrow"><span style="font-size:34px">${cur.i}</span><b>${cur.t}</b></div><p class="mmsg">${cur.m}</p><div class="jrow">${spk(cur.m)}<button class="mini" onclick="setMood('')">✏️ Changer</button></div>`;
+  return `<span class="lab">💬 Comment ça va aujourd’hui ?</span><div class="moods">${MOODS.map(x=>`<button class="mb" onclick="setMood('${x.v}')"><span>${x.i}</span>${x.t}</button>`).join('')}</div><p class="fine">Tu n’es pas obligé de répondre. Ça reste sur ton appareil, personne ne le voit.</p>`;
+}
+function setMood(v){if(v)S.mood={d:dayKey(),v};else delete S.mood;save();$('mood').innerHTML=moodHtml();if(v&&S.auto)say(MOODS.find(x=>x.v===v).m)}
+
+const CONSEILS=[
+"Un cariste vérifie toujours son chariot avant de démarrer.",
+"On ne passe jamais sous une charge levée.",
+"Chaussures de sécurité aux pieds dès qu’on entre dans l’entrepôt.",
+"Avant de ranger une palette, je regarde si l’emplacement est libre et stable.",
+"Les charges lourdes se rangent en bas, les légères en haut.",
+"Pour lever un carton : dos droit, jambes fléchies.",
+"Une allée dégagée, c’est un accident évité.",
+"Un colis abîmé ? Je préviens le responsable avant de continuer.",
+"Je vérifie le bon de livraison avant de signer.",
+"FIFO : premier entré, premier sorti. Les produits les plus anciens partent d’abord.",
+"Avant de reculer avec un chariot, je regarde derrière moi.",
+"Pas de téléphone au volant d’un chariot : je m’arrête d’abord.",
+"Boire de l’eau pendant le travail aide à rester concentré.",
+"Une erreur signalée tout de suite coûte moins cher qu’une erreur découverte chez le client.",
+"Je range mon poste avant de partir : la personne suivante dira merci."
+];
+const conseilHtml=()=>{const t=CONSEILS[Math.floor(Date.now()/864e5)%CONSEILS.length];return `<span class="lab">🦺 Conseil du jour</span><div class="jrow"><p class="tipd">${t}</p>${spk(t)}</div>`};
+
+const gamesOf=b=>b.seqs.flatMap(s=>s.games);
+function badgeList(){
+  const g=allGames(),t=total();
+  const L=[
+   {id:'first',icon:'🎮',name:'1er jeu terminé',ok:g.some(x=>stars(x)>=1)},
+   {id:'three',icon:'🥅',name:'Un jeu à 3 étoiles',ok:g.some(x=>stars(x)===3)},
+   {id:'s10',icon:'🌟',name:'10 étoiles',ok:t>=10},
+   {id:'s50',icon:'🏅',name:'50 étoiles',ok:t>=50},
+   {id:'s100',icon:'🏆',name:'100 étoiles',ok:t>=100}
+  ];
+  BLOCS.forEach(b=>{const gs=gamesOf(b);if(gs.length)L.push({id:'b-'+b.id,icon:b.icon,name:b.name+' complétée',c:b.c,ok:gs.every(x=>stars(x)>=1)})});
+  return L;
+}
+function checkBadges(){
+  const had=new Set(S.badges||[]),L=badgeList(),nw=L.filter(b=>b.ok&&!had.has(b.id));
+  if(nw.length){S.badges=L.filter(b=>b.ok).map(b=>b.id);save()}
+  return nw;
+}
+function badgesHtml(){
+  const L=badgeList(),n=L.filter(b=>b.ok).length;
+  return `<div class="card rb"><span class="lab">🏅 Mes badges · ${n}/${L.length}</span><div class="badges">${L.map(b=>`<span class="bd ${b.ok?'':'lock'}" style="--c:${b.c||'#E0B24A'}">${b.ok?b.icon:'🔒'} ${b.name}</span>`).join('')}</div></div>`;
+}
+
 /* ---------- accueil : date, météo, blague ---------- */
 const BLAGUES=[
 ["Quel est le comble pour un cariste ?","D’être à bout de fourches !"],
@@ -1062,16 +1130,21 @@ function home(){
     <div class="card" id="wx"><span class="lab">🌦️ Météo</span><span class="wxl">Chargement…</span></div>
     <div class="card" id="joke">${jokeHtml()}</div>
   </div>
+  <div class="hero">
+    <div class="card" id="mood">${moodHtml()}</div>
+    <div class="card" id="conseil">${conseilHtml()}</div>
+  </div>
   <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
   <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
   <div class="grid big">${BLOCS.map(b=>`<button class="tile" style="--c:${b.c}" onclick="openBloc('${b.id}')"><div class="ti">${b.icon}</div><div class="tn">${b.name}</div>${starsTxt(blocStars(b),blocMax(b))}</button>`).join('')}</div>
+  ${badgesHtml()}
   <button class="refbtn" onclick="refView()">📋 Le programme (référentiel)</button>
   <button class="reset" onclick="resetAll()">Effacer mes étoiles</button>`;
   loadWx();
   requestAnimationFrame(()=>requestAnimationFrame(()=>{const b=$('ball');if(b)b.style.left=`calc((100% - 96px) * ${pct} + 6px)`}));
   updBar();
 }
-function resetAll(){if(confirm('Effacer toutes les étoiles ?')){S.stars={};save();home()}}
+function resetAll(){if(confirm('Effacer toutes les étoiles ?')){S.stars={};S.badges=[];save();home()}}
 
 /* ---------- matière ---------- */
 function openBloc(bid){
@@ -1206,6 +1279,7 @@ function finish(){
   const g=cur.g,max=cur.qs.length*2,r=cur.pts/max;
   const st=r>=.85?3:r>=.55?2:1;
   if(st>(S.stars[g.id]||0)){S.stars[g.id]=st;save()}
+  const nb=checkBadges();
   const title=st===3?'BUT ! Champion !':st===2?'Bien joué !':'Tu progresses !';
   const games=cur.s.games,idx=games.indexOf(g),nxt=games[idx+1];
   const all=total()===maxStars();
@@ -1214,6 +1288,7 @@ function finish(){
     <div class="bigstars" aria-label="${st} étoiles sur 3">${[1,2,3].map(k=>`<span class="${k<=st?'on':''}" style="animation-delay:${k*.35}s">★</span>`).join('')}</div>
     <h2>${st===3?'⚽🥅 ':''}${title}</h2>
     <p>⚽ ${cur.pts} / ${max} &nbsp; ${spk(title)}</p>
+    ${nb.length?`<div class="newbd">🏅 Nouveau badge : ${nb.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
     ${all?'<p class="big">🏆</p><h2>Tu as toutes les étoiles !</h2>':''}
     <div class="btns">
       <button class="nb" onclick="play('${g.id}')">🔄 Rejouer</button>
