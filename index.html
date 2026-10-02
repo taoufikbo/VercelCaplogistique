@@ -190,6 +190,9 @@ noscript{display:block;padding:20px;font-weight:700}
 /* confort de lecture (bouton Aa) */
 body.comfort{font-size:21px;line-height:1.8;letter-spacing:.06em;word-spacing:.16em}
 body.comfort #side{font-size:20px;letter-spacing:.07em}
+body.comfort :not(svg):not(svg *){letter-spacing:.05em;word-spacing:.14em}
+body.comfort p,body.comfort li,body.comfort small,body.comfort .tn,body.comfort .ans{line-height:1.7}
+body.comfort .tn,body.comfort .ans,body.comfort .jq,body.comfort .ja{font-size:1.1em}
 /* accueil : date, météo, blague */
 .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:14px 0}
 .hero .card{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -966,6 +969,7 @@ const starsTxt=(n,m)=>`<span class="ts"><b>★</b> ${n}/${m}</span>`;
 let ctx={bid:null,sid:null};
 let navOpen=null;
 function toggleNav(f){document.body.classList.toggle('nav-open',f)}
+addEventListener('keydown',e=>{if(e.key==='Escape')toggleNav(false)});
 function navGo(fn){toggleNav(false);fn()}
 function renderNav(){
   if(ctx.bid)navOpen=ctx.bid;
