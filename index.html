@@ -159,29 +159,58 @@ noscript{display:block;padding:20px;font-weight:700}
 .cl small{display:block;font-size:13px;opacity:.75;margin-top:2px}
 .gtop h2{font-size:20px}
 .slide .head .back{flex:none}
-/* menu latéral (style Relearn) */
-#side{flex:none;width:290px;position:sticky;top:66px;height:calc(100vh - 66px);overflow-y:auto;background:#252b3a;color:#dfe4ee;padding:12px 0 40px;font-size:16px}
-#side .nh{padding:6px 18px 12px;font-weight:700;color:var(--yel);font-size:15px;letter-spacing:.5px;text-transform:uppercase}
+/* menu latéral : conçu pour dyslexie / TDAH
+   fond crème (pas de blanc pur), texte gris foncé, police sans empattement,
+   interlettrage et interligne aérés, pas de majuscules, cibles >= 48 px,
+   une seule matière dépliée à la fois, repère « Tu es ici » */
+#side{flex:none;width:300px;position:sticky;top:66px;height:calc(100vh - 66px);overflow-y:auto;background:#FBF6E9;color:#2B2B2B;border-right:3px solid #E4DCC5;padding:14px 12px 40px;font-size:18px;line-height:1.5;letter-spacing:.03em;word-spacing:.1em}
+#side .here{background:#FFF;border:2px solid #E4DCC5;border-radius:14px;padding:10px 12px;margin-bottom:14px;font-size:16px}
+#side .here b{display:block;font-size:14px;color:#5a5a5a;font-weight:400}
+#side .nh{padding:2px 6px 8px;font-weight:700;font-size:18px}
 #side ul{list-style:none;margin:0;padding:0}
-#side .row{display:flex;align-items:stretch}
-#side a{flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px 9px 18px;color:inherit;text-decoration:none;cursor:pointer;border-left:5px solid transparent;line-height:1.3}
-#side a:hover{background:#2f3750}
-#side a.act{background:#1F2430;border-left-color:var(--c,var(--yel));color:#fff;font-weight:700}
-#side .chev{flex:none;width:40px;color:#9aa4bd;font-size:13px;transition:transform .2s}
-#side .open>.row>.chev{transform:rotate(90deg)}
-#side ul ul{display:none;background:#1c212d}
-#side .open>ul{display:block}
-#side ul ul a{padding-left:42px;font-size:15px;font-weight:400}
-#side .sc{margin-left:auto;font-size:12px;color:#9aa4bd;white-space:nowrap}
-#side hr{border:0;border-top:1px solid #3a4258;margin:10px 18px}
+#side>ul>li{margin-bottom:8px}
+#side button.nl{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;text-align:left;color:inherit;font:inherit;letter-spacing:inherit;word-spacing:inherit;background:#fff;border:2px solid #E4DCC5;border-radius:14px}
+#side button.nl:hover{border-color:#b9ad8a}
+#side button.nl.act{background:#FFF1B8;border-color:#2B2B2B;font-weight:700}
+#side .ic{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--c,#E4DCC5);font-size:20px;line-height:1}
+#side .tx{flex:1;min-width:0}
+#side .sc{flex:none;font-size:14px;color:#4a4a4a;white-space:nowrap}
+#side .sc b{color:#B07A00}
+#side .chev{flex:none;width:20px;text-align:center;font-size:16px;transition:transform .2s}
+#side .open>.nl .chev{transform:rotate(90deg)}
+#side li>ul{display:none;margin:6px 0 4px 22px;padding-left:12px;border-left:4px solid var(--c,#E4DCC5)}
+#side li.open>ul{display:block}
+#side li>ul button.nl{min-height:48px;font-size:17px;background:transparent;border-color:transparent;padding:6px 10px}
+#side li>ul button.nl:hover{background:#fff}
+#side li>ul button.nl.act{background:#FFF1B8;border-color:#2B2B2B}
+#side hr{border:0;border-top:2px solid #E4DCC5;margin:12px 4px}
+#side button:focus-visible{outline:4px solid var(--blu);outline-offset:2px}
 #menu{display:none}
 #scrim{display:none}
+/* confort de lecture (bouton Aa) */
+body.comfort{font-size:21px;line-height:1.8;letter-spacing:.06em;word-spacing:.16em}
+body.comfort #side{font-size:20px;letter-spacing:.07em}
+/* accueil : date, météo, blague */
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:14px 0}
+.hero .card{display:flex;flex-direction:column;gap:6px;min-width:0}
+.hero .lab{font-size:15px;color:#555}
+.hero .dt{font-size:24px;font-weight:700;line-height:1.3}
+.wxm{display:flex;align-items:center;gap:12px}
+.wxi{font-size:52px;line-height:1}
+.wxt{font-size:32px;font-weight:700;line-height:1.1}
+.wxl{font-size:16px}
+.tip{background:#FFF6CC;border-left:6px solid var(--yel);border-radius:10px;padding:6px 10px;font-size:16px}
+.mini{align-self:flex-start;font-size:15px;padding:8px 12px;border-radius:10px;background:#EEF1F5;border:2px solid #cfd6e0;font-weight:700}
+.jq{font-size:19px;margin:0;flex:1}
+.ja{font-size:19px;font-weight:700;margin:0;color:#0e7a55}
+.jrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 @media(max-width:900px){
   #menu{display:block}
-  #side{position:fixed;left:0;top:0;bottom:0;height:auto;z-index:40;transform:translateX(-100%);transition:transform .25s;width:min(300px,86vw);padding-top:20px}
+  #side{position:fixed;left:0;top:0;bottom:0;height:auto;z-index:40;transform:translateX(-100%);transition:transform .25s;width:min(310px,88vw);padding-top:20px}
   body.nav-open #side{transform:none}
   body.nav-open #scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:35}
 }
+@media(prefers-reduced-motion:reduce){#side,#side .chev{transition:none}}
 </style>
 </head>
 <body>
@@ -190,6 +219,7 @@ noscript{display:block;padding:20px;font-weight:700}
   <button class="ib" onclick="home()" aria-label="Accueil">🏠</button>
   <button class="ib" id="b-auto" onclick="tog('auto')" title="Lecture automatique" aria-label="Lecture automatique">🗣️</button>
   <button class="ib" id="b-slow" onclick="tog('slow')" title="Voix lente" aria-label="Voix lente">🐢</button>
+  <button class="ib" id="b-comf" onclick="tog('comfort')" title="Confort de lecture (lettres plus espacées)" aria-label="Confort de lecture" style="font-size:18px;font-weight:700">Aa</button>
   <button class="ib" id="b-fx" onclick="tog('fx')" title="Sons du jeu" aria-label="Sons du jeu">🎵</button>
   <span id="tot">★ 0/24</span>
 </header>
@@ -934,19 +964,21 @@ const LV=[[0,"🧢","Stagiaire"],[.2,"🚜","Cariste"],[.45,"🦺","Chef d’éq
 const level=p=>LV.reduce((l,x)=>p>=x[0]?x:l,LV[0]);
 const starsTxt=(n,m)=>`<span class="ts"><b>★</b> ${n}/${m}</span>`;
 let ctx={bid:null,sid:null};
-const navOpen=new Set();
+let navOpen=null;
 function toggleNav(f){document.body.classList.toggle('nav-open',f)}
 function navGo(fn){toggleNav(false);fn()}
 function renderNav(){
-  if(ctx.bid)navOpen.add(ctx.bid);
+  if(ctx.bid)navOpen=ctx.bid;
   const homeAct=!ctx.bid&&!ctx.v;
-  $('side').innerHTML=`<div class="nh">Mes matières</div><ul>
-  <li><div class="row"><a class="${homeAct?'act':''}" onclick="navGo(home)">🏠 Accueil</a></div></li>
-  ${BLOCS.map(b=>`<li class="${navOpen.has(b.id)?'open':''}"><div class="row"><a class="${ctx.bid===b.id&&!ctx.sid?'act':''}" style="--c:${b.c}" onclick="navGo(()=>openBloc('${b.id}'))"><span>${b.icon}</span><span>${b.name}</span><span class="sc">★ ${blocStars(b)}/${blocMax(b)}</span></a><span class="chev" role="button" aria-label="Déplier" onclick="navChev('${b.id}')" style="cursor:pointer;display:flex;align-items:center;justify-content:center">▶</span></div>
-    <ul>${b.seqs.map(s=>`<li><div class="row"><a class="${ctx.sid===s.id&&ctx.bid===b.id?'act':''}" style="--c:${b.c}" onclick="navGo(()=>openSeq('${b.id}','${s.id}'))"><span>${s.icon}</span><span>${s.name}</span></a></div></li>`).join('')}</ul></li>`).join('')}
-  </ul><hr><ul><li><div class="row"><a class="${ctx.v==='ref'?'act':''}" onclick="navGo(refView)">📋 Le programme</a></div></li></ul>`;
+  const b0=ctx.bid&&findBloc(ctx.bid),s0=ctx.sid&&findSeq(ctx.bid,ctx.sid);
+  const here=ctx.v==='ref'?'📋 Le programme':b0?b0.icon+' '+b0.name+(s0?'<br>➡️ '+s0.icon+' '+s0.name:''):'🏠 Accueil';
+  $('side').innerHTML=`<div class="here"><b>📍 Tu es ici</b>${here}</div>
+  <div class="nh">Mes matières</div><ul>
+  <li><button class="nl ${homeAct?'act':''}" onclick="navGo(home)"><span class="ic">🏠</span><span class="tx">Accueil</span></button></li>
+  ${BLOCS.map(b=>`<li class="${navOpen===b.id?'open':''}" style="--c:${b.c}"><button class="nl ${ctx.bid===b.id&&!ctx.sid?'act':''}" onclick="navGo(()=>openBloc('${b.id}'))"><span class="ic">${b.icon}</span><span class="tx">${b.name}</span><span class="sc"><b>★</b> ${blocStars(b)}/${blocMax(b)}</span><span class="chev" aria-hidden="true">▸</span></button>
+    <ul>${b.seqs.map(s=>`<li><button class="nl ${ctx.sid===s.id&&ctx.bid===b.id?'act':''}" onclick="navGo(()=>openSeq('${b.id}','${s.id}'))"><span class="tx">${s.icon} ${s.name}</span></button></li>`).join('')}</ul></li>`).join('')}
+  </ul><hr><ul><li><button class="nl ${ctx.v==='ref'?'act':''}" onclick="navGo(refView)"><span class="ic">📋</span><span class="tx">Le programme</span></button></li></ul>`;
 }
-function navChev(id){navOpen.has(id)?navOpen.delete(id):navOpen.add(id);renderNav()}
 
 function updBar(){
   renderNav();
@@ -954,8 +986,66 @@ function updBar(){
   $('b-auto').classList.toggle('off',!S.auto);
   $('b-slow').classList.toggle('off',!S.slow);
   $('b-fx').classList.toggle('off',!S.fx);
+  $('b-comf').classList.toggle('off',!S.comfort);
+  document.body.classList.toggle('comfort',!!S.comfort);
 }
 function tog(k){S[k]=!S[k];save();updBar();if(k==='auto'&&!S.auto)stopSay();if(k==='fx'&&S.fx)beepOk()}
+
+/* ---------- accueil : date, météo, blague ---------- */
+const BLAGUES=[
+["Quel est le comble pour un cariste ?","D’être à bout de fourches !"],
+["Quel est le comble pour un électricien ?","De ne pas être au courant !"],
+["Pourquoi les poissons n’aiment pas jouer au tennis ?","Parce qu’ils ont peur du filet !"],
+["Pourquoi les maths sont tristes ?","Parce qu’elles ont plein de problèmes !"],
+["Que dit un escargot sur le dos d’une tortue ?","Youpiii !"],
+["Quel est le comble pour un jardinier ?","De raconter des salades !"],
+["Pourquoi les pompiers ont des bretelles rouges ?","Pour tenir leur pantalon !"],
+["Qu’est-ce qui est jaune et qui attend ?","Jonathan !"],
+["Quel est le comble pour un gardien de but ?","D’être sur la touche… quand il fait le mur !"],
+["Pourquoi le livreur ne perd jamais son calme ?","Parce qu’il prend les choses colis par colis !"],
+["Que dit un carton qui perd son ruban adhésif ?","« Je me décolle, je suis à bout de nerfs ! »"],
+["Quel est le comble pour un boulanger ?","De se faire rouler dans la farine !"],
+["Que fait une fraise sur un cheval ?","Tagada, tagada !"],
+["Pourquoi les oiseaux volent vers le sud ?","Parce que c’est trop loin pour y aller à pied !"],
+["Quel est le comble pour un magasinier ?","De ne pas retrouver ses clés dans son propre stock !"]
+];
+let jokeI=Math.floor(Date.now()/864e5)%BLAGUES.length;
+const dateFr=()=>{const d=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});return d.charAt(0).toUpperCase()+d.slice(1)};
+function jokeHtml(){
+  const [q,a]=BLAGUES[jokeI];
+  return `<span class="lab">😄 Blague du jour</span><div class="jrow"><p class="jq">${q}</p>${spk(q)}</div>
+  <p class="ja" id="ja" hidden>${a}</p>
+  <div class="jrow"><button class="mini" id="jb" onclick="revealJoke()">👀 Voir la réponse</button><button class="mini" onclick="newJoke()">🔄 Une autre</button></div>`;
+}
+function revealJoke(){$('ja').hidden=false;$('jb').hidden=true;if(S.auto)say(BLAGUES[jokeI][1])}
+function newJoke(){stopSay();let n;do{n=Math.floor(Math.random()*BLAGUES.length)}while(n===jokeI);jokeI=n;$('joke').innerHTML=jokeHtml()}
+
+const WX={d:null,k:'',t:0};
+const WCODE=c=>c===0?['☀️','Grand soleil']:c<=2?['🌤️','Éclaircies']:c===3?['☁️','Nuageux']:c<=48?['🌫️','Brouillard']:c<=57?['🌦️','Bruine']:c<=67?['🌧️','Pluie']:c<=77?['❄️','Neige']:c<=82?['🌦️','Averses']:c<=86?['❄️','Neige']:['⛈️','Orage'];
+function wxTip(c,t){return c>=95?'⛈️ Orage : reste à l’abri.':(c>=51&&c<=67)||(c>=80&&c<=82)?'☔ Prends un parapluie ou une veste de pluie.':c>=71&&c<=86?'🧤 Il neige : couvre-toi bien.':t<=5?'🧥 Il fait froid : mets une veste chaude.':t>=28?'💧 Il fait chaud : pense à boire de l’eau.':'👍 Bonne journée pour aller en cours !'}
+async function loadWx(){
+  const loc=S.loc||{lat:48.8566,lon:2.3522,name:'Paris'},k=loc.lat+','+loc.lon;
+  try{
+    if(!(WX.d&&WX.k===k&&Date.now()-WX.t<9e5)){
+      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
+      if(!r.ok)throw new Error(r.status);
+      WX.d=await r.json();WX.k=k;WX.t=Date.now();
+    }
+    const el=$('wx');if(!el)return;
+    const c=WX.d.current,d=WX.d.daily,[ic,tx]=WCODE(c.weather_code),t=Math.round(c.temperature_2m);
+    el.innerHTML=`<span class="lab">🌦️ Météo · ${loc.name}</span>
+    <div class="wxm"><span class="wxi">${ic}</span><div><div class="wxt">${t} °C</div><div class="wxl">${tx} · min ${Math.round(d.temperature_2m_min[0])}° / max ${Math.round(d.temperature_2m_max[0])}°</div></div></div>
+    <div class="tip">${wxTip(c.weather_code,t)}</div>
+    <button class="mini" onclick="wxPlace()">${S.loc?'🏙️ Revenir à Paris':'📍 Ma position'}</button>`;
+  }catch(e){
+    const el=$('wx');if(el)el.innerHTML=`<span class="lab">🌦️ Météo</span><span class="wxl">Météo indisponible pour le moment (pas de connexion ?).</span><button class="mini" onclick="loadWx()">🔄 Réessayer</button>`;
+  }
+}
+function wxPlace(){
+  if(S.loc){delete S.loc;save();loadWx();return}
+  if(!navigator.geolocation){alert('Ton appareil ne donne pas sa position.');return}
+  navigator.geolocation.getCurrentPosition(p=>{S.loc={lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2),name:'Ma position'};save();loadWx()},()=>alert('Position refusée. La météo reste sur Paris.'),{timeout:8000});
+}
 
 /* ---------- accueil ---------- */
 function home(){
@@ -963,11 +1053,17 @@ function home(){
   const t=total(),m=maxStars(),pct=t/m,lv=level(pct);
   app.innerHTML=`
   <div class="sign"><h1>🚚 Mon CAP Logistique</h1></div>
+  <div class="hero">
+    <div class="card"><span class="lab">📅 Aujourd’hui</span><span class="dt">${dateFr()}</span></div>
+    <div class="card" id="wx"><span class="lab">🌦️ Météo</span><span class="wxl">Chargement…</span></div>
+    <div class="card" id="joke">${jokeHtml()}</div>
+  </div>
   <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
   <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
   <div class="grid big">${BLOCS.map(b=>`<button class="tile" style="--c:${b.c}" onclick="openBloc('${b.id}')"><div class="ti">${b.icon}</div><div class="tn">${b.name}</div>${starsTxt(blocStars(b),blocMax(b))}</button>`).join('')}</div>
   <button class="refbtn" onclick="refView()">📋 Le programme (référentiel)</button>
   <button class="reset" onclick="resetAll()">Effacer mes étoiles</button>`;
+  loadWx();
   requestAnimationFrame(()=>requestAnimationFrame(()=>{const b=$('ball');if(b)b.style.left=`calc((100% - 96px) * ${pct} + 6px)`}));
   updBar();
 }
