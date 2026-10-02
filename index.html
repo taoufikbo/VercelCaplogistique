@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1F2430">
+<title>Mon CAP Logistique – Révision en jeux</title>
+<style>
+:root{--ink:#1F2430;--yel:#FFC800;--grn:#19A974;--red:#E5484D;--blu:#2F6FED;--org:#FF8A3D;--bg:#E9EDF2}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Verdana,"Trebuchet MS",Tahoma,sans-serif;font-size:18px;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:focus-visible,.hot:focus-visible{outline:4px solid var(--blu);outline-offset:2px}
+
+/* barre du haut */
+#bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;padding:8px 12px 14px;background:var(--ink);color:#fff}
+#bar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8px;background:repeating-linear-gradient(-45deg,var(--yel) 0 12px,var(--ink) 12px 24px)}
+.ib{width:44px;height:44px;border-radius:12px;background:#333b4f;font-size:22px;line-height:1}
+.ib.off{opacity:.35}
+#tot{margin-left:auto;color:var(--yel);font-weight:700;white-space:nowrap}
+main{max-width:860px;margin:0 auto;padding:14px 12px 70px}
+
+/* accueil */
+.sign{display:flex;align-items:center;gap:10px;background:var(--yel);border:4px solid var(--ink);border-radius:16px;padding:10px 12px}
+.sign::before,.sign::after{content:"";flex:1;min-width:10px;height:16px;border-radius:8px;background:repeating-linear-gradient(-45deg,var(--ink) 0 8px,var(--yel) 8px 16px)}
+.sign h1{margin:0;font-size:22px;text-align:center}
+.pitch{position:relative;height:64px;border-radius:14px;margin:14px 0 8px;border:3px solid #fff;outline:3px solid var(--ink);background:repeating-linear-gradient(90deg,#2E9E5B 0 40px,#34AD63 40px 80px)}
+.ball,.goal{position:absolute;top:8px;font-size:38px;line-height:1.2}
+.ball{left:6px;transition:left 1.1s cubic-bezier(.3,1.3,.5,1)}
+.goal{right:6px}
+.lvl{display:flex;align-items:center;gap:10px;font-weight:700;margin:4px 0 14px}
+.course{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;background:var(--yel);border:4px solid var(--ink);border-radius:18px;padding:14px;font-size:24px;font-weight:700;box-shadow:0 5px 0 var(--ink);margin-bottom:18px}
+.course:active,.tile:active,.next:active{transform:translateY(3px);box-shadow:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tile{background:#fff;border-radius:18px;border-top:12px solid var(--c);padding:10px 8px 12px;text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.ti{font-size:48px;line-height:1.2}
+.tn{font-weight:700;font-size:16px;line-height:1.25;min-height:2.5em;display:flex;align-items:center;justify-content:center}
+.ts{font-size:24px;letter-spacing:2px;color:#d3d8e0}
+.ts b{color:#FFB400;font-weight:400}
+.reset{display:block;margin:26px auto 0;font-size:14px;opacity:.6;text-decoration:underline}
+
+/* cartes */
+.card{background:#fff;border-radius:20px;padding:16px;box-shadow:0 4px 0 rgba(0,0,0,.14)}
+.big{font-size:44px;line-height:1}
+h2{font-size:22px;margin:0;flex:1;line-height:1.3}
+.spk{flex:none;width:44px;height:44px;border-radius:50%;background:var(--blu);color:#fff;font-size:20px;line-height:1;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.gtop{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.back{width:44px;height:44px;border-radius:12px;background:#fff;font-size:22px;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.pbar{flex:1;height:16px;background:#cfd6e0;border-radius:8px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--grn);border-radius:8px;transition:width .4s}
+.pts{font-weight:700;white-space:nowrap}
+.story{display:flex;align-items:center;gap:10px;background:#FFF6CC;border-left:8px solid var(--yel);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.story p{margin:0;flex:1}
+.qline{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+
+/* réponses */
+.opts{display:grid;gap:10px}
+.opts.duo{grid-template-columns:1fr 1fr;gap:12px}
+@media(min-width:620px){.opts.n4{grid-template-columns:1fr 1fr}}
+.opt{display:flex;border:3px solid var(--ink);border-radius:16px;overflow:hidden;background:#fff}
+.opt.g{background:#DDF6EC;border-color:var(--grn)}
+.opt.r{background:#FFE4E5;border-color:var(--red)}
+.opt.y{background:#FFF0B3;border-color:#C99A00}
+.opt.o{background:#FFE1D1;border-color:var(--org)}
+.ans{flex:1;display:flex;align-items:center;gap:10px;padding:12px;text-align:left;font-weight:700}
+.oi{font-size:34px;line-height:1}
+.duo .ans{flex-direction:column;text-align:center;font-size:22px;padding:16px 6px;justify-content:center}
+.duo .oi{font-size:46px}
+.opt .spk{width:46px;height:auto;border-radius:0;box-shadow:none}
+.opt.good{background:var(--grn)!important;border-color:#0e7a55!important;color:#fff;animation:pop .45s}
+.opt.good .ans{color:#fff}
+.opt.bad{background:#c9ced6!important;border-color:#9aa1ad!important;opacity:.6;animation:shake .35s}
+@keyframes pop{50%{transform:scale(1.05)}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+.fb{margin-top:14px;border-radius:16px;padding:12px}
+.fb.ok{background:#DDF6EC;border:3px solid var(--grn)}
+.fb.ko{background:#FFF0D6;border:3px solid var(--org)}
+.fb.retry{background:#FFF0D6;border:3px solid var(--org);font-weight:700;text-align:center}
+.fbt{font-size:22px;margin-bottom:6px}
+.why{display:flex;align-items:center;gap:10px}
+.why p{margin:0;flex:1}
+.next{display:block;margin:14px auto 0;background:var(--ink);color:#fff;border-radius:14px;padding:14px 28px;font-weight:700;font-size:20px;box-shadow:0 5px 0 #000}
+.fl{position:absolute;z-index:30;pointer-events:none;font-weight:700;font-size:26px;color:#0e7a55;text-shadow:0 2px 0 #fff;transform:translateX(-50%);animation:up 1s ease-out forwards}
+@keyframes up{to{transform:translate(-50%,-70px);opacity:0}}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--yel);padding:10px 20px;border-radius:30px;font-weight:700;z-index:40;animation:up2 1.6s forwards}
+@keyframes up2{0%{opacity:0;bottom:0}15%,80%{opacity:1;bottom:22px}100%{opacity:0}}
+
+/* fiche */
+.slide .head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.art{max-width:560px;margin:0 auto}
+.art svg{width:100%;height:auto;display:block}
+.art.tall{max-width:440px}
+.hot{cursor:pointer}
+.hint{text-align:center;font-size:15px;opacity:.7;margin:6px 0 0}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+.nb{min-width:56px;height:52px;padding:0 16px;border-radius:14px;background:var(--ink);color:#fff;font-weight:700;font-size:20px;box-shadow:0 4px 0 #000}
+.nb.go{background:var(--grn)}
+.nb.ghost{visibility:hidden}
+.dots{display:flex;gap:8px}
+.dots i{width:14px;height:14px;border-radius:50%;background:#cfd6e0}
+.dots i.on{background:var(--ink)}
+
+.vz{display:flex;gap:8px;align-items:flex-start;margin-bottom:14px}
+.vz>:first-child{flex:1;margin:0!important}
+.plan{border:3px solid var(--ink);border-radius:14px;overflow:hidden;font-size:15px}
+.plan .ph{background:#0a3a8a;color:#fff;font-weight:700;text-align:center;padding:6px}
+.pr{display:grid;grid-template-columns:44px 1fr 24px 1fr 44px;align-items:center;gap:4px;padding:6px 8px;border-top:2px solid #e3e8f0}
+.pr .c{background:#E1ECFB;border-radius:8px;text-align:center;padding:3px 0;font-size:13px;white-space:nowrap}
+.pr .c.a{background:#E4F2DA}.pr .c.g{background:#e6e6e6;color:#555}
+.pr .b{background:#cfe0fb;border:1px solid var(--blu);border-radius:8px;text-align:center;font-weight:700;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{background:#fff;border:2px solid var(--ink);border-radius:10px;padding:2px 8px;font-weight:700;font-size:15px}
+.tl{display:flex;align-items:center;gap:8px;font-weight:700}
+.tl b{background:var(--blu);color:#fff;border-radius:12px;padding:6px 14px;font-size:22px}
+.tl i{flex:1;height:6px;background:var(--ink);border-radius:3px}
+.duo .ans{font-size:24px}
+.ans .oi:empty{display:none}
+/* fin de partie */
+.endc{text-align:center}
+.bigstars{font-size:64px;letter-spacing:6px;color:#d3d8e0}
+.bigstars span{display:inline-block;opacity:0}
+.bigstars span.on{color:#FFB400;animation:starin .5s forwards}
+@keyframes starin{from{transform:scale(3) rotate(-30deg);opacity:0}to{transform:none;opacity:1}}
+.endc h2{font-size:28px;margin:6px 0}
+.btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}
+.btns .nb{font-size:18px}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:50}
+noscript{display:block;padding:20px;font-weight:700}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+
+.cards{display:block}
+.kc{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:3px solid var(--ink);border-radius:16px;padding:10px 12px;margin:0 0 8px;box-shadow:0 3px 0 rgba(0,0,0,.15);color:var(--ink)}
+.kc:active{transform:translateY(2px);box-shadow:none}
+.kc .ki{font-size:38px;line-height:1;flex:none;width:48px;text-align:center}
+.kc .kb{flex:1;display:flex;flex-direction:column}
+.kc .kb b{font-size:20px;line-height:1.25}
+.kc .kb small{font-size:15px;line-height:1.3;opacity:.9}
+.kc .ks{opacity:.55;font-size:18px}
+.kc.y{background:#FFC800}.kc.o{background:#FF8A3D}.kc.l{background:#EEF1F5}
+.kc.b{background:#2F6FED;color:#fff}.kc.g{background:#19A974;color:#fff}.kc.p{background:#7C4DFF;color:#fff}.kc.r{background:#E5484D;color:#fff}.kc.k{background:#1F2430;color:#fff}
+.arw{text-align:center;font-size:20px;line-height:1;margin:-2px 0 6px}
+.code{font-size:14px;opacity:.7;margin:0 0 12px}
+.grid.big{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+.tile .ts{font-size:15px;letter-spacing:0;color:#667}
+.tile .ts b{color:#FFB400}
+.refbtn{display:block;width:100%;margin:22px 0 0;padding:14px;border-radius:16px;background:#fff;border:3px solid var(--ink);font-weight:700;font-size:18px;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.listen{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.spk.huge{width:72px;height:72px;font-size:32px}
+.show{font-size:34px;font-weight:700}
+.sm{font-size:15px}
+.rb{margin-top:14px}
+.cl{list-style:none;margin:0;padding:0}
+.cl li{display:flex;gap:10px;padding:8px 0;border-top:1px solid #e3e8f0;font-size:16px;line-height:1.35}
+.cl li:first-child{border-top:0}
+.cl .ci{flex:none;font-size:20px}
+.cl small{display:block;font-size:13px;opacity:.75;margin-top:2px}
+.gtop h2{font-size:20px}
+.slide .head .back{flex:none}
+</style>
+</head>
+<body>
+<header id="bar">
+  <button class="ib" onclick="home()" aria-label="Accueil">🏠</button>
+  <button class="ib" id="b-auto" onclick="tog('auto')" title="Lecture automatique" aria-label="Lecture automatique">🗣️</button>
+  <button class="ib" id="b-slow" onclick="tog('slow')" title="Voix lente" aria-label="Voix lente">🐢</button>
+  <button class="ib" id="b-fx" onclick="tog('fx')" title="Sons du jeu" aria-label="Sons du jeu">🎵</button>
+  <span id="tot">★ 0/24</span>
+</header>
+<main id="app"></main>
+<canvas id="fx"></canvas>
+<noscript>Ouvre ce fichier dans un navigateur (Chrome, Safari, Edge) pour jouer.</noscript>
+
+<script>
+/* ---------- état ---------- */
+const $=id=>document.getElementById(id);
+const app=$('app');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const KEY='mouad-cap-ol-v1';
+let S={stars:{},auto:true,slow:false,fx:true};
+try{const j=localStorage.getItem(KEY);if(j)S=Object.assign(S,JSON.parse(j))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const spk=(t,l)=>`<button class="spk" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(t)}" data-l="${l||'fr'}" aria-label="Écouter">🔊</button>`;
+
+/* ---------- voix ---------- */
+let vFr=null,vEn=null;
+function pickVoice(){if(!('speechSynthesis' in window))return;const v=speechSynthesis.getVoices();vFr=v.find(x=>/^fr[-_]FR/i.test(x.lang))||v.find(x=>/^fr/i.test(x.lang))||null;vEn=v.find(x=>/^en[-_]GB/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null}
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}
+function clean(t){return String(t).replace(/___/g,' blanc ').replace(/(^|[^\d,.])1\s*h\b/g,'$11 heure').replace(/(\d)\s*h\b/g,'$1 heures').replace(/(\d+)e\b/g,'$1ième').replace(/€/g,' euros ').replace(/%/g,' pour cent ').replace(/×/g,' fois ').replace(/−/g,' moins ').replace(/–/g,' à ').replace(/\+/g,' plus ').replace(/=/g,' égale ').replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{2BFF}\u{2700}-\u{27BF}\u{FE0F}\u{200D}]/gu,' ').replace(/\s+/g,' ').trim()}
+function say(t,l){
+  if(!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  const en=l==='en';
+  const u=new SpeechSynthesisUtterance(en?String(t).replace(/\s+/g,' ').trim():clean(t));
+  u.lang=en?'en-GB':'fr-FR';const v=en?vEn:vFr;if(v)u.voice=v;
+  u.rate=S.slow?0.78:0.95;
+  speechSynthesis.speak(u);
+}
+const stopSay=()=>{if('speechSynthesis' in window)speechSynthesis.cancel()};
+
+/* ---------- sons ---------- */
+let ac;
+function actx(){if(!ac){const A=window.AudioContext||window.webkitAudioContext;if(A)ac=new A()}if(ac&&ac.state==='suspended')ac.resume();return ac}
+function tone(f,when,dur,type,vol){
+  if(!S.fx)return;const a=actx();if(!a)return;
+  const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.value=f;
+  o.connect(g);g.connect(a.destination);
+  const t=a.currentTime+when;g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(vol||.16,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.start(t);o.stop(t+dur+.05);
+}
+const beepOk=()=>{tone(660,0,.15);tone(880,.12,.28)};
+const beepNo=()=>tone(180,0,.3,'square',.07);
+const fanfare=()=>{[523,659,784,1047,784,1047].forEach((f,i)=>tone(f,i*.13,.3,'triangle',.18))};
+
+/* ---------- confettis ---------- */
+const cv=$('fx'),cx=cv.getContext('2d');let parts=[],raf=0;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fit(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',fit);fit();
+function confetti(x,y,n){
+  n=reduce?Math.ceil(n/5):n;
+  const cols=['#FFC800','#19A974','#2F6FED','#E5484D','#FF8A3D','#ffffff'];
+  for(let i=0;i<n;i++)parts.push({x,y,vx:(Math.random()-.5)*12,vy:-Math.random()*12-3,s:5+Math.random()*7,c:cols[i%cols.length],r:Math.random()*6,vr:(Math.random()-.5)*.4,l:0});
+  if(!raf)raf=requestAnimationFrame(loop);
+}
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.l++;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);cx.restore()});
+  parts=parts.filter(p=>p.y<cv.height+20&&p.l<140);
+  raf=parts.length?requestAnimationFrame(loop):0;
+  if(!parts.length)cx.clearRect(0,0,cv.width,cv.height);
+}
+
+
+const T=(x,y,s,txt,f="#1F2430",w=400,a="middle")=>`<text x="${x}" y="${y}" font-size="${s}" font-weight="${w}" fill="${f}" text-anchor="${a}">${txt}</text>`;
+const R=(x,y,w,h,f,s="#1F2430")=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="20" fill="${f}" stroke="${s}" stroke-width="4"/>`;
+const AR=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1F2430" stroke-width="5" stroke-linecap="round" marker-end="url(#ah)"/>`;
+const LN=d=>`<path d="${d}" fill="none" stroke="#1F2430" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+const DEFS=`<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1F2430"/></marker></defs>`;
+const sv=(t,inner)=>`<g class="hot" role="button" tabindex="0" data-t="${esc(t)}" onclick="say(this.dataset.t)" onkeydown="if(event.key==='Enter')say(this.dataset.t)">${inner}</g>`;
+
+const SVG1=`<svg viewBox="0 0 400 450" role="img" aria-label="Faute, lien et dommage donnent la responsabilité">${DEFS}
+${sv("La faute : on n’a pas respecté une règle ou une consigne.",R(10,10,380,96,"#FFC800")+T(62,72,48,"⚠️")+T(120,52,26,"FAUTE","#1F2430",800,"start")+T(120,82,16,"règle non respectée","#1F2430",400,"start"))}
+${AR(200,108,200,126)}
+${sv("Le lien de causalité : c’est la faute qui a provoqué le dommage.",`<rect x="50" y="128" width="300" height="64" rx="32" fill="#2F6FED" stroke="#1F2430" stroke-width="4"/>`+T(200,158,24,"🔗 LIEN","#fff",800)+T(200,180,13,"la faute provoque le dommage","#fff"))}
+${AR(200,194,200,214)}
+${sv("Le dommage : quelque chose est cassé, ou quelqu’un est blessé.",R(10,216,380,96,"#FF8A80")+T(62,278,48,"💥")+T(120,258,26,"DOMMAGE","#1F2430",800,"start")+T(120,288,16,"cassé ou blessé","#1F2430",400,"start"))}
+${AR(200,314,200,338)}
+${sv("Faute, plus dommage, plus lien : la responsabilité peut être engagée.",R(10,342,380,100,"#19A974")+`<circle cx="62" cy="392" r="34" fill="#fff"/>`+T(62,406,40,"⚖️")+T(108,386,20,"RESPONSABILITÉ","#fff",800,"start")+T(108,416,18,"engagée","#fff",700,"start"))}
+</svg>`;
+
+const SVG2=`<svg viewBox="0 0 400 480" role="img" aria-label="Les types de responsabilité">${DEFS}
+${sv("La responsabilité civile sert à réparer le dommage. Elle se divise en deux : contractuelle et délictuelle.",R(10,10,380,66,"#2F6FED")+T(200,43,24,"🩹 CIVILE","#fff",800)+T(200,65,15,"réparer le dommage","#fff"))}
+${AR(105,78,105,100)}${AR(295,78,295,100)}
+${sv("Contractuelle : un contrat n’est pas respecté. Par exemple, une livraison en retard.",R(10,104,185,140,"#E8F0FF","#2F6FED")+T(102,144,34,"📜")+T(102,172,14.5,"CONTRACTUELLE","#1F2430",800)+T(102,193,13,"contrat non respecté")+T(102,225,13,"📦⏰ livraison en retard"))}
+${sv("Délictuelle : il n’y a pas de contrat. Par exemple, un chariot abîme la voiture d’un visiteur.",R(205,104,185,140,"#E8F0FF","#2F6FED")+T(297,144,34,"🚧")+T(297,172,14.5,"DÉLICTUELLE","#1F2430",800)+T(297,193,13,"pas de contrat")+T(297,225,13,"🚜🚗 abîme une voiture"))}
+${sv("La responsabilité pénale sert à punir une infraction.",R(10,282,380,66,"#E5484D")+T(200,315,24,"👮 PÉNALE","#fff",800)+T(200,337,15,"punir l’infraction","#fff"))}
+${AR(200,350,200,372)}
+${sv("Pénale : on punit une infraction, quand la loi n’est pas respectée. Par exemple, le vol d’un téléphone.",R(10,376,380,94,"#FFECEC","#E5484D")+T(62,434,44,"🥷")+T(112,414,17,"INFRACTION","#1F2430",800,"start")+T(112,438,14,"loi non respectée","#1F2430",400,"start")+T(112,458,14,"📱 vol d’un téléphone","#1F2430",400,"start"))}
+</svg>`;
+
+const node=(y,fill,txtc,icon,tag,l1,l2,say)=>sv(say,R(10,y,380,100,fill)+T(62,y+62,44,icon)+T(112,y+38,22,tag,txtc,800,"start")+T(112,y+62,14,l1,txtc,400,"start")+T(112,y+82,14,l2,txtc,400,"start"));
+const SVG3=`<svg viewBox="0 0 400 510" role="img" aria-label="Exemple d’Inès">${DEFS}
+${node(10,"#FFC800","#1F2430","📱","FAUTE","Elle regarde son téléphone","en conduisant le chariot","La faute : Inès regarde son téléphone en conduisant le chariot.")}
+${AR(200,112,200,138)}
+${node(140,"#2F6FED","#fff","🔗","LIEN","Elle ne voit pas le collègue :","elle le heurte","Le lien : comme elle regarde son téléphone, elle ne voit pas le collègue et elle le heurte.")}
+${AR(200,242,200,268)}
+${node(270,"#FF8A80","#1F2430","🤕","DOMMAGE","Le collègue est blessé au bras","et doit être soigné","Le dommage : le collègue est blessé au bras et doit être soigné.")}
+${AR(200,372,200,398)}
+${node(400,"#19A974","#fff","⚖️","RESPONSABILITÉ","Elle peut être engagée :","civile, pour réparer","La responsabilité est engagée. C’est une responsabilité civile : on répare le dommage.")}
+</svg>`;
+
+
+const SLIDES_RESP=[
+ {title:"3 choses pour une responsabilité",say:"Pour qu’une responsabilité soit engagée, il faut trois choses : une faute, un dommage, et un lien entre les deux.",svg:SVG1,cls:"tall"},
+ {title:"Réparer ou punir ?",say:"Il y a deux grandes familles. La responsabilité civile sert à réparer. Elle se divise en deux : contractuelle, quand un contrat n’est pas respecté, et délictuelle, quand il n’y a pas de contrat. La responsabilité pénale sert à punir une infraction.",svg:SVG2,cls:"tall"},
+ {title:"Exemple : Inès",say:"Exemple. Inès regarde son téléphone en conduisant un chariot : c’est la faute. Elle ne voit pas son collègue et le heurte : c’est le lien. Il est blessé au bras : c’est le dommage. La responsabilité est engagée.",svg:SVG3,cls:"tall"}
+];
+;
+const tile=(y,fill,tc,icon,big,label,say)=>sv(say,R(10,y,380,88,fill)+T(62,y+58,44,icon)+T(120,y+50,40,big,tc,800,"start")+T(120,y+74,15,label,tc,400,"start"));
+const SVGA=`<svg viewBox="0 0 400 484" role="img" aria-label="Les cinq chiffres à retenir">${DEFS}
+${tile(10,"#19A974","#fff","🗓️","35 h","durée légale par semaine","La durée légale du travail est de 35 heures par semaine.")}
+${tile(104,"#FF8A3D","#1F2430","⏱️","10 h","maximum par jour","Maximum 10 heures de travail par jour.")}
+${tile(198,"#7C4DFF","#fff","📆","48 h","maximum par semaine","Maximum 48 heures de travail par semaine.")}
+${tile(292,"#2F6FED","#fff","🌙","11 h","de repos entre 2 journées","Au moins 11 heures de repos entre deux journées de travail.")}
+${tile(386,"#FFC800","#1F2430","🛌","24 h","de repos par semaine","Au moins 24 heures de repos d’affilée chaque semaine.")}
+</svg>`;
+
+const SEG=(x,w,f)=>`<rect x="${x}" y="64" width="${w}" height="56" fill="${f}" stroke="#1F2430" stroke-width="3"/>`;
+const SVGB=`<svg viewBox="0 0 400 400" role="img" aria-label="Les heures supplémentaires et leurs majorations">${DEFS}
+${T(200,30,18,"Une semaine de travail","#1F2430",800)}
+${sv("Les 35 premières heures de la semaine sont des heures normales.",SEG(20,245,"#2F6FED")+T(142,100,24,"35 h","#fff",800))}
+${sv("De la 36ième à la 43ième heure : 8 heures supplémentaires, majorées de 25 pour cent.",SEG(265,56,"#19A974")+T(293,98,15,"25 %","#fff",800))}
+${sv("À partir de la 44ième heure : majorées de 50 pour cent.",SEG(321,35,"#FF8A3D")+T(338,98,13,"50 %","#1F2430",800))}
+${sv("Le maximum est de 48 heures par semaine.",T(381,102,26,"🛑"))}
+${T(265,56,12,"35 h")}${T(321,56,12,"43 h")}${T(358,56,12,"48 h")}
+${LN("M20 130V138H265V130")}${T(142,158,13,"heures normales")}
+${LN("M265 130V138H356V130")}${T(310,158,13,"heures sup.")}
+${node(176,"#19A974","#fff","➕","+ 25 %","de la 36e à la 43e heure","12 € devient 15 €","De la 36ième à la 43ième heure, c’est plus 25 pour cent. Un salaire de 12 euros devient 15 euros de l’heure.")}
+${node(290,"#FF8A3D","#1F2430","➕","+ 50 %","à partir de la 44e heure","12 € devient 18 €","À partir de la 44ième heure, c’est plus 50 pour cent. Un salaire de 12 euros devient 18 euros de l’heure.")}
+</svg>`;
+
+const SVGC=`<svg viewBox="0 0 400 510" role="img" aria-label="Exemple de calcul : Raï, 45 heures">${DEFS}
+${node(10,"#FFC800","#1F2430","🧮","HEURES SUP","45 h − 35 h = 10 h","Raï : 12 € de l’heure","Raï travaille 45 heures. 45 moins 35 égale 10 heures supplémentaires. Son salaire est de 12 euros de l’heure.")}
+${AR(200,112,200,138)}
+${node(140,"#19A974","#fff","➕","+ 25 %","8 h × 15 € = 120 €","les 8 premières heures","Les 8 premières heures sont à 15 euros. 8 fois 15 égale 120 euros.")}
+${AR(200,242,200,268)}
+${node(270,"#FF8A3D","#1F2430","➕","+ 50 %","2 h × 18 € = 36 €","les 2 dernières heures","Les 2 dernières heures sont à 18 euros. 2 fois 18 égale 36 euros.")}
+${AR(200,372,200,398)}
+${node(400,"#2F6FED","#fff","💶","TOTAL","120 € + 36 € = 156 €","pour les 10 heures sup","Au total : 120 plus 36 égale 156 euros pour les 10 heures supplémentaires.")}
+</svg>`;
+
+const PILL=(x,y,w,f,txt,s=20)=>`<rect x="${x}" y="${y}" width="${w}" height="44" rx="14" fill="${f}" stroke="#1F2430" stroke-width="3"/>`+T(x+w/2,y+30,s,txt,"#fff",800);
+const SVGD=`<svg viewBox="0 0 400 450" role="img" aria-label="Les temps de repos">${DEFS}
+${sv("Entre deux journées de travail : au moins 11 heures de repos. Par exemple, fin du travail à 20 heures, reprise à 7 heures le lendemain.",R(10,10,380,200,"#E8F0FF","#2F6FED")+T(62,64,48,"🌙")+T(112,52,26,"11 h minimum","#1F2430",800,"start")+T(112,76,15,"entre deux journées","#1F2430",400,"start")+PILL(24,118,84,"#2F6FED","20 h")+PILL(292,118,84,"#2F6FED","7 h")+AR(114,140,286,140)+T(200,130,15,"11 h de repos","#1F2430",800)+T(66,184,13,"fin du travail")+T(334,184,13,"le lendemain"))}
+${sv("Chaque semaine : au moins 24 heures de repos d’affilée. Par exemple, du samedi 12 heures au dimanche 12 heures.",R(10,230,380,210,"#FFF1E3","#FF8A3D")+T(62,284,48,"🛌")+T(112,272,26,"24 h d’affilée","#1F2430",800,"start")+T(112,296,15,"de repos par semaine","#1F2430",400,"start")+PILL(12,340,116,"#FF8A3D","Samedi 12 h",14)+PILL(272,340,116,"#FF8A3D","Dimanche 12 h",14)+AR(134,362,266,362)+T(200,352,15,"24 h","#1F2430",800))}
+</svg>`;
+
+
+const SLIDES_DUREE=[
+ {title:"Les 5 chiffres à retenir",say:"Cinq chiffres à retenir. 35 heures : la durée légale par semaine. 10 heures : le maximum par jour. 48 heures : le maximum par semaine. 11 heures de repos entre deux journées. 24 heures de repos par semaine.",svg:SVGA,cls:"tall"},
+ {title:"Les heures supplémentaires",say:"Une heure supplémentaire est une heure faite au-delà de 35 heures par semaine. De la 36ième à la 43ième heure, elle est majorée de 25 pour cent. À partir de la 44ième heure, de 50 pour cent. Le maximum est de 48 heures.",svg:SVGB,cls:"tall"},
+ {title:"Calculer la paie",say:"Exemple. Raï travaille 45 heures, donc 10 heures supplémentaires. Les 8 premières sont payées 15 euros, soit 120 euros. Les 2 dernières sont payées 18 euros, soit 36 euros. Au total, 156 euros.",svg:SVGC,cls:"tall"},
+ {title:"Le repos",say:"Il faut au moins 11 heures de repos entre deux journées de travail. Et au moins 24 heures de repos d’affilée chaque semaine.",svg:SVGD,cls:"tall"}
+];
+;
+/* ---------- jeux : données ---------- */
+const O=(t,i,c)=>({t,i,c});
+const OUINON=[O("OUI","✅","g"),O("NON","❌","r")];
+const VF=[O("VRAI","✅","g"),O("FAUX","❌","r")];
+const FD=[O("Faute","⚠️","y"),O("Dommage","💥","o")];
+const TYPES=[O("Civile","🩹"),O("Contractuelle","📜"),O("Délictuelle","🚧"),O("Pénale","👮")];
+const MOTS=[O("Faute","⚠️"),O("Dommage","💥"),O("Lien de causalité","🔗"),O("Responsabilité","⚖️")];
+
+const rel=(sicon,story,ok,why)=>({sicon,story,icon:"⚖️",text:"Quelle responsabilité ?",opts:TYPES,ok,why});
+const fd=(sicon,story,ok,why)=>({sicon,story,icon:"🤔",text:"Faute ou dommage ?",opts:FD,ok,why});
+const eng=(sicon,story,ok,why)=>({sicon,story,icon:"⚖️",text:"Responsabilité engagée ?",opts:OUINON,ok,why});
+const mot=(text,ok,why)=>({icon:"🔤",text,opts:MOTS,ok,why});
+const faute=(sicon,story,opts,why)=>({sicon,story,icon:"⚠️",text:"Quelle est la faute ?",opts,ok:0,why});
+const dom=(sicon,story,opts,why)=>({sicon,story,icon:"💥",text:"Quel est le dommage ?",opts,ok:0,why});
+const lien=(sicon,story,why)=>({sicon,story,icon:"🔗",text:"La faute a-t-elle causé le dommage ?",opts:OUINON,ok:0,why});
+
+/* Enquêtes : la bonne réponse est toujours en position 0 dans les données, puis on mélange les options à l’affichage */
+const NORA="Nora conduit un transpalette trop vite. Elle percute une étagère et plusieurs cartons tombent.";
+const YANIS="Yanis utilise un chariot sans autorisation. Il heurte une palette et détruit des produits.";
+const EMILIE="Lors d’une livraison, Émilie laisse un colis fragile sans protection au bord du quai. Le colis tombe et le matériel du client est cassé.";
+const INES="Inès conduit un chariot. Elle regarde un message sur son téléphone, ne voit pas un collègue et le heurte. Il est blessé au bras et doit être soigné.";
+
+const GAMES_RESP=[
+ {id:"relier",icon:"🔗",name:"Relier",c:"#2F6FED",qs:[
+  rel("🚚⏰","Une entreprise ne livre pas une commande à la date prévue.",1,"Le contrat n’est pas respecté : responsabilité contractuelle."),
+  rel("🥷📱","Un salarié vole un téléphone dans le vestiaire.",3,"Voler est une infraction : on punit. Responsabilité pénale."),
+  rel("🚜🚗","Un conducteur de chariot endommage la voiture d’un visiteur.",2,"Pas de contrat avec le visiteur : responsabilité délictuelle (une famille de la civile : on répare)."),
+  rel("🧑‍🔧💥","Un salarié casse accidentellement le matériel d’une personne extérieure à l’entreprise.",2,"Personne extérieure, pas de contrat : responsabilité délictuelle."),
+  rel("🧾","Un client ne paie pas la facture prévue au contrat.",1,"Le contrat n’est pas respecté : responsabilité contractuelle."),
+  rel("👊","Un agent frappe un collègue.",3,"Une agression est une infraction : responsabilité pénale.")
+ ]},
+ {id:"quiz",icon:"⚡",name:"Quiz éclair",c:"#8E5CF7",mix:true,qs:[
+  {icon:"🩹",text:"La responsabilité civile sert surtout à…",opts:[O("Punir une infraction","🚔"),O("Réparer un dommage","🩹"),O("Vérifier un contrat","📄")],ok:1,why:"La responsabilité civile répare le dommage."},
+  {icon:"📜",text:"La responsabilité contractuelle peut être engagée quand…",opts:[O("Un contrat n’est pas respecté","📜"),O("Une personne respecte la loi","✅"),O("Aucun dommage n’existe","🚫")],ok:0,why:"Contractuelle = un contrat n’est pas respecté."},
+  {icon:"🔗",text:"Pour relier la faute au dommage, on cherche…",opts:[O("Une sanction","🚔"),O("Un lien de causalité","🔗"),O("Un contrat de travail","📄")],ok:1,why:"Le lien de causalité relie la faute au dommage."},
+  {icon:"⚖️",text:"Une responsabilité peut être engagée quand une faute provoque un dommage.",opts:VF,ok:0,why:"Vrai : faute, dommage et lien."},
+  {icon:"👮",text:"La responsabilité pénale sert uniquement à rembourser une victime.",opts:VF,ok:1,why:"Faux : la pénale sert à punir une infraction."},
+  {icon:"🔗",text:"Le lien de causalité permet de relier la faute au dommage.",opts:VF,ok:0,why:"Vrai : c’est ce qui relie la faute au dommage."}
+ ]},
+ {id:"mots",icon:"🔤",name:"Les bons mots",c:"#19A974",qs:[
+  mot("Une blessure ou une marchandise cassée, c’est un ___.",1,"C’est un dommage."),
+  mot("Ne pas respecter une consigne peut être une ___.",0,"C’est une faute."),
+  mot("Ce qui relie la faute au dommage, c’est le ___.",2,"C’est le lien de causalité."),
+  mot("Quand les conditions sont réunies, la ___ peut être engagée.",3,"La responsabilité est engagée quand il y a faute, dommage et lien.")
+ ]},
+ {id:"fd",icon:"💥",name:"Faute ou dommage",c:"#FF8A3D",qs:[
+  fd("🚬🚫","Un agent fume dans une zone où c’est interdit.",0,"Il ne respecte pas la règle : c’est une faute."),
+  fd("🖥️💥","Un écran d’ordinateur est brisé.",1,"C’est ce qui est cassé : le dommage."),
+  fd("💧⚠️","Une employée laisse un liquide au sol sans le signaler.",0,"Elle oublie de prévenir : c’est une faute."),
+  fd("🤕","Un visiteur glisse et se blesse à la cheville.",1,"C’est la blessure : le dommage."),
+  fd("🚜💨","Un cariste roule trop vite dans l’allée.",0,"Il ne respecte pas la sécurité : c’est une faute."),
+  fd("📦💥","Des cartons sont écrasés.",1,"C’est ce qui est abîmé : le dommage.")
+ ]},
+ {id:"intrus",icon:"🕵️",name:"L’intrus",c:"#E5484D",mix:true,qs:[
+  {icon:"🩹",text:"Responsabilité civile : trouve l’intrus.",opts:[O("Réparer un dommage","🩹"),O("Indemniser une victime","💶"),O("Punir une infraction","🚔")],ok:2,why:"Punir, c’est la pénale. La civile répare."},
+  {icon:"👮",text:"Responsabilité pénale : trouve l’intrus.",opts:[O("Sanctionner","🚔"),O("Non-respect de la loi","📕"),O("Indemniser automatiquement un client","💶")],ok:2,why:"Indemniser, c’est la civile."},
+  {icon:"📜",text:"Responsabilité contractuelle : trouve l’intrus.",opts:[O("Facture prévue au contrat non réglée","🧾"),O("Prestation promise non réalisée","📦"),O("Agression","👊")],ok:2,why:"Une agression est une infraction, pas un contrat non respecté."},
+  {icon:"⚖️",text:"Conditions de la responsabilité : trouve l’intrus.",opts:[O("Faute","⚠️"),O("Dommage","💥"),O("Lien de causalité","🔗"),O("Salaire","💰")],ok:3,why:"Le salaire n’est pas une condition. Il faut une faute, un dommage et un lien."}
+ ]},
+ {id:"engagee",icon:"⚖️",name:"Engagée ou pas ?",c:"#1F2430",qs:[
+  eng("📦⬆️💻","Un préparateur empile des cartons trop haut malgré la consigne. Ils tombent et abîment l’ordinateur d’un client.",0,"Il y a une faute, un dommage et un lien : OUI."),
+  eng("⚡🧊","Un éclair coupe le courant et abîme des produits réfrigérés. Les procédures étaient respectées.",1,"Aucune faute : les procédures étaient respectées. NON."),
+  eng("🚪🤷‍♀️","Une employée oublie de fermer une porte de réserve. Rien n’est volé ni abîmé.",1,"Il y a une faute, mais aucun dommage. NON."),
+  eng("🏋️📦","Un agent déplace seul une charge prévue pour deux et fait tomber un colis fragile.",0,"Faute, dommage et lien : OUI.")
+ ]},
+ {id:"enquete",icon:"🔎",name:"Enquête",c:"#0EA5C6",seq:true,mix:true,qs:[
+  faute("🚜💨",NORA,[O("Conduire trop vite","🚜💨"),O("Les cartons tombent","📦"),O("Il y a une étagère","🧱")],"Conduire trop vite : elle ne respecte pas la sécurité."),
+  dom("🚜💨",NORA,[O("Les cartons tombent","📦💥"),O("Conduire trop vite","🚜💨"),O("Un transpalette","🚜")],"Les cartons tombés : c’est ce qui est abîmé."),
+  lien("🚜💨",NORA,"Elle roule trop vite, elle percute, les cartons tombent : le lien existe."),
+  faute("🚜🚫",YANIS,[O("Utiliser un chariot sans autorisation","🚜🚫"),O("Des produits détruits","📦💥"),O("Une palette","🧱")],"Il n’a pas le droit de conduire : c’est la faute."),
+  dom("🚜🚫",YANIS,[O("Des produits détruits","📦💥"),O("Utiliser un chariot sans autorisation","🚜🚫"),O("Une palette","🧱")],"Les produits détruits : c’est le dommage."),
+  lien("🚜🚫",YANIS,"Sans autorisation, il heurte la palette et détruit les produits : le lien existe."),
+  faute("📦⚠️",EMILIE,[O("Laisser le colis fragile sans protection","📦⚠️"),O("Le matériel du client cassé","💥"),O("Le bord du quai","🚚")],"Elle laisse le colis sans protection : c’est la faute."),
+  dom("📦⚠️",EMILIE,[O("Le matériel du client cassé","💥"),O("Laisser le colis fragile sans protection","📦⚠️"),O("Effectuer une livraison","🚚")],"Le matériel cassé : c’est le dommage."),
+  lien("📦⚠️",EMILIE,"Le colis sans protection tombe et casse le matériel : le lien existe."),
+  eng("📦⚠️",EMILIE,0,"Faute, dommage et lien : la responsabilité peut être engagée. OUI.")
+ ]},
+ {id:"ines",icon:"📱",name:"Mission Inès",c:"#C026D3",seq:true,mix:true,qs:[
+  {sicon:"📱🚜",story:INES,icon:"⚠️",text:"Quelle est la faute d’Inès ?",opts:[O("Elle regarde son téléphone en conduisant","📱"),O("Elle déplace une palette","🧱"),O("Elle travaille dans un entrepôt","🏭")],ok:0,why:"Regarder son téléphone en conduisant un chariot : c’est la faute."},
+  {sicon:"📱🚜",story:INES,icon:"💥",text:"Quel est le dommage ?",opts:[O("Le collègue est blessé au bras","🤕"),O("Elle conduit un chariot","🚜"),O("Elle reçoit un message","💬")],ok:0,why:"Le collègue blessé : c’est le dommage."},
+  lien("📱🚜",INES,"Elle regarde son téléphone, ne voit pas le collègue et le heurte : la faute a causé la blessure."),
+  eng("📱🚜",INES,0,"Faute, dommage et lien : la responsabilité peut être engagée. OUI."),
+  {sicon:"📱🚜",story:INES,icon:"🩹",text:"Quelle responsabilité pour réparer le dommage ?",opts:TYPES,ok:0,why:"On veut réparer le dommage : responsabilité civile."},
+  {sicon:"📱🚜",story:INES,icon:"🎯",text:"À quoi sert cette responsabilité ?",opts:[O("Réparer le dommage","🩹"),O("Punir une infraction","🚔"),O("Vérifier un contrat","📄")],ok:0,why:"La responsabilité civile sert à réparer le dommage."}
+ ]}
+];
+
+
+/* ---------- jeux : données ---------- */
+const N=(...a)=>a.map(t=>O(t));
+const vf=(icon,text,ok,why)=>({icon,text,opts:VF,ok,why});
+const nq=(icon,text,opts,ok,why,extra)=>Object.assign({icon,text,opts,ok,why},extra||{});
+const yn=(icon,text,ok,why,extra)=>Object.assign({icon,text,opts:OUINON,ok,why},extra||{});
+
+const PLAN=`<div class="plan"><div class="ph">📅 Planning de Lucas</div>`+[["Lun","8h–12h","13h–17h","8 h"],["Mar","8h–12h","13h–17h","8 h"],["Mer","8h–12h",null,"4 h"],["Jeu","8h–12h","13h–17h","8 h"],["Ven","8h–12h","13h–17h","8 h"]].map(r=>`<div class="pr"><b>${r[0]}</b><span class="c">${r[1]}</span><span>${r[2]?'🍽️':''}</span>${r[2]?`<span class="c a">${r[2]}</span>`:`<span class="c g">🏠 libre</span>`}<span class="b">${r[3]}</span></div>`).join('')+`</div>`;
+const PLANSAY="Planning de Lucas. Lundi, mardi, jeudi et vendredi : de 8 heures à 12 heures, et de 13 heures à 17 heures, soit 8 heures. Mercredi : de 8 heures à 12 heures seulement, soit 4 heures.";
+const pl={viz:PLAN,vsay:PLANSAY};
+const CH=a=>`<div class="chips">${a.map(x=>`<span>${x}</span>`).join('')}</div>`;
+const TL=(a,b)=>`<div class="tl"><b>${a}</b><i></i><b>${b}</b></div>`;
+
+const INV="Pendant l’inventaire, Lucas travaille 10 h du lundi au jeudi, et 8 h le vendredi. Son salaire est de 17 € de l’heure.";
+const INVV=CH(["Lun 10 h","Mar 10 h","Mer 10 h","Jeu 10 h","Ven 8 h"]);
+const inv={story:INV,sicon:"📦🧑‍🏭",viz:INVV};
+const rep=(a,b,txt)=>({story:txt,sicon:"🌙",viz:TL(a,b)});
+
+const GAMES_DUREE=[
+ {id:"planning",icon:"📅",name:"Planning de Lucas",c:"#2F6FED",seq:true,qs:[
+  nq("🏭","Qui travaille dans l’entrepôt ?",[O("Lucas","👷"),O("Eden","🧑‍🏭"),O("Marwan","🧑‍💼")],0,"Lucas travaille dans un entrepôt logistique.",pl),
+  nq("1️⃣","Combien d’heures le lundi ?",N("4 h","8 h","9 h"),1,"De 8 h à 12 h : 4 h. De 13 h à 17 h : 4 h. Total : 8 heures.",pl),
+  nq("3️⃣","Combien d’heures le mercredi ?",N("4 h","8 h","12 h"),0,"Seulement le matin, de 8 h à 12 h : 4 heures.",pl),
+  yn("🔁","Lucas travaille tous les jours de la même façon ?",1,"Non : le mercredi, il ne travaille que 4 heures.",pl),
+  nq("⚖️","Quelle est la durée légale du travail en France ?",N("30 h","35 h","39 h"),1,"La durée légale : 35 heures par semaine.",pl),
+  nq("🧮","Combien d’heures Lucas fait-il dans la semaine ?",N("32 h","36 h","40 h"),1,"8 + 8 + 4 + 8 + 8 = 36 heures.",pl),
+  nq("💡","Quel constat peut-on faire ?",[O("Il fait 1 heure supplémentaire","➕"),O("Il fait moins de 35 h","⬇️"),O("Il fait 5 heures supplémentaires","5️⃣")],0,"36 h − 35 h = 1 heure supplémentaire.",pl)
+ ]},
+ {id:"vf",icon:"✅",name:"Vrai ou faux",c:"#19A974",qs:[
+  vf("🗓️","La durée légale du travail est de 35 h par semaine.",0,"Vrai : 35 heures par semaine."),
+  vf("➕","Une heure supplémentaire est une heure faite après 35 h.",0,"Vrai : au-delà de 35 heures par semaine."),
+  vf("🌗","Un salarié peut travailler 15 h dans une journée.",1,"Faux : 10 heures par jour au maximum."),
+  vf("📆","Un salarié peut travailler 48 h dans une semaine.",0,"Vrai : 48 heures, c’est le maximum."),
+  vf("🧮","Travailler 38 h dans la semaine, ce sont des heures supplémentaires.",0,"Vrai : 38 h − 35 h = 3 heures supplémentaires.")
+ ]},
+ {id:"hs",icon:"➕",name:"Heures sup",c:"#FF8A3D",qs:[
+  nq("🧮","35 h travaillées : combien d’heures sup ?",N("0 h","5 h","35 h"),0,"Pile 35 h : aucune heure supplémentaire."),
+  nq("🧮","36 h travaillées : combien d’heures sup ?",N("0 h","1 h","6 h"),1,"36 h − 35 h = 1 heure supplémentaire."),
+  nq("🧮","40 h travaillées : combien d’heures sup ?",N("5 h","4 h","40 h"),0,"40 h − 35 h = 5 heures supplémentaires."),
+  nq("🧮","45 h travaillées : combien d’heures sup ?",N("5 h","10 h","45 h"),1,"45 h − 35 h = 10 heures supplémentaires."),
+  nq("📅","Combien d’heures Eden travaille-t-il ?",N("35 h","40 h","48 h"),1,"5 jours × 8 h = 40 heures.",{story:"Eden travaille 8 h par jour, du lundi au vendredi.",sicon:"🧑‍🏭"}),
+  nq("➕","Eden fait-il des heures sup ? Combien ?",N("5 h","0 h","8 h"),0,"40 h − 35 h = 5 heures supplémentaires.",{story:"Eden travaille 8 h par jour, du lundi au vendredi.",sicon:"🧑‍🏭"}),
+  nq("🧮","Daren travaille 39 h. Combien d’heures sup ?",N("4 h","39 h","3 h"),0,"39 h − 35 h = 4 heures supplémentaires.")
+ ]},
+ {id:"limites",icon:"🚦",name:"Les limites",c:"#7C4DFF",qs:[
+  vf("⏱️","Un salarié peut travailler 10 heures dans une journée.",0,"Vrai : 10 heures par jour, c’est le maximum."),
+  vf("🌗","Un salarié peut travailler 13 heures dans une journée.",1,"Faux : le maximum est de 10 heures par jour."),
+  vf("📆","Un salarié peut travailler 48 heures dans une semaine.",0,"Vrai : 48 heures par semaine au maximum."),
+  vf("🌙","Entre deux journées de travail, il faut au moins 11 heures de repos.",0,"Vrai : 11 heures minimum de repos."),
+  vf("🛌","Un salarié doit avoir au moins 24 heures de repos par semaine.",0,"Vrai : 24 heures consécutives de repos."),
+  yn("⏱️","Marwan respecte-t-il la durée maximale par jour ?",1,"Non : 11 h dépasse les 10 h maximum.",{story:"Marwan travaille 11 h lundi.",sicon:"🧑‍💼"}),
+  yn("📆","Miguel respecte-t-il la durée maximale par semaine ?",1,"Non : 49 h dépasse les 48 h maximum.",{story:"Miguel travaille 49 h cette semaine.",sicon:"🧑‍🔧"})
+ ]},
+ {id:"respecte",icon:"🔍",name:"Respecté ou pas ?",c:"#E5484D",seq:true,qs:[
+  nq("🕗","Combien d’heures de 8 h à 18 h ?",N("8 h","10 h","18 h"),1,"18 h − 8 h = 10 heures.",{story:"Josaphat travaille de 8 h à 18 h.",sicon:"🧑‍🏭"}),
+  yn("⏱️","La durée maximale par jour est-elle respectée ?",0,"Oui : 10 heures par jour, c’est le maximum autorisé.",{story:"Josaphat travaille de 8 h à 18 h.",sicon:"🧑‍🏭"}),
+  yn("📆","La durée maximale par semaine est-elle respectée ?",1,"Non : 50 h dépasse les 48 h maximum.",{story:"Ethane travaille 50 heures dans la semaine.",sicon:"🧑‍🔧"}),
+  nq("🕖","Combien d’heures de 7 h à 19 h ?",N("10 h","11 h","12 h"),2,"19 h − 7 h = 12 heures.",{story:"Emma travaille de 7 h à 19 h.",sicon:"👩‍🏭"}),
+  yn("⏱️","La durée maximale par jour est-elle respectée ?",1,"Non : 12 h dépasse les 10 h par jour.",{story:"Emma travaille de 7 h à 19 h.",sicon:"👩‍🏭"}),
+  yn("📆","La durée maximale par semaine est-elle respectée ?",0,"Oui : 46 h est sous les 48 h maximum.",{story:"Jehiel travaille 46 heures dans la semaine.",sicon:"🧑‍💼"})
+ ]},
+ {id:"repos",icon:"😴",name:"Le repos",c:"#0EA5C6",seq:true,qs:[
+  nq("🌙","Combien d’heures de repos ?",N("9 h","11 h","13 h"),1,"De 20 h à minuit : 4 h. Puis jusqu’à 7 h : 7 h. Total : 11 heures.",rep("20 h","7 h","Fin du travail : 20 h. Reprise : 7 h le lendemain.")),
+  yn("⚖️","La loi est-elle respectée ?",0,"Oui : 11 heures de repos, c’est le minimum.",rep("20 h","7 h","Fin du travail : 20 h. Reprise : 7 h le lendemain.")),
+  nq("🌙","Combien d’heures de repos ?",N("9 h","10 h","11 h"),0,"De 21 h à minuit : 3 h. Puis jusqu’à 6 h : 6 h. Total : 9 heures.",rep("21 h","6 h","Fin du travail : 21 h. Reprise : 6 h le lendemain.")),
+  yn("⚖️","La loi est-elle respectée ?",1,"Non : 9 heures, c’est moins que les 11 heures minimum.",rep("21 h","6 h","Fin du travail : 21 h. Reprise : 6 h le lendemain.")),
+  nq("🌙","Combien d’heures de repos ?",N("12 h","14 h","16 h"),1,"De 18 h à minuit : 6 h. Puis jusqu’à 8 h : 8 h. Total : 14 heures.",rep("18 h","8 h","Fin du travail : 18 h. Reprise : 8 h le lendemain.")),
+  yn("⚖️","La loi est-elle respectée ?",0,"Oui : 14 heures, c’est plus que les 11 heures minimum.",rep("18 h","8 h","Fin du travail : 18 h. Reprise : 8 h le lendemain.")),
+  nq("🛌","Combien d’heures de repos par semaine, au minimum ?",N("11 h","24 h","48 h"),1,"Au moins 24 heures consécutives de repos par semaine.")
+ ]},
+ {id:"pourcent",icon:"📈",name:"Les majorations",c:"#C026D3",qs:[
+  nq("🟢","Les 8 premières heures sup (36e à 43e heure) sont majorées de…",N("10 %","25 %","50 %"),1,"De la 36e à la 43e heure : + 25 %."),
+  nq("🟠","À partir de la 44e heure, la majoration est de…",N("25 %","50 %","100 %"),1,"À partir de la 44e heure : + 50 %."),
+  nq("💶","Combien vaut 1 heure majorée à 25 % ?",N("13 €","15 €","24 €"),1,"12 € + 25 % = 12 € + 3 € = 15 €.",{story:"Warren fait 2 heures sup. Son salaire est de 12 € de l’heure.",sicon:"🧑‍🏭"}),
+  nq("💶","Combien sera-t-il payé pour ses 2 heures ?",N("30 €","24 €","15 €"),0,"2 × 15 € = 30 €.",{story:"Warren fait 2 heures sup à 25 %. Une heure vaut 15 €.",sicon:"🧑‍🏭"}),
+  nq("💶","Combien vaut 1 heure majorée à 50 % ?",N("21 €","19 €","28 €"),0,"14 € + 50 % = 14 € + 7 € = 21 €.",{story:"David fait 2 heures sup à 50 %. Son salaire est de 14 € de l’heure.",sicon:"🧑‍🔧"}),
+  nq("💶","Combien sera-t-il payé pour ses 2 heures ?",N("42 €","21 €","35 €"),0,"2 × 21 € = 42 €.",{story:"David fait 2 heures sup à 50 %. Une heure vaut 21 €.",sicon:"🧑‍🔧"})
+ ]},
+ {id:"paie",icon:"💶",name:"Ma paie",c:"#1F2430",seq:true,qs:[
+  nq("💶","Combien vaut 1 heure majorée à 25 % ?",N("12,50 €","11 €","15 €"),0,"10 € + 25 % = 10 € + 2,50 € = 12,50 €.",{story:"Lewin fait 2 heures sup à 25 %. Son salaire est de 10 € de l’heure.",sicon:"🧑‍🏭"}),
+  nq("💶","Combien sera-t-il payé ?",N("25 €","20 €","12,50 €"),0,"2 × 12,50 € = 25 €.",{story:"Lewin fait 2 heures sup à 25 %. Une heure vaut 12,50 €.",sicon:"🧑‍🏭"}),
+  nq("💶","Combien vaut 1 heure majorée à 25 % ?",N("17,50 €","18 €","16 €"),0,"14 € + 25 % = 14 € + 3,50 € = 17,50 €.",{story:"Hamza fait 3 heures sup à 25 %. Son salaire est de 14 € de l’heure.",sicon:"🧑‍🔧"}),
+  nq("💶","Combien sera-t-il payé ?",N("52,50 €","42 €","17,50 €"),0,"3 × 17,50 € = 52,50 €.",{story:"Hamza fait 3 heures sup à 25 %. Une heure vaut 17,50 €.",sicon:"🧑‍🔧"}),
+  nq("➕","Combien d’heures sup a-t-il faites ?",N("9 h","44 h","8 h"),0,"44 h − 35 h = 9 heures supplémentaires.",{story:"Makan travaille 44 h. Son salaire est de 12 € de l’heure.",sicon:"🧑‍💼"}),
+  nq("🟢","Combien sont majorées à 25 % ?",N("9 h","8 h","1 h"),1,"Les 8 premières heures sup sont à 25 %.",{story:"Makan fait 9 heures sup (44 h − 35 h).",sicon:"🧑‍💼"}),
+  nq("🟠","Combien sont majorées à 50 % ?",N("1 h","2 h","8 h"),0,"9 − 8 = 1 heure, la 44e heure, à 50 %.",{story:"Makan fait 9 heures sup. 8 sont à 25 %.",sicon:"🧑‍💼"})
+ ]},
+ {id:"mission",icon:"📦",name:"Mission inventaire",c:"#C2410C",seq:true,qs:[
+  nq("🧮","Combien d’heures travaille-t-il dans la semaine ?",N("40 h","48 h","50 h"),1,"10 + 10 + 10 + 10 + 8 = 48 heures.",inv),
+  yn("📆","Respecte-t-il la durée maximale par semaine ?",0,"Oui : 48 h, c’est exactement le maximum.",inv),
+  nq("➕","Combien d’heures sup a-t-il faites ?",N("13 h","48 h","8 h"),0,"48 h − 35 h = 13 heures supplémentaires.",inv),
+  nq("🟢","Combien sont majorées à 25 % ?",N("13 h","8 h","5 h"),1,"Les 8 premières heures sup (36e à 43e heure).",inv),
+  nq("🟠","Combien sont majorées à 50 % ?",N("5 h","8 h","13 h"),0,"13 − 8 = 5 heures, de la 44e à la 48e heure.",inv),
+  nq("💶","Combien sont payées les heures sup ?",N("297,50 €","221 €","156 €"),0,"25 % : 17 € → 21,25 €, donc 8 × 21,25 € = 170 €. 50 % : 17 € → 25,50 €, donc 5 × 25,50 € = 127,50 €. Total : 297,50 €.",inv),
+  nq("🏆","Bonus : et le salaire de toute la semaine ?",N("892,50 €","816 €","595 €"),0,"35 h × 17 € = 595 €. Plus 297,50 € d’heures sup : 892,50 €.",inv)
+ ]}
+];
+
+
+/* ===== NOUVEAU CONTENU : cartes, ordre, jeux ===== */
+const C=(i,b,t,c,s)=>({i,b,t,c:c||'l',s:s||(b+'. '+t+'.')});
+const SL=(title,say,cards,flow)=>({title,say,cards,flow:!!flow});
+const GM=(id,icon,name,c,qs,o)=>Object.assign({id,icon,name,c,qs,mix:true},o||{});
+const ORD=(icon,title,steps)=>steps.map((s,k)=>{const n=steps.length,a=steps[k],b=steps[(k+1)%n],d=steps[(k+2)%n];return {story:title,sicon:'🔢',icon,text:"Quelle est l’étape "+(k+1)+" ?",opts:[O(a[1],a[0]),O(b[1],b[0]),O(d[1],d[0])],ok:0,why:"Étape "+(k+1)+" : "+a[1]+"."}});
+const K=(t,s,p,n)=>({t,s:s||[],p:!!p,n:n||''});
+const fill=(text,a,b,ok,why)=>({icon:'✏️',text,opts:[O(a),O(b)],ok,why});
+const voc=(en,fr,w1,w2)=>({icon:'🎧',hear:en,hl:'en',show:en,text:'Que veut dire ce mot ?',opts:N(fr,w1,w2),ok:0,why:en+' = '+fr+'.'});
+const rev=(fr,en,w1,w2)=>({icon:'🇬🇧',text:'Comment dit-on « '+fr+' » en anglais ?',opts:N(en,w1,w2),ol:'en',ok:0,why:fr+' = '+en+'.'});
+const lis=(en,fr,w1,w2,why)=>({icon:'🎧',hear:en,hl:'en',text:'Écoute. Qu’est-ce que ça veut dire ?',opts:N(fr,w1,w2),ok:0,why:why||en+' = '+fr+'.'});
+const pic=(icon,text,opts,why)=>({icon,text,opts,ok:0,why});
+
+const BLOCS=[
+/* ---------------- 1. RÉCEPTION ---------------- */
+{id:'rec',icon:'🚚',name:'Réception',c:'#2F6FED',code:'BC01 · Réceptionner des marchandises et produits',
+ comps:[K('Se situer dans un environnement professionnel spécifique',['rec0']),K('Prendre un poste en autonomie',['rec0']),K('Prendre en charge les opérations de réception',['rec1']),K('Contrôler les quantités et l’état de la livraison',['rec2']),K('Mettre en stock les marchandises ou les produits',['rec3'],true)],
+ seqs:[
+ {id:'rec0',icon:'🏭',name:'L’entrepôt et mon poste',
+  slides:[
+   SL('Le chemin des marchandises','Dans un entrepôt, la marchandise suit un chemin : la réception, le stockage, la préparation, puis l’expédition.',[C('🚚','Réception','on décharge et on contrôle','b'),C('📦','Stockage','on range les palettes','g'),C('🛒','Préparation','on prépare les commandes','y'),C('🚛','Expédition','on envoie aux clients','o')],true),
+   SL('Je prends mon poste','Avant de commencer, je mets mes équipements de protection, je lis les consignes et mon planning, et je suis à l’heure.',[C('🦺','Gilet','pour être vu','y'),C('🥾','Chaussures de sécurité','pour protéger mes pieds','o'),C('🧤','Gants','pour protéger mes mains','g'),C('📋','Consignes et planning','je lis avant de commencer','b'),C('⏰','À l’heure','l’équipe compte sur moi','l')])],
+  games:[GM('rec0','🏭','Les zones','#2F6FED',[
+   ...ORD('🏭','Le chemin d’une marchandise',[['🚚','Réception'],['📦','Stockage'],['🛒','Préparation'],['🚛','Expédition']]),
+   nq('🚚','Où décharge-t-on le camion ?',[O('Quai de réception','🚚'),O('Zone d’expédition','🚛'),O('Bureau','🖥️')],0,'On décharge les camions au quai de réception.'),
+   nq('🥾','Pour marcher dans l’entrepôt, je porte…',[O('Chaussures de sécurité','🥾'),O('Sandales','🩴'),O('Pantoufles','🥿')],0,'Les chaussures de sécurité protègent mes pieds.'),
+   nq('📋','Au début de mon poste, je lis…',[O('Les consignes et le planning','📋'),O('Mes messages','💬'),O('Un journal','📰')],0,'Je regarde les consignes et mon planning.'),
+   yn('⏰','Être à l’heure à son poste, c’est important ?',0,'Oui : l’équipe compte sur moi.')])]},
+ {id:'rec1',icon:'📄',name:'Accueillir et vérifier',
+  slides:[
+   SL('J’accueille le chauffeur','Quand le camion arrive : j’accueille le chauffeur, je demande ses documents, je les compare avec la commande, puis j’indique le quai.',[C('👋','Je l’accueille','poliment','y'),C('📄','Je demande les documents','bon de livraison','b'),C('✅','Je compare','avec la commande','g'),C('🚪','J’indique le quai','où décharger','o')],true),
+   SL('Les documents','Le bon de commande dit ce qu’on a commandé. Le bon de livraison dit ce que le fournisseur livre. Le bon de réception dit ce que j’ai vraiment reçu.',[C('🧾','Bon de commande','ce que j’ai commandé','y'),C('📄','Bon de livraison (BL)','ce que le fournisseur livre','b'),C('✅','Bon de réception','ce que j’ai vraiment reçu','g')])],
+  games:[GM('rec1','📄','Les documents','#2F6FED',[
+   ...ORD('🚚','J’accueille un camion',[['👋','J’accueille le chauffeur'],['📄','Je demande les documents'],['✅','Je compare avec la commande'],['🚪','J’indique le quai']]),
+   nq('🧾','Le bon de commande indique…',[O('Ce que l’entreprise a commandé','🧾'),O('Le prix de l’essence','⛽'),O('La météo','☀️')],0,'Le bon de commande = ce qu’on a commandé.'),
+   nq('📄','Le bon de livraison (BL) indique…',[O('Ce que le fournisseur livre','📄'),O('Mon salaire','💶'),O('Mon planning','📅')],0,'Le BL = ce que le fournisseur livre.'),
+   nq('✅','Je compare le BL avec…',[O('Le bon de commande','🧾'),O('Un menu','🍽️'),O('Un journal','📰')],0,'Je compare ce qui est livré avec ce qui est commandé.'),
+   yn('🚚','Je laisse décharger sans rien vérifier ?',1,'Non : je vérifie d’abord les documents.')])]},
+ {id:'rec2',icon:'🔍',name:'Décharger et contrôler',
+  slides:[
+   SL('Je contrôle','Je contrôle trois choses : la quantité, l’état des colis, et la référence.',[C('🔢','Quantité','je compte les colis','b'),C('👀','État','colis abîmé, mouillé, ouvert ?','o'),C('🏷️','Référence','bon produit, bonne étiquette ?','g')]),
+   SL('Il y a un problème','S’il y a un problème, je note des réserves sur le bon de livraison, avec le chauffeur, avant qu’il parte. Puis je préviens mon responsable.',[C('📉','Manque','il y a moins de colis','r'),C('💥','Avarie','colis abîmé','o'),C('❌','Erreur','mauvais produit','y'),C('✍️','Réserves','j’écris sur le BL avant le départ du chauffeur','b'),C('📣','Je préviens','mon responsable','g')])],
+  games:[GM('rec2','🔍','Contrôler','#2F6FED',[
+   nq('📉','Le BL indique 10 cartons, j’en compte 8.',[O('Un manque','📉'),O('Une avarie','💥'),O('Une erreur de produit','❌')],0,'Il manque des colis : c’est un manque.'),
+   nq('💥','Un carton est écrasé et mouillé.',[O('Une avarie','💥'),O('Un manque','📉'),O('Tout va bien','👍')],0,'Un colis abîmé : c’est une avarie.'),
+   nq('❌','On reçoit des vis M8 à la place des vis M6.',[O('Une erreur de produit','❌'),O('Un manque','📉'),O('Une avarie','💥')],0,'Ce n’est pas le bon produit : c’est une erreur.'),
+   yn('✍️','Il manque 2 cartons. Je signe sans rien dire ?',1,'Non : je note des réserves sur le bon de livraison.'),
+   nq('✍️','Où je note les réserves ?',[O('Sur le bon de livraison','📄'),O('Nulle part','🤷'),O('Sur un mur','🧱')],0,'Je les écris sur le bon de livraison.'),
+   nq('⏱️','Quand je note les réserves ?',[O('Avant le départ du chauffeur','🚛'),O('Une semaine plus tard','📆'),O('Jamais','🚫')],0,'Avant que le chauffeur parte.'),
+   nq('📣','Après avoir noté le problème, je…',[O('Préviens mon responsable','📣'),O('Ne dis rien','🤐'),O('Jette le colis','🗑️')],0,'Je transmets l’information à mon responsable.'),
+   nq('🧮','Le BL : 24 cartons. Reçus : 21. Combien manquent-ils ?',N('3','4','5'),0,'24 − 21 = 3 cartons manquent.')])]},
+ {id:'rec3',icon:'📦',name:'Mettre en stock',
+  slides:[
+   SL('Je range','Je contrôle la palette, je lis l’emplacement, je range avec le chariot, puis j’enregistre l’entrée dans l’ordinateur.',[C('📦','Palette contrôlée','étiquette lisible','b'),C('🏷️','Je lis l’emplacement','allée, travée, niveau','y'),C('🚜','Je range','au bon endroit','o'),C('💻','J’enregistre l’entrée','le stock est à jour','g')],true),
+   SL('Les règles de rangement','Le lourd en bas, le léger en haut. Premier entré, premier sorti. Pour les produits à date limite, le premier périmé sort en premier.',[C('🔻','Lourd en bas','plus stable et plus sûr','o'),C('🔄','FIFO','premier entré, premier sorti','b'),C('⏳','FEFO','premier périmé, premier sorti','g'),C('📍','Adresse A-03-2','allée A, travée 03, niveau 2','y')])],
+  games:[GM('rec3','📦','Ranger','#2F6FED',[
+   ...ORD('📦','Mettre en stock',[['📦','Je contrôle la palette'],['🏷️','Je lis l’emplacement'],['🚜','Je range la palette'],['💻','J’enregistre l’entrée']]),
+   nq('🔻','Où range-t-on les colis lourds ?',[O('En bas','🔻'),O('Tout en haut','🔺'),O('Peu importe','🤷')],0,'Le lourd en bas : c’est plus stable.'),
+   nq('🔄','FIFO veut dire…',[O('Premier entré, premier sorti','🔄'),O('Fini, fermé, fait','✅'),O('Fragile, froid, fort','🧊')],0,'FIFO : premier entré, premier sorti.'),
+   nq('🥛','Des yaourts avec date limite. J’utilise…',[O('FEFO : le premier périmé sort en premier','⏳'),O('Le plus récent d’abord','🆕'),O('Au hasard','🎲')],0,'Avec une date limite, le premier périmé sort en premier.'),
+   nq('📍','Adresse A-03-2 : quelle est l’allée ?',N('A','03','2'),0,'A-03-2 : allée A, travée 03, niveau 2.'),
+   yn('💻','J’enregistre l’entrée en stock dans l’ordinateur ?',0,'Oui : le stock doit toujours être à jour.')])]}]},
+
+/* ---------------- 2. CHARIOTS ---------------- */
+{id:'cha',icon:'🚜',name:'Chariots',c:'#FF8A3D',code:'BC02 · Transférer en sécurité des marchandises et produits',
+ comps:[K('Mettre en service un engin de manutention adapté à la situation professionnelle',['cha1','cha2']),K('Conduire un engin de manutention (1A, 1B et 3 – R.489 CNAM)',['cha3'],true),K('Manœuvrer un engin de manutention (1A, 1B et 3 – R.489 CNAM)',['cha3'],true),K('Effectuer les opérations de fin de poste',['cha4'])],
+ seqs:[
+ {id:'cha1',icon:'🛒',name:'Quel chariot ?',
+  slides:[SL('Les 3 catégories','Trois catégories de chariots. La 1A : le transpalette porté, qui déplace les palettes au sol. La 1B : le gerbeur porté, qui lève en hauteur. La 3 : le chariot élévateur frontal.',[C('🛒','Catégorie 1A','transpalette porté : palettes au sol','y'),C('🏗️','Catégorie 1B','gerbeur porté : lève en hauteur','o'),C('🚜','Catégorie 3','chariot élévateur frontal','g'),C('🎓','CACES','certificat de conduite en sécurité','b')])],
+  games:[GM('cha1','🛒','Les catégories','#FF8A3D',[
+   nq('🛒','Un transpalette à conducteur porté, c’est la catégorie…',N('1A','1B','3'),0,'1A : transpalette porté.'),
+   nq('🏗️','Un gerbeur à conducteur porté, qui lève en hauteur, c’est la catégorie…',N('1B','1A','3'),0,'1B : gerbeur porté.'),
+   nq('🚜','Un chariot élévateur frontal, c’est la catégorie…',N('3','1A','1B'),0,'3 : chariot élévateur frontal.'),
+   nq('🎓','CACES veut dire…',[O('Certificat d’aptitude à la conduite en sécurité','🎓'),O('Carte d’accès au stock','🪪'),O('Code des achats','🧾')],0,'CACES : Certificat d’aptitude à la conduite en sécurité.'),
+   yn('🚫','Je peux conduire un chariot sans autorisation ?',1,'Non : il faut être formé et avoir l’autorisation de l’employeur.'),
+   nq('🪪','Qui donne l’autorisation de conduite ?',[O('L’employeur','🏢'),O('Un collègue','🧑‍🏭'),O('Le chauffeur','🚛')],0,'C’est l’employeur qui donne l’autorisation.')])]},
+ {id:'cha2',icon:'🔧',name:'Avant de démarrer',
+  slides:[SL('Mon contrôle avant de rouler','Avant de rouler : je mets mes équipements, je fais le tour du chariot, je m’installe en sécurité, je teste le klaxon et les freins. Si je vois un défaut, je n’utilise pas le chariot.',[C('🦺','Mes EPI','gilet, chaussures de sécurité','y'),C('👀','Tour du chariot','pneus, fourches, fuites','o'),C('💺','Je m’installe','ceinture ou retenue bouclée','b'),C('🔔','Je teste','klaxon, freins, feux','g'),C('🚫','Défaut ?','je n’utilise pas et je préviens','r')],true)],
+  games:[GM('cha2','🔧','Contrôler','#FF8A3D',[
+   ...ORD('🔧','Avant de démarrer',[['🦺','Je mets mes EPI'],['👀','Je fais le tour du chariot'],['💺','Je m’installe, ceinture bouclée'],['🔔','Je teste klaxon et freins']]),
+   nq('🛢️','Je vois une fuite d’huile sous le chariot. Je…',[O('Ne l’utilise pas et je préviens','🛑'),O('Roule quand même','💨'),O('Ne dis rien','🤐')],0,'Un défaut : je n’utilise pas le chariot et je préviens.'),
+   nq('🏷️','La plaque de charge indique…',[O('La charge maximale','⚖️'),O('La couleur du chariot','🎨'),O('Le nom du cariste','🧑‍🏭')],0,'La plaque de charge donne la charge maximale.'),
+   yn('💺','Je boucle ma ceinture (ou ma retenue) avant de rouler ?',0,'Oui : c’est ma protection.'),
+   yn('🔔','Je roule même si le klaxon ne marche pas ?',1,'Non : un chariot avec un défaut ne roule pas.')])]},
+ {id:'cha3',icon:'🛣️',name:'Conduire en sécurité',
+  slides:[
+   SL('Sur la route','Je roule fourches basses, à vitesse adaptée. Je regarde où je vais. Les piétons sont prioritaires.',[C('⬇️','Fourches basses','près du sol quand je roule','y'),C('🐢','Vitesse adaptée','je m’arrête si besoin','g'),C('👀','Je regarde','en marche arrière je regarde derrière','b'),C('🚶','Piétons prioritaires','je les laisse passer','o')]),
+   SL('Les règles à retenir','Pas de passager. Jamais sous une charge levée. Je klaxonne aux croisements. Dans une pente, la charge est du côté de la montée.',[C('🚫','Pas de passager','jamais','r'),C('⛔','Pas sous une charge levée','jamais','r'),C('🔔','Klaxon','aux croisements','y'),C('⛰️','Dans une pente','la charge côté montée','b')])],
+  games:[GM('cha3','🛣️','Conduire','#FF8A3D',[
+   vf('⬆️','Je roule avec les fourches hautes pour aller plus vite.',1,'Faux : je roule fourches basses.'),
+   vf('🧍','Je peux prendre un collègue comme passager.',1,'Faux : jamais de passager.'),
+   vf('🚶','Les piétons sont prioritaires.',0,'Vrai : je les laisse passer.'),
+   vf('🔔','Je klaxonne aux croisements.',0,'Vrai : pour prévenir les autres.'),
+   nq('↩️','Je recule. Je dois…',[O('Regarder derrière moi','👀'),O('Rouler sans regarder','🙈'),O('Fermer les yeux','😑')],0,'Je regarde derrière moi.'),
+   vf('⛔','Je passe sous une charge levée pour gagner du temps.',1,'Faux : c’est très dangereux.'),
+   nq('⛰️','Dans une pente avec une charge, la charge est côté…',[O('Montée','⬆️'),O('Descente','⬇️'),O('Peu importe','🤷')],0,'La charge reste côté montée.'),
+   nq('📦','Je ne vois pas devant à cause de la charge. Je…',[O('Me fais guider ou je recule','🧑‍✈️'),O('Roule vite','💨'),O('Klaxonne et fonce','📣')],0,'Je me fais guider ou je roule en marche arrière.')])]},
+ {id:'cha4',icon:'🏁',name:'Fin de poste',
+  slides:[SL('Je gare le chariot','À la fin : fourches au sol, frein serré, clé retirée, chariot en charge, et je signale ce qui ne va pas.',[C('⬇️','Fourches au sol','','y'),C('🛑','Frein serré','','o'),C('🔑','Clé retirée','','b'),C('🔌','Je mets en charge','','g'),C('📝','Je signale','les anomalies','l')],true)],
+  games:[GM('cha4','🏁','Fin de poste','#FF8A3D',[
+   ...ORD('🏁','Fin de poste',[['⬇️','Fourches au sol'],['🛑','Frein serré'],['🔑','Clé retirée'],['🔌','Je mets en charge'],['📝','Je signale les anomalies']]),
+   yn('⬆️','Je laisse les fourches en l’air ?',1,'Non : fourches au sol.'),
+   nq('🅿️','Où je gare le chariot ?',[O('Dans la zone prévue','🅿️'),O('Devant une sortie de secours','🚪'),O('Au milieu de l’allée','🛣️')],0,'Dans la zone de stationnement prévue.'),
+   nq('📝','J’ai senti que le frein était faible. Je…',[O('Le signale','📝'),O('Ne dis rien','🤐'),O('Le cache','🙈')],0,'Je signale l’anomalie pour qu’on répare.')])]}]},
+
+/* ---------------- 3. EXPÉDITION ---------------- */
+{id:'exp',icon:'📦',name:'Expédition',c:'#19A974',code:'BC03 · Réaliser des opérations d’expédition',
+ comps:[K('Prendre en charge la préparation de commandes',['exp1']),K('Déstocker les marchandises et/ou produits',['exp1']),K('Conditionner les marchandises et/ou produits',['exp2']),K('Réaliser et transférer l’unité de charge',['exp3']),K('Expédier les unités de charge',['exp4']),K('Identifier les conséquences d’un fait ou d’une donnée économique sur l’activité logistique et la supply chain',['exp5']),K('Appliquer les écogestes professionnels',['exp6'])],
+ seqs:[
+ {id:'exp1',icon:'🛒',name:'Préparer une commande',
+  slides:[SL('Le picking','Je lis le bon de préparation, je vais à l’emplacement, je prends la bonne référence en bonne quantité, je vérifie, puis je dépose en zone d’expédition.',[C('📋','Je lis le bon','références et quantités','b'),C('🚶','Je vais à l’emplacement','dans le stock','y'),C('🤏','Je prélève','bonne référence, bonne quantité','g'),C('✅','Je vérifie','avant de partir','o'),C('🧺','Je dépose','en zone d’expédition','l')],true)],
+  games:[GM('exp1','🛒','Picking','#19A974',[
+   ...ORD('🛒','Préparer une commande',[['📋','Je lis le bon de préparation'],['🚶','Je vais à l’emplacement'],['🤏','Je prends la bonne référence'],['✅','Je vérifie la quantité'],['🧺','Je dépose en zone d’expédition']]),
+   nq('🤏','Le bon indique 3 × réf. A12. Je prends…',[O('3 pièces de A12','✅'),O('3 pièces de A21','❌'),O('5 pièces de A12','❌')],0,'Bonne référence et bonne quantité : 3 × A12.'),
+   nq('🧮','4 cartons de 6 bouteilles. Combien de bouteilles ?',N('24','10','20'),0,'4 × 6 = 24 bouteilles.'),
+   nq('🔁','Je me suis trompé de référence. Je…',[O('Corrige avant d’expédier','🔁'),O('Envoie quand même','📤'),O('Cache l’erreur','🙈')],0,'Je corrige avant l’expédition.')])]},
+ {id:'exp2',icon:'📦',name:'Conditionner',
+  slides:[
+   SL('Bien emballer','Un bon emballage protège le produit : bonne taille de carton, calage pour éviter la casse, étiquette lisible.',[C('📦','Carton adapté','bonne taille, solide','y'),C('🧱','Calage','papier, bulles : pas de casse','o'),C('🏷️','Étiquette','adresse et code-barres lisibles','b')]),
+   SL('Les symboles sur les colis','Un verre veut dire fragile. Un parapluie veut dire craint l’humidité. Les flèches montrent le haut.',[C('🍷','Fragile','manipuler avec soin','r'),C('☔','Craint l’humidité','garder au sec','b'),C('⬆️','Haut','ne pas retourner','g')])],
+  games:[GM('exp2','📦','Emballer','#19A974',[
+   pic('🍷','Ce symbole veut dire…',[O('Fragile','🍷'),O('Lourd','🏋️'),O('Chaud','🔥')],'Le verre = fragile.'),
+   pic('☔','Ce symbole veut dire…',[O('Craint l’humidité','☔'),O('Fragile','🍷'),O('Haut','⬆️')],'Le parapluie = craint l’humidité.'),
+   pic('⬆️','Ces flèches veulent dire…',[O('Le haut du colis','⬆️'),O('À jeter','🗑️'),O('Pause','⏸️')],'Les flèches montrent le haut.'),
+   nq('🧱','Le calage sert à…',[O('Éviter la casse','🧱'),O('Faire joli','🎀'),O('Alourdir','🏋️')],0,'Il protège le produit.'),
+   nq('🏷️','Sur l’étiquette, je dois pouvoir lire…',[O('L’adresse et le code-barres','🏷️'),O('Mon prénom','🙋'),O('Rien','⬜')],0,'Adresse et code-barres lisibles.'),
+   yn('📦','Un produit fragile dans un carton trop grand, sans calage : c’est bon ?',1,'Non : il va bouger et casser.')])]},
+ {id:'exp3',icon:'🧱',name:'Construire la palette',
+  slides:[SL('Une palette stable','Le lourd en bas, le léger en haut. Les colis ne dépassent pas. On croise les couches. Puis on filme, et on met l’étiquette bien visible.',[C('🔻','Lourd en bas','léger en haut','o'),C('📐','Pas de débord','les colis restent sur la palette','y'),C('🧩','Couches croisées','pour tenir ensemble','b'),C('🎞️','Filmage ou cerclage','pour tenir la charge','g'),C('🏷️','Étiquette visible','sur la palette','l')])],
+  games:[GM('exp3','🧱','Palette','#19A974',[
+   nq('🔻','Quel colis va en bas ?',[O('Le plus lourd','🏋️'),O('Le plus léger','🪶'),O('Au hasard','🎲')],0,'Le plus lourd en bas.'),
+   vf('📐','Les colis peuvent dépasser de la palette.',1,'Faux : pas de débord.'),
+   nq('🎞️','Le film ou le cerclage sert à…',[O('Tenir la charge','🎞️'),O('Décorer','🎀'),O('Cacher','🙈')],0,'Il maintient la charge.'),
+   nq('🧮','5 colis par couche, 4 couches. Combien de colis ?',N('20','9','25'),0,'5 × 4 = 20 colis.'),
+   vf('🧩','On croise les couches pour que la palette tienne mieux.',0,'Vrai : c’est plus stable.'),
+   nq('🏷️','L’étiquette de la palette doit être…',[O('Bien visible','👀'),O('Cachée en dessous','🙈'),O('Absente','🚫')],0,'Visible pour être lue.')])]},
+ {id:'exp4',icon:'🚛',name:'Expédier',
+  slides:[SL('J’expédie','Je prépare le bon de livraison, je vérifie l’étiquette, je charge le camion avec soin, le chauffeur signe, puis j’enregistre la sortie du stock.',[C('📄','Bon de livraison','prêt et complet','b'),C('🏷️','Étiquette','je vérifie','y'),C('🚛','Je charge','avec soin, sans bousculer','o'),C('✍️','Le chauffeur signe','','g'),C('💻','J’enregistre la sortie','le stock est à jour','l')],true)],
+  games:[GM('exp4','🚛','Expédier','#19A974',[
+   ...ORD('🚛','Expédier une commande',[['📄','Je prépare le bon de livraison'],['🏷️','Je vérifie l’étiquette'],['🚛','Je charge le camion'],['✍️','Le chauffeur signe'],['💻','J’enregistre la sortie']]),
+   nq('✍️','Qui signe le bon de livraison au départ ?',[O('Le chauffeur','🚛'),O('Un passant','🚶'),O('Personne','🚫')],0,'Le chauffeur signe pour prendre la marchandise.'),
+   nq('💻','J’enregistre la sortie du stock pour…',[O('Que le stock reste à jour','💻'),O('Rien','🤷'),O('Faire joli','🎀')],0,'Pour que le stock soit à jour.')])]},
+ {id:'exp5',icon:'🌍',name:'Supply chain et économie',
+  slides:[
+   SL('La chaîne logistique','La chaîne va du fournisseur jusqu’au client. Le fournisseur livre l’entrepôt, puis le transport livre le client.',[C('🏭','Fournisseur','fabrique','b'),C('🏬','Entrepôt','stocke et prépare','g'),C('🚛','Transport','livre','o'),C('🏪','Client','reçoit','y')],true),
+   SL('Un fait économique, une conséquence','Quand le prix du carburant monte, le transport coûte plus cher. En période de fêtes, il y a plus de commandes. Un retard de bateau peut causer des ruptures de stock.',[C('⛽','Carburant plus cher','transport plus cher','r'),C('🎄','Fêtes, soldes','plus de commandes, plus de personnel','g'),C('🚢','Bateau en retard','ruptures de stock','b')])],
+  games:[GM('exp5','🌍','Supply chain','#19A974',[
+   ...ORD('🌍','La chaîne logistique',[['🏭','Fournisseur'],['🏬','Entrepôt'],['🚛','Transport'],['🏪','Client']]),
+   nq('⛽','Le carburant coûte plus cher. Conséquence ?',[O('Le transport coûte plus cher','🚛'),O('Les camions volent','✈️'),O('Rien ne change','😐')],0,'Le transport coûte plus cher.'),
+   nq('🎄','Avant Noël, il y a…',[O('Plus de commandes','📈'),O('Moins de commandes','📉'),O('Aucune commande','🚫')],0,'Plus de commandes, donc plus de travail.'),
+   nq('🚢','Un bateau de marchandises a du retard. Risque ?',[O('Rupture de stock','📭'),O('Stock en trop','📦'),O('Rien','😐')],0,'Les produits manquent : rupture de stock.'),
+   nq('🏬','L’entrepôt sert à…',[O('Stocker et préparer les commandes','🏬'),O('Fabriquer','🏭'),O('Vendre aux clients','🏪')],0,'Il stocke et prépare.')])]},
+ {id:'exp6',icon:'♻️',name:'Écogestes',
+  slides:[SL('Les écogestes au travail','Je trie les déchets, je réutilise les cartons, j’éteins la lumière, et je range les produits dangereux au bon endroit.',[C('♻️','Je trie','carton, plastique, bois','g'),C('📦','Je réutilise','les bons cartons','y'),C('💡','J’éteins','la lumière en partant','o'),C('☣️','Produits dangereux','dans un bac spécial','r')])],
+  games:[GM('exp6','♻️','Écogestes','#19A974',[
+   nq('📦','Où jette-t-on le carton propre ?',[O('Bac carton / papier','📦'),O('Bac bois','🪵'),O('Bac plastique','🧴')],0,'Le carton va dans le bac carton.'),
+   nq('🎞️','Où jette-t-on le film plastique ?',[O('Bac plastique','🧴'),O('Bac carton','📦'),O('Bac verre','🍾')],0,'Le plastique va dans le bac plastique.'),
+   nq('🪵','Une palette en bois cassée va…',[O('Dans le bac bois','🪵'),O('Dans le bac verre','🍾'),O('Dans la nature','🌳')],0,'Le bois va dans le bac bois.'),
+   nq('🛢️','Un bidon d’huile usée va…',[O('Dans les déchets dangereux','☣️'),O('Dans le bac carton','📦'),O('Dans l’évier','🚰')],0,'Un déchet dangereux va dans un bac spécial.'),
+   yn('💡','J’éteins la lumière en quittant une zone vide ?',0,'Oui : j’économise de l’énergie.'),
+   yn('📦','Je peux réutiliser un carton en bon état ?',0,'Oui : ça évite des déchets.')])]}]},
+
+/* ---------------- 4. FRANÇAIS / HG-EMC ---------------- */
+{id:'fra',icon:'📚',name:'Français, Histoire-Géo, EMC',c:'#8E5CF7',code:'BC04 · Français et Histoire-géographie-enseignement moral et civique',
+ comps:[K('Français : communiquer, écouter, dialoguer et s’exprimer',['fra1']),K('Français : reformuler, à l’écrit ou à l’oral, un message lu ou entendu',['fra2']),K('Français : évaluer sa production orale ou écrite en vue de l’améliorer',['fra3']),K('Français : lire, comprendre et présenter des textes et des œuvres',['fra2'],true,'Textes documentaires ; œuvres littéraires à travailler en classe'),K('Français : rendre compte d’une expérience en lien avec le métier',['fra1'],true),K('Histoire-géo : maîtriser et utiliser des repères chronologiques et spatiaux',['fra5']),K('Histoire-géo : s’approprier les démarches historiques et géographiques',[],true,'À travailler avec les documents du cours'),K('EMC : construire et exprimer une argumentation cohérente',[],true,'À travailler à l’oral en classe'),K('EMC : mettre à distance ses opinions personnelles',[],true,'À travailler à l’oral en classe'),K('Histoire-géo-EMC : principes et valeurs de la République',['fra4'])],
+ seqs:[
+ {id:'fra1',icon:'🗣️',name:'Parler de mon travail',
+  slides:[SL('Je me présente et je raconte','Pour parler de mon travail : je dis bonjour, je me présente, je dis ma formation, je raconte mon stage et ce que j’ai appris.',[C('👋','Bonjour','poliment','y'),C('🙋','Je m’appelle…','je me présente','b'),C('🎓','Je suis en CAP logistique','ma formation','g'),C('🏭','J’ai fait un stage chez…','où','o'),C('🔧','J’ai appris à…','ce que je sais faire','l')],true)],
+  games:[GM('fra1','🗣️','À l’oral','#8E5CF7',[
+   nq('👋','Pour saluer mon professeur, je dis…',[O('Bonjour Madame','👋'),O('Salut','🤙'),O('Yo','✌️')],0,'Je dis bonjour poliment.'),
+   nq('🙏','Quelle phrase est la plus polie ?',[O('Pourriez-vous m’aider, s’il vous plaît ?','🙏'),O('Aide-moi.','😠'),O('Fais-le.','👉')],0,'« S’il vous plaît » rend la phrase polie.'),
+   nq('🏭','Quelle phrase raconte bien mon travail ?',[O('J’ai déchargé des camions et contrôlé les colis.','✅'),O('C’était bien.','🤷'),O('Je sais pas.','🤐')],0,'On dit précisément ce qu’on a fait.'),
+   nq('🤔','Je ne comprends pas la consigne. Je…',[O('Demande de répéter','🙋'),O('Ne dis rien','🤐'),O('Pars','🚪')],0,'Je demande de répéter.'),
+   nq('👂','Bien écouter, c’est…',[O('Regarder la personne sans la couper','👀'),O('Parler en même temps','🗣️'),O('Regarder mon téléphone','📱')],0,'J’écoute sans couper la parole.'),
+   nq('🔁','Reformuler, c’est…',[O('Redire avec mes mots','🔁'),O('Copier','📋'),O('Se taire','🤐')],0,'Je redis avec mes propres mots.')])]},
+ {id:'fra2',icon:'📖',name:'Lire et comprendre',
+  slides:[SL('Je lis bien','Pour comprendre un texte : je lis tout, je repère qui, quoi, où, quand, et je peux le redire avec mes mots.',[C('👤','Qui ?','les personnes','y'),C('❓','Quoi ?','ce qui se passe','b'),C('📍','Où ?','le lieu','g'),C('⏰','Quand ?','l’heure, la date','o')])],
+  games:[GM('fra2','📖','Comprendre','#8E5CF7',(()=>{const T="Le camion arrive à 8 h au quai 2. Le chauffeur, M. Diallo, livre 12 palettes de boissons. Deux palettes sont mouillées. Karim, le cariste, prévient son responsable.";const e={story:T,sicon:'📖'};return [
+   nq('📍','Où arrive le camion ?',[O('Au quai 2','🚪'),O('Au bureau','🖥️'),O('À la maison','🏠')],0,'Le texte dit : au quai 2.',e),
+   nq('⏰','À quelle heure ?',[O('8 h','⏰'),O('12 h','🕛'),O('17 h','🕔')],0,'À 8 h.',e),
+   nq('🧮','Combien de palettes sont livrées ?',N('12','2','8'),0,'12 palettes de boissons.',e),
+   nq('💧','Que se passe-t-il pour deux palettes ?',[O('Elles sont mouillées','💧'),O('Elles sont perdues','❓'),O('Elles sont vides','📭')],0,'Deux palettes sont mouillées.',e),
+   nq('📣','Qui prévient le responsable ?',[O('Karim, le cariste','🚜'),O('M. Diallo','🚛'),O('Personne','🚫')],0,'Karim prévient son responsable.',e),
+   nq('🔁','Quelle phrase redit le texte avec d’autres mots ?',[O('Le chauffeur apporte 12 palettes, dont 2 sont abîmées par l’eau.','✅'),O('Le camion repart avec 12 palettes.','❌'),O('Karim conduit le camion.','❌')],0,'C’est la reformulation fidèle.',e)]})(),{seq:true})]},
+ {id:'fra3',icon:'✏️',name:'Écrire sans fautes',
+  slides:[SL('Les petits mots qui piègent','Attention aux petits mots : a ou à, est ou et, ont ou on, sont ou son, ce ou se.',[C('✏️','a / à','il a (avoir) · à l’entrepôt (lieu)','y'),C('✏️','est / et','il est (être) · et = aussi','b'),C('✏️','on / ont','on = nous · ils ont (avoir)','g'),C('✏️','son / sont','son = à lui · ils sont (être)','o'),C('✏️','ce / se','ce colis · il se lave','l')])],
+  games:[GM('fra3','✏️','Orthographe','#8E5CF7',[
+   fill('Le chariot ___ un problème.','a','à',0,'« a » vient du verbe avoir : il possède un problème.'),
+   fill('Je vais ___ l’entrepôt.','a','à',1,'« à » indique le lieu.'),
+   fill('Le colis ___ lourd.','est','et',0,'« est » vient du verbe être.'),
+   fill('Les cartons ___ les palettes.','est','et',1,'« et » veut dire « aussi ».'),
+   fill('Les caristes ___ fini leur travail.','on','ont',1,'« ont » vient du verbe avoir.'),
+   fill('Ils ___ prêts.','sont','son',0,'« sont » vient du verbe être.'),
+   fill('___ colis est fragile.','Ce','Se',0,'« Ce » désigne le colis.'),
+   fill('Il ___ lave les mains.','ce','se',1,'« se » va avec un verbe : il se lave.')],{mix:false})]},
+ {id:'fra4',icon:'🇫🇷',name:'La République',
+  slides:[SL('Les valeurs de la République','La devise de la France : Liberté, Égalité, Fraternité. La laïcité : l’État est neutre et chacun est libre de croire ou non. À 18 ans, on vote.',[C('🇫🇷','Liberté, Égalité, Fraternité','la devise','b'),C('⚖️','Laïcité','l’État est neutre, chacun est libre de croire ou non','g'),C('🗳️','Voter','à partir de 18 ans','y'),C('👫','Égalité','filles et garçons ont les mêmes droits','o'),C('📜','Droits et devoirs','je respecte la loi','l')])],
+  games:[GM('fra4','🇫🇷','Valeurs','#8E5CF7',[
+   nq('🇫🇷','La devise de la France est…',[O('Liberté, Égalité, Fraternité','🇫🇷'),O('Travail, Famille, Patrie','❌'),O('Paix, Amour, Joie','❌')],0,'Liberté, Égalité, Fraternité.'),
+   nq('⚖️','La laïcité, c’est…',[O('L’État est neutre, chacun est libre de croire ou non','⚖️'),O('Interdire toutes les religions','🚫'),O('Imposer une seule religion','❌')],0,'L’État est neutre et chacun est libre.'),
+   nq('🗳️','On peut voter à partir de…',[O('18 ans','🗳️'),O('16 ans','❌'),O('21 ans','❌')],0,'À partir de 18 ans.'),
+   vf('👫','Les filles et les garçons ont les mêmes droits.',0,'Vrai : c’est l’égalité.'),
+   nq('🎆','Le 14 juillet, on fête…',[O('La fête nationale','🎆'),O('Noël','🎄'),O('Pâques','🐣')],0,'Le 14 juillet est la fête nationale.'),
+   nq('🎶','La Marseillaise est…',[O('L’hymne national','🎶'),O('Un sport','⚽'),O('Une ville','🏙️')],0,'La Marseillaise est l’hymne national.'),
+   vf('🚫','Se moquer de quelqu’un à cause de son origine est puni par la loi.',0,'Vrai : c’est de la discrimination.')])]},
+ {id:'fra5',icon:'🗺️',name:'Repères',
+  slides:[SL('Des dates et des lieux','1789 : la Révolution française. 1905 : la loi sur la laïcité. 1944 : le droit de vote des femmes. 2002 : l’euro en pièces et en billets. Le Havre et Marseille sont de grands ports.',[C('🏰','1789','la Révolution française','y'),C('⚖️','1905','la loi sur la laïcité','b'),C('🗳️','1944','le droit de vote des femmes','g'),C('💶','2002','l’euro en pièces et billets','o'),C('🚢','Le Havre, Marseille','grands ports de France','l')])],
+  games:[GM('fra5','🗺️','Repères','#8E5CF7',[
+   nq('🏰','1789 : quel événement ?',[O('La Révolution française','🏰'),O('L’euro','💶'),O('Le vote des femmes','🗳️')],0,'1789 : la Révolution française.'),
+   nq('⚖️','La loi de 1905 parle de…',[O('La laïcité','⚖️'),O('Les ports','🚢'),O('L’euro','💶')],0,'1905 : séparation des Églises et de l’État, la laïcité.'),
+   nq('🗳️','Les femmes obtiennent le droit de vote en…',N('1944','1789','2002'),0,'En 1944.'),
+   nq('💶','L’euro arrive en pièces et en billets en…',N('2002','1944','1905'),0,'En 2002.'),
+   nq('🚢','Le Havre est un grand…',[O('Port','🚢'),O('Aéroport','✈️'),O('Stade','🏟️')],0,'Le Havre est un grand port.'),
+   nq('📦','Un conteneur sert à…',[O('Transporter des marchandises par bateau, train ou camion','🚢'),O('Faire du sport','⚽'),O('Dormir','😴')],0,'Il voyage sur plusieurs transports.')])]}]},
+
+/* ---------------- 5. MATHS / PC ---------------- */
+{id:'mat',icon:'🧮',name:'Maths et Physique-chimie',c:'#E5484D',code:'BC05 · Mathématiques et physique-chimie',
+ comps:[K('Rechercher, extraire et organiser l’information',['mat1','mat2','mat3']),K('Proposer, choisir, exécuter une méthode de résolution ou un protocole opératoire en respectant les règles de sécurité',['mat1','mat3','mat4']),K('Expérimenter, utiliser une simulation',[],true,'À faire avec le professeur (tableur, manipulations)'),K('Critiquer un résultat, argumenter',['mat2']),K('Rendre compte d’une démarche, d’un résultat, à l’oral ou à l’écrit',[],true,'À travailler en classe')],
+ seqs:[
+ {id:'mat1',icon:'💯',name:'Pourcentages et proportions',
+  slides:[SL('Calculer vite','10 % : je divise par 10. 50 % : je prends la moitié. 25 % : je prends le quart. Pour la proportionnalité, je cherche ce que vaut 1.',[C('💯','10 %','je divise par 10','y'),C('➗','50 %','la moitié','b'),C('🍰','25 %','le quart','g'),C('⚖️','Proportionnalité','je cherche ce que vaut 1','o')])],
+  games:[GM('mat1','💯','Calculer','#E5484D',[
+   nq('💯','Combien font 10 % de 80 ?',N('8','10','20'),0,'80 ÷ 10 = 8.'),
+   nq('➗','Combien font 50 % de 60 ?',N('30','50','6'),0,'La moitié de 60 = 30.'),
+   nq('🍰','Combien font 25 % de 40 ?',N('10','25','20'),0,'Le quart de 40 = 10.'),
+   nq('🏷️','Un article coûte 20 €. Il augmente de 10 %. Nouveau prix ?',N('22 €','21 €','30 €'),0,'10 % de 20 = 2, donc 22 €.'),
+   nq('🏷️','Remise de 20 % sur un article à 50 €. Prix à payer ?',N('40 €','30 €','45 €'),0,'20 % de 50 = 10, donc 40 €.'),
+   nq('📦','3 cartons contiennent 36 bouteilles. Et 5 cartons ?',N('60','48','72'),0,'1 carton = 12 bouteilles, donc 5 × 12 = 60.'),
+   nq('🧾','TVA 20 % : un prix de 100 € HT devient ?',N('120 € TTC','110 € TTC','200 € TTC'),0,'20 % de 100 = 20, donc 120 €.'),
+   nq('🚛','2 palettes = 48 colis. Et 3 palettes ?',N('72','64','96'),0,'1 palette = 24 colis, donc 3 × 24 = 72.')])]},
+ {id:'mat2',icon:'⚖️',name:'Unités et conversions',
+  slides:[SL('Les conversions','1 kg = 1 000 g. 1 tonne = 1 000 kg. 1 m = 100 cm. 1 L = 1 000 mL. 1 h = 60 min.',[C('⚖️','1 kg = 1 000 g','','y'),C('🏋️','1 t = 1 000 kg','','o'),C('📏','1 m = 100 cm','','b'),C('🥤','1 L = 1 000 mL','','g'),C('⏱️','1 h = 60 min','','l')])],
+  games:[GM('mat2','⚖️','Convertir','#E5484D',[
+   nq('⚖️','2,5 kg =',[O('2 500 g'),O('250 g'),O('25 g')],0,'2,5 × 1 000 = 2 500 g.'),
+   nq('🏋️','3 t =',[O('3 000 kg'),O('300 kg'),O('30 kg')],0,'3 × 1 000 = 3 000 kg.'),
+   nq('📏','150 cm =',[O('1,5 m'),O('15 m'),O('0,15 m')],0,'150 ÷ 100 = 1,5 m.'),
+   nq('⏱️','90 min =',[O('1 h 30'),O('1 h 90'),O('9 h')],0,'60 + 30 = 1 h 30.'),
+   nq('🥤','0,5 L =',[O('500 mL'),O('50 mL'),O('5 mL')],0,'0,5 × 1 000 = 500 mL.'),
+   nq('⏱️','1 h 15 min =',[O('75 min'),O('115 min'),O('60 min')],0,'60 + 15 = 75 min.'),
+   yn('🚛','Un camion charge 12 t au maximum. On met 8 palettes de 1 500 kg. C’est possible ?',0,'8 × 1 500 = 12 000 kg = 12 t : c’est juste le maximum.')])]},
+ {id:'mat3',icon:'📐',name:'Palette, surface, volume',
+  slides:[SL('Mesurer','Une europalette mesure 1,20 m sur 0,80 m. La surface, c’est longueur × largeur. Le volume, c’est longueur × largeur × hauteur.',[C('🧱','Europalette','1,20 m × 0,80 m','y'),C('📐','Surface','longueur × largeur','b'),C('📦','Volume','longueur × largeur × hauteur','g'),C('🧮','Colis sur une palette','par couche × nombre de couches','o')])],
+  games:[GM('mat3','📐','Mesurer','#E5484D',[
+   nq('📐','Surface d’une europalette (1,2 m × 0,8 m) ?',[O('0,96 m²'),O('2 m²'),O('9,6 m²')],0,'1,2 × 0,8 = 0,96 m².'),
+   nq('🧮','5 colis par couche, 4 couches. Combien de colis ?',N('20','9','25'),0,'5 × 4 = 20.'),
+   nq('📦','Volume : 2 m × 1 m × 1,5 m =',[O('3 m³'),O('4,5 m³'),O('2,5 m³')],0,'2 × 1 × 1,5 = 3 m³.'),
+   nq('📦','Volume d’un carton de 40 cm × 30 cm × 20 cm ?',[O('24 000 cm³'),O('90 cm³'),O('2 400 cm³')],0,'40 × 30 × 20 = 24 000 cm³.'),
+   nq('🧮','12 colis par couche, 5 couches. Combien de colis ?',N('60','17','50'),0,'12 × 5 = 60.'),
+   nq('📏','4 couches de 30 cm sur une palette de 15 cm. Hauteur totale ?',[O('135 cm'),O('120 cm'),O('150 cm')],0,'4 × 30 = 120, plus 15 = 135 cm.')])]},
+ {id:'mat4',icon:'☣️',name:'Produits dangereux',
+  slides:[SL('Les pictogrammes','Chaque pictogramme annonce un danger. La flamme : inflammable. La tête de mort : toxique. Le produit qui ronge : corrosif. Le poisson : danger pour l’environnement. L’explosion : explosif.',[C('🔥','Inflammable','loin des flammes','o'),C('☠️','Toxique','dangereux pour la santé','r'),C('🧪','Corrosif','attaque la peau','y'),C('🐟','Environnement','ne pas jeter dans la nature','g'),C('💥','Explosif','chocs et chaleur interdits','b'),C('📄','Étiquette et FDS','j’y lis les consignes','l')])],
+  games:[GM('mat4','☣️','Pictogrammes','#E5484D',[
+   pic('🔥','Ce pictogramme (une flamme) veut dire…',[O('Inflammable','🔥'),O('Toxique','☠️'),O('Corrosif','🧪')],'La flamme = inflammable.'),
+   pic('☠️','Cette tête de mort veut dire…',[O('Toxique','☠️'),O('Inflammable','🔥'),O('Explosif','💥')],'Tête de mort = toxique.'),
+   pic('🐟','Le poisson et l’arbre veulent dire…',[O('Dangereux pour l’environnement','🐟'),O('Explosif','💥'),O('Inflammable','🔥')],'Danger pour l’environnement.'),
+   nq('📄','Où je lis les consignes d’un produit ?',[O('Sur l’étiquette et la fiche de données de sécurité','📄'),O('Nulle part','🤷'),O('Sur mon téléphone','📱')],0,'Étiquette et FDS.'),
+   yn('🧴','Je mélange deux produits pour nettoyer plus fort ?',1,'Non : le mélange peut dégager un gaz dangereux.'),
+   yn('🍾','Je mets un produit chimique dans une bouteille d’eau ?',1,'Non : quelqu’un pourrait le boire.'),
+   nq('👓','Avant d’utiliser un produit, je…',[O('Lis l’étiquette','📄'),O('Le goûte','👅'),O('Le mélange','🧪')],0,'Je lis l’étiquette.')])]}]},
+
+/* ---------------- 6. EPS ---------------- */
+{id:'eps',icon:'⚽',name:'Éducation physique',c:'#0EA5C6',code:'BC06 · Éducation physique et sportive',
+ comps:[K('Développer sa motricité',[],true,'Se pratique sur le terrain'),K('S’organiser pour apprendre et s’entraîner',['eps1']),K('Exercer sa responsabilité dans un engagement personnel et solidaire : connaître les règles, les appliquer et les faire respecter',['eps2']),K('Construire durablement sa santé',['eps1']),K('Accéder au patrimoine culturel sportif et artistique',['eps3'])],
+ seqs:[
+ {id:'eps1',icon:'💪',name:'Santé et effort',
+  slides:[SL('Je prends soin de moi','Avant l’effort, je m’échauffe. Pendant, je bois. Après, je m’étire. Je dors assez et je mange bien.',[C('🔥','Échauffement','avant l’effort','o'),C('💧','Boire','avant, pendant, après','b'),C('🧘','Étirements','après l’effort','g'),C('😴','Dormir','8 à 10 h','p'),C('🍎','Bien manger','fruits, légumes','y')])],
+  games:[GM('eps1','💪','Mon corps','#0EA5C6',[
+   nq('🔥','Avant un match, je…',[O('M’échauffe','🔥'),O('Reste assis','🛋️'),O('Dors','😴')],0,'Je m’échauffe pour préparer mon corps.'),
+   nq('💧','Pendant l’effort, je…',[O('Bois de l’eau','💧'),O('Ne bois rien','🚫'),O('Mange un gâteau','🍰')],0,'Je bois de l’eau.'),
+   nq('🧘','Après l’effort, je…',[O('M’étire et je récupère','🧘'),O('Cours encore','🏃'),O('Dors par terre','😵')],0,'Je récupère.'),
+   nq('😴','Un adolescent a besoin de dormir environ…',[O('8 à 10 h','😴'),O('4 h','⏰'),O('15 h','🛌')],0,'Environ 8 à 10 heures.'),
+   vf('🔥','S’entraîner sans s’échauffer ne présente aucun risque.',1,'Faux : on risque de se blesser.'),
+   nq('🎯','L’échauffement sert à…',[O('Préparer les muscles et le cœur','❤️'),O('Fatiguer','😮‍💨'),O('Perdre du temps','⏳')],0,'Il prépare le corps à l’effort.')])]},
+ {id:'eps2',icon:'🤝',name:'Règles et esprit d’équipe',
+  slides:[SL('Jouer ensemble','Le fair-play : je respecte les règles, l’arbitre et les adversaires. J’encourage mes coéquipiers.',[C('🤝','Fair-play','respecter les règles et les adversaires','g'),C('🧑‍⚖️','L’arbitre','j’accepte sa décision','y'),C('📣','J’encourage','mes coéquipiers','o'),C('🎽','Les rôles','joueur, arbitre, coach','b')])],
+  games:[GM('eps2','🤝','Fair-play','#0EA5C6',[
+   nq('🙂','Mon coéquipier se trompe. Je…',[O('L’encourage','👍'),O('Me moque','😏'),O('Le critique fort','😠')],0,'J’encourage : on gagne ensemble.'),
+   nq('🟨','L’arbitre siffle une faute contre moi. Je…',[O('Accepte la décision','🤝'),O('Crie','😡'),O('Pars','🚪')],0,'J’accepte la décision de l’arbitre.'),
+   nq('🤝','Le fair-play, c’est…',[O('Respecter les règles et les adversaires','🤝'),O('Gagner à tout prix','🏆'),O('Tricher','🙈')],0,'Respecter les règles et les autres.'),
+   vf('🏆','Pour gagner, on a le droit de tricher.',1,'Faux : tricher n’est jamais juste.'),
+   nq('🧑‍⚖️','Qui fait respecter les règles pendant un match ?',[O('L’arbitre','🧑‍⚖️'),O('Le public','👏'),O('Le ballon','⚽')],0,'L’arbitre.'),
+   nq('🗣️','Pour gagner en équipe, il faut…',[O('Communiquer et s’entraider','🗣️'),O('Jouer seul','🙅'),O('Se disputer','😠')],0,'On parle et on s’entraide.')])]},
+ {id:'eps3',icon:'🏅',name:'Culture sportive',
+  slides:[SL('Le sport dans le monde','Les Jeux olympiques ont lieu tous les 4 ans. En 2024, ils ont eu lieu à Paris. La Coupe du monde de football a lieu tous les 4 ans.',[C('🏅','Jeux olympiques','tous les 4 ans','y'),C('🗼','Paris 2024','les Jeux d’été','b'),C('⚽','Coupe du monde de football','tous les 4 ans','g'),C('🚴','Tour de France','course de vélo, chaque été','o'),C('🎾','Roland-Garros','tournoi de tennis à Paris','l')])],
+  games:[GM('eps3','🏅','Culture','#0EA5C6',[
+   nq('🏅','Les Jeux olympiques ont lieu tous les…',[O('4 ans','🏅'),O('2 ans','❌'),O('10 ans','❌')],0,'Tous les 4 ans.'),
+   nq('🗼','Les Jeux d’été 2024 ont eu lieu à…',[O('Paris','🗼'),O('Marseille','⚓'),O('Lyon','🦁')],0,'À Paris.'),
+   nq('⚽','La Coupe du monde de football a lieu tous les…',[O('4 ans','⚽'),O('1 an','❌'),O('8 ans','❌')],0,'Tous les 4 ans.'),
+   nq('🚴','Le Tour de France est une course de…',[O('Vélo','🚴'),O('Voiture','🚗'),O('Natation','🏊')],0,'Une course cycliste.'),
+   nq('🎾','Roland-Garros est un tournoi de…',[O('Tennis','🎾'),O('Football','⚽'),O('Rugby','🏉')],0,'Du tennis.'),
+   nq('🌎','La Coupe du monde 2026 de football est organisée par…',[O('Les États-Unis, le Canada et le Mexique','🌎'),O('La France','🇫🇷'),O('Le Japon','🇯🇵')],0,'Trois pays organisent cette Coupe du monde.')])]}]},
+
+/* ---------------- 7. PSE ---------------- */
+{id:'pse',icon:'🩺',name:'Prévention, santé, environnement',c:'#C026D3',code:'BC07 · Prévention-santé-environnement',
+ comps:[K('Appliquer une méthode d’analyse d’une situation de la vie professionnelle ou quotidienne et d’une documentation',['pse2']),K('Mettre en relation un phénomène physiologique, un enjeu environnemental, une disposition réglementaire, avec une mesure de prévention',['pse1','pse2','pse5']),K('Proposer une solution pour résoudre un problème lié à la santé, l’environnement ou la consommation et argumenter un choix',['pse4','pse5']),K('Communiquer à l’écrit et à l’oral avec une syntaxe claire et un vocabulaire technique adapté',[],true,'À travailler en classe'),K('Agir face à une situation d’urgence',['pse3'],true,'Formation de secourisme sur le terrain')],
+ seqs:[
+ {id:'pse1',icon:'🦴',name:'Gestes et postures',
+  slides:[SL('Protéger mon dos','Pour porter : je plie les jambes, le dos reste droit. La charge est près du corps. Je tourne avec les pieds. J’utilise une aide, ou je demande de l’aide.',[C('🦵','Je plie les jambes','dos droit','y'),C('🤏','Charge près du corps','','b'),C('🔄','Je tourne avec les pieds','pas avec le dos','g'),C('🛒','Je prends une aide','diable, transpalette','o'),C('🤝','Trop lourd ?','je demande de l’aide','r')])],
+  games:[GM('pse1','🦴','Mon dos','#C026D3',[
+   vf('🦵','Pour porter une charge, je plie les jambes.',0,'Vrai : le dos reste droit.'),
+   vf('🔄','Je tourne le dos pour poser la charge sur le côté.',1,'Faux : je tourne avec les pieds.'),
+   nq('🤏','La charge doit être…',[O('Près du corps','🤏'),O('Loin du corps','🙆'),O('Au-dessus de ma tête','🙌')],0,'Près du corps.'),
+   nq('🤝','La charge est trop lourde. Je…',[O('Demande de l’aide','🤝'),O('Force','😤'),O('Lance','🤾')],0,'Je demande de l’aide.'),
+   nq('🦴','TMS veut dire…',[O('Troubles musculo-squelettiques','🦴'),O('Transport maritime sécurisé','🚢'),O('Tout mon stock','📦')],0,'Les TMS sont des douleurs aux muscles et aux articulations.'),
+   nq('🛒','Pour déplacer une charge lourde, j’utilise…',[O('Un diable ou un transpalette','🛒'),O('Mon dos','🦴'),O('Rien','🤷')],0,'Une aide à la manutention.')])]},
+ {id:'pse2',icon:'⚠️',name:'Danger, risque, protection',
+  slides:[
+   SL('Les mots à connaître','Un danger peut faire mal. Un dommage est la blessure. Un EPI est un équipement de protection. La prévention évite l’accident.',[C('⚡','Danger','ce qui peut faire mal','y'),C('🤕','Dommage','la blessure','r'),C('🦺','EPI','équipement de protection individuelle','g'),C('🛡️','Prévention','j’évite l’accident','b')]),
+   SL('Les panneaux','Rond rouge : interdit. Rond bleu : obligatoire. Triangle jaune : danger. Carré vert : sortie ou secours.',[C('🔴','Rond rouge','interdit','r'),C('🔵','Rond bleu','obligatoire','b'),C('🟡','Triangle jaune','danger','y'),C('🟢','Carré vert','sortie ou secours','g')])],
+  games:[GM('pse2','⚠️','Prévention','#C026D3',[
+   nq('💦','Un sol mouillé, c’est un…',[O('Danger','⚠️'),O('Dommage','🤕'),O('EPI','🦺')],0,'Un sol mouillé peut faire glisser : c’est un danger.'),
+   nq('🤕','Je glisse et je me fais mal. C’est le…',[O('Dommage','🤕'),O('Danger','⚠️'),O('EPI','🦺')],0,'La blessure est le dommage.'),
+   nq('⛑️','Un casque est un…',[O('EPI','⛑️'),O('Danger','⚠️'),O('Dommage','🤕')],0,'Un équipement de protection individuelle.'),
+   pic('🔴','Un panneau rond rouge veut dire…',[O('Interdiction','🚫'),O('Obligation','✅'),O('Secours','🟢')],'Rond rouge : interdit.'),
+   pic('🔵','Un panneau rond bleu veut dire…',[O('Obligation','✅'),O('Interdiction','🚫'),O('Danger','⚠️')],'Rond bleu : obligatoire.'),
+   pic('🟡','Un triangle jaune veut dire…',[O('Danger','⚠️'),O('Sortie','🚪'),O('Obligation','✅')],'Triangle jaune : danger.'),
+   pic('🟢','Un carré vert veut dire…',[O('Sortie ou secours','🚪'),O('Interdiction','🚫'),O('Danger','⚠️')],'Carré vert : sortie ou secours.')])]},
+ {id:'pse3',icon:'🚑',name:'Agir en urgence',
+  slides:[
+   SL('Protéger, Alerter, Secourir','Face à un accident : je protège, j’alerte, je secours.',[C('🛑','Protéger','pour qu’il n’y ait pas d’autre blessé','y'),C('📞','Alerter','j’appelle les secours','b'),C('🩹','Secourir','je fais les bons gestes','g')],true),
+   SL('Les numéros','15 : le SAMU, urgence médicale. 18 : les pompiers. 17 : la police. 112 : le numéro d’urgence européen.',[C('🚑','15','SAMU, urgence médicale','r'),C('🚒','18','pompiers','o'),C('🚓','17','police','b'),C('🇪🇺','112','urgence européenne','g')])],
+  games:[GM('pse3','🚑','Urgence','#C026D3',[
+   ...ORD('🚑','En cas d’accident',[['🛑','Protéger'],['📞','Alerter'],['🩹','Secourir']]),
+   nq('🚑','Urgence médicale : j’appelle le…',N('15','17','18'),0,'Le 15, le SAMU.'),
+   nq('🚒','Un incendie : j’appelle le…',N('18','15','17'),0,'Le 18, les pompiers.'),
+   nq('🇪🇺','Le numéro d’urgence européen est le…',N('112','15','17'),0,'Le 112.'),
+   nq('📞','Au téléphone, je dis…',[O('Où je suis et ce qui s’est passé','📍'),O('Rien','🤐'),O('Mon âge','🎂')],0,'Où je suis et ce qui s’est passé.'),
+   nq('🩸','Un collègue saigne beaucoup. Je…',[O('Appuie sur la plaie et j’alerte','🩹'),O('Pars','🏃'),O('Attends','⏳')],0,'J’appuie sur la plaie et j’alerte les secours.')])]},
+ {id:'pse4',icon:'❤️',name:'Ma santé',
+  slides:[SL('Prendre soin de moi','Je dors assez. Je fais des pauses d’écran. Je bois de l’eau. Le tabac, l’alcool et les drogues sont dangereux. Si ça ne va pas, j’en parle à un adulte.',[C('😴','Dormir','8 à 10 h','p'),C('📱','Écrans','des pauses, pas avant de dormir','b'),C('🥤','Boire de l’eau','moins de sucre','g'),C('🚬','Tabac, alcool, drogues','dangereux, surtout au travail et sur la route','r'),C('💬','J’en parle','à un adulte de confiance','y')])],
+  games:[GM('pse4','❤️','Santé','#C026D3',[
+   nq('😴','Un adolescent a besoin de dormir…',[O('8 à 10 h','😴'),O('3 h','⏰'),O('14 h','🛌')],0,'Environ 8 à 10 heures.'),
+   nq('🥤','La meilleure boisson pour la santé est…',[O('L’eau','💧'),O('Le soda','🥤'),O('L’énergisant','⚡')],0,'L’eau.'),
+   vf('🚜','Boire de l’alcool avant de conduire un chariot est dangereux.',0,'Vrai : c’est très dangereux.'),
+   vf('🚬','Le tabac est bon pour la santé.',1,'Faux : le tabac est dangereux.'),
+   nq('💬','Je me sens mal et stressé. Je peux…',[O('En parler à un adulte de confiance','💬'),O('Me taire','🤐'),O('Tout garder','😞')],0,'En parler aide.'),
+   nq('📱','Regarder son écran tard la nuit…',[O('Gêne le sommeil','😴'),O('Aide à dormir','😊'),O('Ne change rien','😐')],0,'Les écrans gênent le sommeil.')])]},
+ {id:'pse5',icon:'🛍️',name:'Consommer et environnement',
+  slides:[SL('Consommer malin','Un produit neuf est garanti 2 ans. Pour un achat en ligne, j’ai 14 jours pour changer d’avis. Je trie mes déchets et j’économise l’énergie.',[C('🛡️','Garantie légale','2 ans pour un produit neuf','b'),C('💻','Achat en ligne','14 jours pour changer d’avis','y'),C('🏷️','Nutri-Score','de A (meilleur) à E','g'),C('♻️','Je trie','verre, plastique, carton','o'),C('💡','J’économise l’énergie','','l')])],
+  games:[GM('pse5','🛍️','Consommer','#C026D3',[
+   nq('🛡️','La garantie légale d’un produit neuf dure…',[O('2 ans','🛡️'),O('1 mois','❌'),O('10 ans','❌')],0,'2 ans.'),
+   nq('💻','Pour un achat sur internet, je peux me rétracter pendant…',[O('14 jours','💻'),O('1 jour','❌'),O('1 an','❌')],0,'14 jours.'),
+   nq('🏷️','Le meilleur Nutri-Score est…',[O('A','🟢'),O('E','🔴'),O('C','🟡')],0,'A est le meilleur.'),
+   nq('♻️','Une bouteille en plastique va dans…',[O('Le bac de tri des emballages','♻️'),O('La nature','🌳'),O('Le bac verre','🍾')],0,'Dans le tri des emballages.'),
+   nq('🍾','Une bouteille en verre va…',[O('Dans le conteneur à verre','🍾'),O('Dans la nature','🌳'),O('Dans le feu','🔥')],0,'Dans le conteneur à verre.'),
+   vf('🔋','Je peux jeter une pile dans la poubelle normale.',1,'Faux : elle va dans un point de collecte.'),
+   vf('💡','Éteindre la lumière en partant économise de l’énergie.',0,'Vrai : un petit geste qui compte.')])]}]},
+
+/* ---------------- 8. ANGLAIS ---------------- */
+{id:'ang',icon:'🇬🇧',name:'Anglais',c:'#0F766E',code:'BC08 · Langue vivante étrangère (niveau A2)',lang:'en',
+ comps:[K('Comprendre la langue orale',['ang2','ang3']),K('Comprendre un document écrit',['ang1','ang4']),K('S’exprimer à l’écrit',[],true,'À travailler en classe'),K('S’exprimer à l’oral en continu',[],true,'À s’entraîner en parlant'),K('Interagir à l’oral',[],true,'À s’entraîner avec un camarade')],
+ seqs:[
+ {id:'ang1',icon:'📦',name:'Warehouse words',lang:'en',
+  slides:[
+   SL('Warehouse words (1)','Les mots de l’entrepôt en anglais.',[C('🏭','warehouse','l’entrepôt','b','warehouse'),C('📦','box','le carton','y','box'),C('🧱','pallet','la palette','g','pallet'),C('🚜','forklift','le chariot élévateur','o','forklift')]),
+   SL('Warehouse words (2)','Encore des mots de l’entrepôt.',[C('🚛','truck','le camion','b','truck'),C('🛒','order','la commande','y','order'),C('📄','delivery note','le bon de livraison','g','delivery note'),C('🚪','loading dock','le quai','o','loading dock')])],
+  games:[GM('ang1','📦','Les mots','#0F766E',[
+   voc('warehouse','entrepôt','garage','magasin de vêtements'),voc('pallet','palette','assiette','bouteille'),voc('forklift','chariot élévateur','ascenseur','camion'),voc('truck','camion','voiture','train'),voc('delivery note','bon de livraison','carte postale','facture de gaz'),voc('loading dock','quai','salle de sport','parking'),
+   rev('camion','truck','track','trunk'),rev('commande','order','border','odor')])]},
+ {id:'ang2',icon:'🙋',name:'Introducing myself',lang:'en',
+  slides:[SL('Introducing myself','Pour se présenter en anglais.',[C('👋','Hello! My name is…','Bonjour, je m’appelle…','y','Hello! My name is Sam.'),C('🎓','I am a student.','Je suis élève.','b','I am a student.'),C('🏭','I work in a warehouse.','Je travaille dans un entrepôt.','g','I work in a warehouse.'),C('📚','I am learning logistics.','J’apprends la logistique.','o','I am learning logistics.'),C('🤝','Nice to meet you!','Enchanté !','l','Nice to meet you!')])],
+  games:[GM('ang2','🙋','Écoute','#0F766E',[
+   lis('Hello, my name is Sam.','Il se présente','Il dit au revoir','Il demande l’heure'),lis('I work in a warehouse.','Il travaille dans un entrepôt','Il travaille dans un bureau','Il est au cinéma'),lis('Nice to meet you!','Enchanté !','Merci beaucoup','Excusez-moi'),lis('Thank you very much.','Merci beaucoup','Bonjour','À demain'),lis('Good morning.','Bonjour (le matin)','Bonne nuit','Bon appétit'),lis('See you tomorrow.','À demain','À hier','À ce soir')])]},
+ {id:'ang3',icon:'🚪',name:'At the dock',lang:'en',
+  slides:[SL('At the dock','Des phrases utiles au quai.',[C('🚪','Where is the loading dock?','Où est le quai ?','b','Where is the loading dock?'),C('✍️','Please sign here.','Signez ici, s’il vous plaît.','y','Please sign here.'),C('⏰','The delivery is late.','La livraison est en retard.','o','The delivery is late.'),C('⚠️','Be careful!','Attention !','r','Be careful!'),C('🤝','Can you help me?','Pouvez-vous m’aider ?','g','Can you help me?')])],
+  games:[GM('ang3','🚪','Au quai','#0F766E',[
+   lis('Where is the loading dock?','Où est le quai ?','Où est la cantine ?','Où est la sortie ?'),lis('Please sign here.','Signez ici, s’il vous plaît','Ouvrez la porte','Attendez ici'),lis('The delivery is late.','La livraison est en retard','La livraison est arrivée','La livraison est annulée'),lis('Be careful!','Attention !','Bravo !','Au revoir !'),lis('Can you help me?','Pouvez-vous m’aider ?','Pouvez-vous partir ?','Pouvez-vous crier ?'),lis('The truck is here.','Le camion est là','Le camion est parti','Le camion est cassé')])]},
+ {id:'ang4',icon:'🪧',name:'Safety signs',lang:'en',
+  slides:[SL('Safety signs','Les panneaux de sécurité en anglais.',[C('⚠️','Danger','danger','y','Danger'),C('🚪','Exit','sortie','g','Exit'),C('🔥','Fire','incendie','o','Fire'),C('⛑️','First aid','premiers secours','b','First aid'),C('🚭','No smoking','interdit de fumer','r','No smoking'),C('💦','Wet floor','sol mouillé','l','Wet floor')])],
+  games:[GM('ang4','🪧','Panneaux','#0F766E',[
+   voc('Exit','sortie','entrée','escalier'),voc('Fire','incendie','poisson','pneu'),voc('First aid','premiers secours','premier étage','première classe'),voc('No smoking','interdit de fumer','interdit de courir','interdit de manger'),voc('Wet floor','sol mouillé','sol propre','sol froid'),voc('Danger','danger','dîner','dimanche')])]}]},
+
+/* ---------------- 9. DROIT DU TRAVAIL (cours du lycée) ---------------- */
+{id:'droit',icon:'⚖️',name:'Droit du travail',c:'#1F2430',code:'Cours du lycée · Principales notions de droit du travail',
+ comps:[K('Distinguer les responsabilités civile, contractuelle, délictuelle et pénale',['resp']),K('Identifier une faute, un dommage et le lien de causalité',['resp']),K('Vérifier si une responsabilité peut être engagée',['resp']),K('Identifier les règles relatives à la durée du travail',['duree']),K('Vérifier le respect de la réglementation du temps de travail',['duree']),K('Distinguer les différentes formes d’aménagement du temps de travail',[],false,'À compléter avec le cours'),K('Analyser une situation professionnelle',['resp','duree'])],
+ seqs:[
+ {id:'resp',icon:'⚖️',name:'La responsabilité',slides:SLIDES_RESP,games:GAMES_RESP},
+ {id:'duree',icon:'⏱️',name:'La durée du travail',slides:SLIDES_DUREE,games:GAMES_DUREE}]}
+];
+
+/* ---------- accès aux données ---------- */
+const findBloc=id=>BLOCS.find(b=>b.id===id);
+const findSeq=(b,s)=>findBloc(b).seqs.find(x=>x.id===s);
+const allGames=()=>BLOCS.flatMap(b=>b.seqs.flatMap(s=>s.games));
+const stars=g=>S.stars[g.id]||0;
+const total=()=>allGames().reduce((a,g)=>a+stars(g),0);
+const maxStars=()=>allGames().length*3;
+const seqStars=s=>s.games.reduce((a,g)=>a+stars(g),0);
+const blocStars=b=>b.seqs.reduce((a,s)=>a+seqStars(s),0);
+const blocMax=b=>b.seqs.reduce((a,s)=>a+s.games.length*3,0);
+const LV=[[0,"🧢","Stagiaire"],[.2,"🚜","Cariste"],[.45,"🦺","Chef d’équipe"],[.7,"🧑‍💼","Responsable"],[1,"🏆","Champion"]];
+const level=p=>LV.reduce((l,x)=>p>=x[0]?x:l,LV[0]);
+const starsTxt=(n,m)=>`<span class="ts"><b>★</b> ${n}/${m}</span>`;
+let ctx={bid:null,sid:null};
+
+function updBar(){
+  $('tot').textContent='★ '+total()+'/'+maxStars();
+  $('b-auto').classList.toggle('off',!S.auto);
+  $('b-slow').classList.toggle('off',!S.slow);
+  $('b-fx').classList.toggle('off',!S.fx);
+}
+function tog(k){S[k]=!S[k];save();updBar();if(k==='auto'&&!S.auto)stopSay();if(k==='fx'&&S.fx)beepOk()}
+
+/* ---------- accueil ---------- */
+function home(){
+  stopSay();window.scrollTo(0,0);
+  const t=total(),m=maxStars(),pct=t/m,lv=level(pct);
+  app.innerHTML=`
+  <div class="sign"><h1>🚚 Mon CAP Logistique</h1></div>
+  <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
+  <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
+  <div class="grid big">${BLOCS.map(b=>`<button class="tile" style="--c:${b.c}" onclick="openBloc('${b.id}')"><div class="ti">${b.icon}</div><div class="tn">${b.name}</div>${starsTxt(blocStars(b),blocMax(b))}</button>`).join('')}</div>
+  <button class="refbtn" onclick="refView()">📋 Le programme (référentiel)</button>
+  <button class="reset" onclick="resetAll()">Effacer mes étoiles</button>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{const b=$('ball');if(b)b.style.left=`calc((100% - 96px) * ${pct} + 6px)`}));
+  updBar();
+}
+function resetAll(){if(confirm('Effacer toutes les étoiles ?')){S.stars={};save();home()}}
+
+/* ---------- matière ---------- */
+function openBloc(bid){
+  stopSay();window.scrollTo(0,0);ctx={bid,sid:null};
+  const b=findBloc(bid);
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>${b.icon} ${b.name}</h2>${spk(b.name)}</div>
+  <p class="code">${b.code}</p>
+  <div class="grid">${b.seqs.map(s=>`<button class="tile" style="--c:${b.c}" onclick="openSeq('${bid}','${s.id}')"><div class="ti">${s.icon}</div><div class="tn">${s.name}</div>${starsTxt(seqStars(s),s.games.length*3)}</button>`).join('')}</div>`;
+  updBar();
+}
+
+/* ---------- séquence ---------- */
+function openSeq(bid,sid){
+  stopSay();window.scrollTo(0,0);ctx={bid,sid};
+  const b=findBloc(bid),s=findSeq(bid,sid);
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="openBloc('${bid}')" aria-label="Retour">⬅️</button><h2>${s.icon} ${s.name}</h2>${spk(s.name)}</div>
+  ${s.slides&&s.slides.length?`<button class="course" onclick="fiche(0)"><span class="big">📘</span> Je révise</button>`:''}
+  <div class="grid">${s.games.map(g=>`<button class="tile" style="--c:${g.c}" onclick="play('${g.id}')"><div class="ti">${g.icon}</div><div class="tn">${g.name}</div><div class="ts">${[1,2,3].map(k=>k<=stars(g)?'<b>★</b>':'★').join('')}</div></button>`).join('')}</div>`;
+  updBar();
+}
+
+/* ---------- fiche de révision ---------- */
+function card(c,l){
+  const t=c.s||(c.b+'. '+c.t);
+  return `<button class="kc ${c.c||'l'}" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(t)}" data-l="${l||'fr'}"><span class="ki">${c.i}</span><span class="kb"><b>${c.b}</b>${c.t?`<small>${c.t}</small>`:''}</span><span class="ks">🔊</span></button>`;
+}
+function fiche(n){
+  stopSay();window.scrollTo(0,0);
+  const s=findSeq(ctx.bid,ctx.sid),sl=s.slides[n],last=n===s.slides.length-1;
+  const body=sl.svg
+    ?`<div class="art ${sl.cls||''}">${sl.svg}</div><p class="hint">👆 Touche un dessin pour l’écouter</p>`
+    :`<div class="cards">${sl.cards.map((c,k)=>(k&&sl.flow?'<div class="arw">⬇️</div>':'')+card(c,s.lang)).join('')}</div><p class="hint">👆 Touche une carte pour l’écouter</p>`;
+  app.innerHTML=`
+  <div class="card slide">
+    <div class="head"><button class="back" onclick="openSeq('${ctx.bid}','${ctx.sid}')" aria-label="Retour">⬅️</button><h2>${sl.title}</h2>${spk(sl.say)}</div>
+    ${body}
+    <div class="nav">
+      <button class="nb ${n===0?'ghost':''}" onclick="fiche(${n-1})" aria-label="Précédent">⬅️</button>
+      <div class="dots">${s.slides.map((_,k)=>`<i class="${k===n?'on':''}"></i>`).join('')}</div>
+      ${last?`<button class="nb go" onclick="openSeq('${ctx.bid}','${ctx.sid}')">🎮 Jouer</button>`:`<button class="nb" onclick="fiche(${n+1})" aria-label="Suivant">➡️</button>`}
+    </div>
+  </div>`;
+  updBar();
+  if(S.auto)say(sl.say);
+}
+
+/* ---------- moteur de jeu ---------- */
+let cur=null;
+function play(id){
+  const s=findSeq(ctx.bid,ctx.sid),g=s.games.find(x=>x.id===id);
+  cur={g,s,qs:g.seq?g.qs:shuffle(g.qs),i:0,pts:0,first:0,tries:0,locked:false,streak:0};
+  showQ();
+}
+function prepQ(q){
+  if(cur.g.mix&&q.opts.length>=3){
+    const right=q.opts[q.ok],order=shuffle(q.opts);
+    q.opts=order;q.ok=order.indexOf(right);
+  }
+  return q;
+}
+function showQ(){
+  stopSay();window.scrollTo(0,0);
+  const q=prepQ(cur.qs[cur.i]);
+  cur.tries=0;cur.locked=false;
+  const cls=q.opts.length===2?'duo':'n'+q.opts.length;
+  const ol=q.ol||'fr';
+  app.innerHTML=`
+  <div class="card">
+    <div class="gtop">
+      <button class="back" onclick="openSeq('${ctx.bid}','${ctx.sid}')" aria-label="Retour">⬅️</button>
+      <div class="pbar"><i style="width:${cur.i/cur.qs.length*100}%"></i></div>
+      <span class="pts">⚽ ${cur.pts}</span>
+    </div>
+    ${q.story?`<div class="story"><span class="big">${q.sicon||''}</span><p>${q.story}</p>${spk(q.story)}</div>`:''}
+    ${q.viz?`<div class="vz">${q.viz}${q.vsay?spk(q.vsay):''}</div>`:''}
+    ${q.hear?`<div class="listen"><button class="spk huge" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(q.hear)}" data-l="${q.hl||'fr'}" aria-label="Écouter">🔊</button>${q.show?`<span class="show">${q.show}</span>`:'<span class="show">🎧</span>'}</div>`:''}
+    <div class="qline"><span class="big">${q.icon||''}</span><h2>${q.text}</h2>${spk(q.text)}</div>
+    <div class="opts ${cls}">${q.opts.map((o,k)=>`
+      <div class="opt ${o.c||''}" id="o${k}">
+        <button class="ans" onclick="pick(${k})"><span class="oi">${o.i||''}</span><span>${o.t}</span></button>
+        <button class="spk" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(o.t)}" data-l="${o.l||ol}" aria-label="Écouter">🔊</button>
+      </div>`).join('')}</div>
+    <div id="fb"></div>
+  </div>`;
+  updBar();
+  if(S.auto){if(q.hear)say(q.hear,q.hl||'fr');else say((q.story?q.story+' ':'')+q.text)}
+}
+const PRAISE=["Bravo !","Yes !","Excellent !","Top !","Bien joué !","Gagné !"];
+function pick(k){
+  if(cur.locked)return;
+  actx();
+  const q=cur.qs[cur.i],el=$('o'+k);
+  if(k===q.ok){
+    cur.locked=true;el.classList.add('good');beepOk();
+    const first=cur.tries===0,gain=first?2:1;
+    cur.pts+=gain;
+    if(first){cur.first++;cur.streak++}else cur.streak=0;
+    const r=el.getBoundingClientRect();
+    const fl=document.createElement('span');fl.className='fl';fl.textContent='+'+gain+' ⚽';
+    fl.style.left=(r.left+r.width/2)+'px';fl.style.top=(r.top+window.scrollY)+'px';
+    document.body.appendChild(fl);setTimeout(()=>fl.remove(),1000);
+    confetti(r.left+r.width/2,r.top+r.height/2,first?40:15);
+    if(cur.streak>=3){const t=document.createElement('div');t.className='toast';t.textContent='🔥 série de '+cur.streak+' !';document.body.appendChild(t);setTimeout(()=>t.remove(),1700)}
+    feedback(true,q);
+  }else{
+    cur.tries++;cur.streak=0;
+    el.classList.add('bad');el.querySelector('.ans').disabled=true;beepNo();
+    if(q.opts.length===2||cur.tries>=2){
+      cur.locked=true;$('o'+q.ok).classList.add('good');feedback(false,q);
+    }else{
+      $('fb').innerHTML='<div class="fb retry">💪 Essaie encore !</div>';
+      if(S.auto)say('Essaie encore');
+    }
+  }
+}
+function feedback(ok,q){
+  const msg=ok?PRAISE[Math.floor(Math.random()*PRAISE.length)]:"Pas tout à fait";
+  const lastQ=cur.i===cur.qs.length-1;
+  $('fb').innerHTML=`<div class="fb ${ok?'ok':'ko'}">
+    <div class="fbt">${ok?'🎉':'💡'} <b>${msg}</b></div>
+    <div class="why"><p>${q.why}</p>${spk(q.why)}</div>
+    <button class="next" onclick="nextQ()">${lastQ?'🏁 Terminer':'Suivant ➡️'}</button></div>`;
+  $('fb').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
+  if(S.auto)say((ok?msg+' ':'La bonne réponse : '+q.opts[q.ok].t+'. ')+q.why);
+}
+function nextQ(){cur.i++;if(cur.i>=cur.qs.length)finish();else showQ()}
+
+function finish(){
+  stopSay();window.scrollTo(0,0);
+  const g=cur.g,max=cur.qs.length*2,r=cur.pts/max;
+  const st=r>=.85?3:r>=.55?2:1;
+  if(st>(S.stars[g.id]||0)){S.stars[g.id]=st;save()}
+  const title=st===3?'BUT ! Champion !':st===2?'Bien joué !':'Tu progresses !';
+  const games=cur.s.games,idx=games.indexOf(g),nxt=games[idx+1];
+  const all=total()===maxStars();
+  app.innerHTML=`
+  <div class="card endc">
+    <div class="bigstars" aria-label="${st} étoiles sur 3">${[1,2,3].map(k=>`<span class="${k<=st?'on':''}" style="animation-delay:${k*.35}s">★</span>`).join('')}</div>
+    <h2>${st===3?'⚽🥅 ':''}${title}</h2>
+    <p>⚽ ${cur.pts} / ${max} &nbsp; ${spk(title)}</p>
+    ${all?'<p class="big">🏆</p><h2>Tu as toutes les étoiles !</h2>':''}
+    <div class="btns">
+      <button class="nb" onclick="play('${g.id}')">🔄 Rejouer</button>
+      ${nxt?`<button class="nb go" onclick="play('${nxt.id}')">${nxt.icon} Suivant</button>`:''}
+      <button class="nb" onclick="openSeq('${ctx.bid}','${ctx.sid}')">⬅️ Retour</button>
+    </div>
+  </div>`;
+  updBar();
+  fanfare();
+  confetti(innerWidth/2,innerHeight/3,st*60);
+  if(st===3)setTimeout(()=>confetti(innerWidth*.2,innerHeight/2,50),300),setTimeout(()=>confetti(innerWidth*.8,innerHeight/2,50),500);
+  if(S.auto)setTimeout(()=>say(title),600);
+}
+
+/* ---------- page « programme » (pour les profs) ---------- */
+const seqName=id=>{for(const b of BLOCS){const s=b.seqs.find(x=>x.id===id);if(s)return s.icon+' '+s.name}return id};
+function refView(){
+  stopSay();window.scrollTo(0,0);
+  let nCov=0,nPra=0,nTot=0;
+  BLOCS.forEach(b=>b.comps.forEach(c=>{if(b.id==='droit')return;nTot++;if(c.s.length)nCov++;if(c.p)nPra++}));
+  const rows=BLOCS.map(b=>`<div class="card rb" style="border-top:10px solid ${b.c}">
+    <h2>${b.icon} ${b.name}</h2><p class="code">${b.code}</p>
+    <ul class="cl">${b.comps.map(c=>{
+      const cov=c.s.length>0;
+      const ic=cov?'✅':(c.p?'🛠️':'⏳');
+      const sub=cov?c.s.map(seqName).join(' · ')+(c.p?'<br>🛠️ Complété par la pratique en classe ou sur le terrain':'')+(c.n?'<br>'+c.n:''):(c.p?(c.n||'À pratiquer en vrai, en classe ou sur le terrain'):(c.n||'À compléter'));
+      return `<li><span class="ci">${ic}</span><span>${c.t}<small>${sub}</small></span></li>`}).join('')}</ul></div>`).join('');
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>📋 Le programme</h2></div>
+  <div class="card">
+    <p><b>CAP Opérateur, opératrice logistique</b><br>Arrêté du 13 février 2026 · fiche RNCP42586 · première session d’examen en 2028</p>
+    <p class="sm">Ce site reprend, bloc par bloc, les compétences attendues par le référentiel. Chaque compétence renvoie aux séquences qui la travaillent. <b>${nCov}</b> compétences sur <b>${nTot}</b> ont déjà une séquence. Pour <b>${nPra}</b> d’entre elles, il faut aussi de la pratique réelle (plateau technique, terrain, oral). Les contenus sont des révisions : ils sont à valider avec les cours de l’équipe pédagogique.</p>
+    <p class="sm">✅ séquence disponible &nbsp; 🛠️ à pratiquer en vrai &nbsp; ⏳ à compléter</p>
+  </div>${rows}`;
+  updBar();
+}
+
+updBar();
+home();
+
+</script>
+</body>
+</html>
