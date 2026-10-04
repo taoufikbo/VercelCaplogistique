@@ -1252,7 +1252,7 @@ function fiche(n){
 let cur=null;
 function play(id){
   const s=findSeq(ctx.bid,ctx.sid),g=s.games.find(x=>x.id===id);
-  cur={g,s,qs:g.seq?g.qs:shuffle(g.qs),i:0,pts:0,first:0,tries:0,locked:false,streak:0};
+  cur={g,s,qs:g.seq?g.qs:shuffle(g.qs),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false};
   showQ();
 }
 function prepQ(q){
@@ -1294,7 +1294,7 @@ function showQ(){
 const PRAISE=["Bravo !","Yes !","Excellent !","Top !","Bien joué !","Gagné !"];
 function hint(){
   if(cur.locked||cur.hinted)return;
-  const q=cur.qs[cur.i];cur.hinted=true;
+  const q=cur.qs[cur.i];cur.hinted=true;cur.missed.add(q);
   const b=$('hintb');if(b)b.remove();
   if(q.hint){$('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>${q.hint}</p>${spk(q.hint)}</div>`;if(S.auto)say(q.hint);return}
   const wrong=q.opts.map((_,k)=>k).filter(k=>k!==q.ok&&!$('o'+k).querySelector('.ans').disabled);
@@ -1320,7 +1320,7 @@ function pick(k){
     if(cur.streak>=3){const t=document.createElement('div');t.className='toast';t.textContent='🔥 série de '+cur.streak+' !';document.body.appendChild(t);setTimeout(()=>t.remove(),1700)}
     feedback(true,q);
   }else{
-    cur.tries++;cur.streak=0;
+    cur.tries++;cur.streak=0;cur.missed.add(q);
     el.classList.add('bad');el.querySelector('.ans').disabled=true;beepNo();
     if(q.opts.length===2||cur.tries>=2){
       cur.locked=true;$('o'+q.ok).classList.add('good');feedback(false,q);
@@ -1343,6 +1343,7 @@ function feedback(ok,q){
 function nextQ(){cur.i++;if(cur.i>=cur.qs.length)finish();else showQ()}
 
 function finish(){
+  if(cur.review){finishReview();return}
   stopSay();window.scrollTo(0,0);
   const g=cur.g,max=cur.qs.length*2,r=cur.pts/max;
   const st=r>=.85?3:r>=.55?2:1;
@@ -1359,6 +1360,7 @@ function finish(){
     ${nb.length?`<div class="newbd">🏅 Nouveau badge : ${nb.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
     ${all?'<p class="big">🏆</p><h2>Tu as toutes les étoiles !</h2>':''}
     <div class="btns">
+      ${cur.missed.size?`<button class="nb go" onclick="review()">🔁 Revoir mes erreurs (${cur.missed.size})</button>`:''}
       <button class="nb" onclick="play('${g.id}')">🔄 Rejouer</button>
       ${nxt?`<button class="nb go" onclick="play('${nxt.id}')">${nxt.icon} Suivant</button>`:''}
       <button class="nb" onclick="openSeq('${ctx.bid}','${ctx.sid}')">⬅️ Retour</button>
@@ -1369,6 +1371,32 @@ function finish(){
   confetti(innerWidth/2,innerHeight/3,st*60);
   if(st===3)setTimeout(()=>confetti(innerWidth*.2,innerHeight/2,50),300),setTimeout(()=>confetti(innerWidth*.8,innerHeight/2,50),500);
   if(S.auto)setTimeout(()=>say(title),600);
+}
+
+/* ---------- revoir mes erreurs (sans changer les étoiles) ---------- */
+function review(){
+  const qs=cur.qs.filter(q=>cur.missed.has(q));
+  if(!qs.length)return;
+  cur={g:cur.g,s:cur.s,qs,i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:true};
+  showQ();
+}
+function finishReview(){
+  stopSay();window.scrollTo(0,0);
+  const again=cur.missed.size,msg=again?'Tu as bien travaillé ! Encore un essai pour les dernières ?':'Bravo ! Tu as tout corrigé !';
+  app.innerHTML=`
+  <div class="card endc">
+    <div class="big">${again?'💪':'🎉'}</div>
+    <h2>${msg}</h2>
+    <p>${spk(msg)}</p>
+    <p class="sm">Tes étoiles ne changent pas. C’est juste pour t’entraîner.</p>
+    <div class="btns">
+      ${again?`<button class="nb go" onclick="review()">🔁 Encore (${again})</button>`:''}
+      <button class="nb" onclick="openSeq('${ctx.bid}','${ctx.sid}')">⬅️ Retour à la séquence</button>
+    </div>
+  </div>`;
+  updBar();
+  beepOk();confetti(innerWidth/2,innerHeight/3,again?20:60);
+  if(S.auto)setTimeout(()=>say(msg),500);
 }
 
 /* ---------- page « programme » (pour les profs) ---------- */
