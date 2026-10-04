@@ -251,6 +251,8 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .hintbox{display:flex;align-items:center;gap:10px;margin-top:12px;background:#FFF6CC;border-left:8px solid var(--yel);border-radius:12px;padding:10px 12px}
 .hintbox p{margin:0;flex:1}
 .opt.gone{background:#c9ced6;border-color:#9aa1ad;opacity:.5}
+.aim{display:flex;align-items:center;gap:10px;background:#E4F2DA;border-left:8px solid var(--grn);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.aim p{margin:0;flex:1;font-weight:700}
 @media(prefers-reduced-motion:reduce){#side,#side .chev{transition:none}}
 </style>
 </head>
@@ -993,6 +995,164 @@ const BLOCS=[
 ];
 
 /* ---------- accès aux données ---------- */
+/* ---------- objectifs « Je saurai… » et écran « À retenir » (FALC) ---------- */
+const GOALS={
+ rec0:{g:"Je saurai dire le chemin des marchandises dans l’entrepôt.",k:[
+  ["📦","4 étapes","Réception, stockage, préparation, expédition."],
+  ["🦺","Mon poste","Gilet, chaussures de sécurité, gants."],
+  ["⏰","À l’heure","L’équipe compte sur moi."]]},
+ rec1:{g:"Je saurai accueillir un chauffeur et vérifier ses documents.",k:[
+  ["🤝","J’accueille le chauffeur","Je demande le bon de livraison."],
+  ["🔍","Je compare","Je compare avec la commande."],
+  ["📄","3 documents","Bon de commande, bon de livraison, bon de réception."]]},
+ rec2:{g:"Je saurai contrôler une livraison et réagir s’il y a un problème.",k:[
+  ["🔢","Je contrôle","La quantité, l’état et la référence."],
+  ["💥","Un problème","Manque, avarie ou erreur."],
+  ["✍️","J’écris et je préviens","J’écris les réserves sur le BL avant le départ du chauffeur. Je préviens mon responsable."]]},
+ rec3:{g:"Je saurai ranger une palette au bon endroit.",k:[
+  ["📍","Je lis l’emplacement","Allée, travée, niveau. Exemple : A-03-2."],
+  ["⏩","FIFO et FEFO","FIFO : premier entré, premier sorti. FEFO : premier périmé, premier sorti."],
+  ["⬇️","Lourd en bas","C’est plus stable et plus sûr."]]},
+ cha1:{g:"Je saurai reconnaître les 3 catégories de chariots.",k:[
+  ["🛒","Catégorie 1A","Transpalette porté : palettes au sol."],
+  ["🏗️","Catégories 1B et 3","1B : gerbeur porté, il lève en hauteur. 3 : chariot élévateur frontal."],
+  ["🪪","CACES","Certificat de conduite en sécurité."]]},
+ cha2:{g:"Je saurai contrôler mon chariot avant de rouler.",k:[
+  ["🦺","Mes EPI","Gilet et chaussures de sécurité."],
+  ["🔍","Je contrôle et je teste","Pneus, fourches, fuites. Puis klaxon, freins, feux."],
+  ["⚠️","Un défaut ?","Je n’utilise pas le chariot et je préviens."]]},
+ cha3:{g:"Je saurai conduire un chariot en sécurité.",k:[
+  ["⬇️","Fourches basses","Près du sol quand je roule."],
+  ["🚶","Piétons prioritaires","Je les laisse passer. En marche arrière, je regarde derrière."],
+  ["🚫","Jamais","Jamais de passager. Jamais sous une charge levée."]]},
+ cha4:{g:"Je saurai garer mon chariot et finir mon poste.",k:[
+  ["🅿️","Je gare","Fourches au sol, frein serré, clé retirée."],
+  ["🔌","Je mets en charge","Je mets le chariot en charge."],
+  ["📢","Je signale","Je signale les anomalies."]]},
+ exp1:{g:"Je saurai préparer une commande.",k:[
+  ["📋","Je lis le bon","Références et quantités."],
+  ["🛒","Je prélève","Bonne référence, bonne quantité."],
+  ["✅","Je vérifie","Avant de partir. Je dépose en zone d’expédition."]]},
+ exp2:{g:"Je saurai bien emballer un colis.",k:[
+  ["📦","Carton adapté","Bonne taille, solide. Je cale pour éviter la casse."],
+  ["🏷️","Étiquette","Adresse et code-barres lisibles."],
+  ["🥂","Les symboles","Fragile : avec soin. Craint l’humidité : au sec. Haut : ne pas retourner."]]},
+ exp3:{g:"Je saurai construire une palette stable.",k:[
+  ["⬇️","Lourd en bas","Léger en haut."],
+  ["🧱","Pas de débord","Les colis restent sur la palette. Couches croisées pour tenir ensemble."],
+  ["🎞️","Filmage ou cerclage","Pour tenir la charge. L’étiquette reste visible."]]},
+ exp4:{g:"Je saurai expédier une commande.",k:[
+  ["📄","Bon de livraison","Il est prêt et complet. Je vérifie l’étiquette."],
+  ["🚚","Je charge","Avec soin, sans bousculer. Le chauffeur signe."],
+  ["💻","J’enregistre la sortie","Le stock est à jour."]]},
+ exp5:{g:"Je saurai expliquer la chaîne logistique.",k:[
+  ["🔗","4 maillons","Fournisseur, entrepôt, transport, client."],
+  ["⛽","Carburant plus cher","Le transport devient plus cher."],
+  ["🚢","Bateau en retard","Il peut y avoir des ruptures de stock."]]},
+ exp6:{g:"Je saurai faire les écogestes au travail.",k:[
+  ["♻️","Je trie","Carton, plastique, bois."],
+  ["🔁","Je réutilise","Les bons cartons. J’éteins la lumière en partant."],
+  ["⚠️","Produits dangereux","Dans un bac spécial."]]},
+ fra1:{g:"Je saurai me présenter et parler de mon travail.",k:[
+  ["👋","Bonjour","Je dis bonjour poliment. Je dis : je m’appelle…"],
+  ["🎓","Ma formation","Je suis en CAP logistique."],
+  ["🏭","Mon stage","J’ai fait un stage chez… J’ai appris à…"]]},
+ fra2:{g:"Je saurai lire un texte et trouver les informations.",k:[
+  ["👤","Qui ? Quoi ?","Les personnes. Ce qui se passe."],
+  ["📍","Où ?","Le lieu."],
+  ["🕗","Quand ?","L’heure, la date."]]},
+ fra3:{g:"Je saurai bien écrire les petits mots qui piègent.",k:[
+  ["✏️","a / à","« il a » vient du verbe avoir. « à l’entrepôt » indique le lieu."],
+  ["✏️","est / et","« il est » vient du verbe être. « et » veut dire aussi."],
+  ["✏️","on / ont, son / sont","on = nous. Ils ont (avoir). Son = à lui. Ils sont (être)."]]},
+ fra4:{g:"Je saurai expliquer les valeurs de la République.",k:[
+  ["🇫🇷","La devise","Liberté, Égalité, Fraternité."],
+  ["🕊️","Laïcité","L’État est neutre. Chacun est libre de croire ou non."],
+  ["🗳️","Voter","À partir de 18 ans."]]},
+ fra5:{g:"Je saurai situer des dates et des lieux importants.",k:[
+  ["📅","1789","La Révolution française."],
+  ["⚖️","1905 et 1944","1905 : la loi sur la laïcité. 1944 : le droit de vote des femmes."],
+  ["⚓","Les ports","Le Havre, Marseille : grands ports de France."]]},
+ mat1:{g:"Je saurai calculer des pourcentages simples.",k:[
+  ["➗","10 %","Je divise par 10."],
+  ["½","50 % et 25 %","50 % : la moitié. 25 % : le quart."],
+  ["🔎","Proportionnalité","Je cherche ce que vaut 1."]]},
+ mat2:{g:"Je saurai convertir des unités.",k:[
+  ["⚖️","Le poids","1 kg = 1 000 g. 1 t = 1 000 kg."],
+  ["📏","La longueur","1 m = 100 cm."],
+  ["🧪","Volume et temps","1 L = 1 000 mL. 1 h = 60 min."]]},
+ mat3:{g:"Je saurai calculer une surface et un volume.",k:[
+  ["🟫","Europalette","1,20 m × 0,80 m."],
+  ["⬜","Surface","Longueur × largeur."],
+  ["🧊","Volume","Longueur × largeur × hauteur."]]},
+ mat4:{g:"Je saurai reconnaître les pictogrammes des produits dangereux.",k:[
+  ["🔥","Inflammable, toxique, corrosif","Inflammable : loin des flammes. Toxique : dangereux pour la santé. Corrosif : attaque la peau."],
+  ["💣","Environnement et explosif","Environnement : ne pas jeter dans la nature. Explosif : chocs et chaleur interdits."],
+  ["🏷️","Étiquette et FDS","J’y lis les consignes."]]},
+ eps1:{g:"Je saurai prendre soin de mon corps avant et après l’effort.",k:[
+  ["🏃","Échauffement","Avant l’effort. Étirements après l’effort."],
+  ["💧","Boire","Avant, pendant, après."],
+  ["😴","Dormir et bien manger","Dormir 8 à 10 h. Manger des fruits et des légumes."]]},
+ eps2:{g:"Je saurai jouer avec fair-play et esprit d’équipe.",k:[
+  ["🤝","Fair-play","Je respecte les règles et les adversaires."],
+  ["🟨","L’arbitre","J’accepte sa décision."],
+  ["📣","J’encourage","Mes coéquipiers."]]},
+ eps3:{g:"Je saurai citer de grands événements sportifs.",k:[
+  ["🏅","Jeux olympiques","Tous les 4 ans. Paris 2024 : les Jeux d’été."],
+  ["⚽","Coupe du monde de football","Tous les 4 ans."],
+  ["🚴","Tour de France","Course de vélo, chaque été. Roland-Garros : tournoi de tennis à Paris."]]},
+ pse1:{g:"Je saurai protéger mon dos quand je porte une charge.",k:[
+  ["🦵","Je plie les jambes","Dos droit. Charge près du corps."],
+  ["🔄","Je tourne avec les pieds","Pas avec le dos."],
+  ["🙋","Trop lourd ?","Je prends une aide : diable, transpalette. Je demande de l’aide."]]},
+ pse2:{g:"Je saurai reconnaître un danger et me protéger.",k:[
+  ["⚠️","Danger","Ce qui peut faire mal. Le dommage, c’est la blessure."],
+  ["🦺","EPI et prévention","EPI : équipement de protection individuelle. Prévention : j’évite l’accident."],
+  ["🚧","Les panneaux","Rond rouge : interdit. Rond bleu : obligatoire. Triangle jaune : danger. Carré vert : sortie ou secours."]]},
+ pse3:{g:"Je saurai agir en cas d’urgence.",k:[
+  ["🛑","Protéger, alerter, secourir","Je protège pour qu’il n’y ait pas d’autre blessé. J’alerte. Je secours."],
+  ["📞","Les numéros","15 : SAMU. 18 : pompiers. 17 : police."],
+  ["🇪🇺","112","Urgence européenne."]]},
+ pse4:{g:"Je saurai prendre soin de ma santé.",k:[
+  ["😴","Dormir","8 à 10 h. Des pauses d’écran, pas avant de dormir."],
+  ["💧","Boire de l’eau","Moins de sucre."],
+  ["🚭","Tabac, alcool, drogues","Dangereux, surtout au travail et sur la route. J’en parle à un adulte de confiance."]]},
+ pse5:{g:"Je saurai consommer malin et protéger l’environnement.",k:[
+  ["🛡️","Mes droits","Garantie légale : 2 ans pour un produit neuf. Achat en ligne : 14 jours pour changer d’avis."],
+  ["🍎","Nutri-Score","De A (meilleur) à E."],
+  ["♻️","Je trie","Verre, plastique, carton. J’économise l’énergie."]]},
+ ang1:{g:"Je saurai dire 8 mots de l’entrepôt en anglais.",k:[
+  ["🏭","warehouse · box · pallet","l’entrepôt · le carton · la palette","warehouse. box. pallet."],
+  ["🚛","forklift · truck","le chariot élévateur · le camion","forklift. truck."],
+  ["📄","order · delivery note · loading dock","la commande · le bon de livraison · le quai","order. delivery note. loading dock."]]},
+ ang2:{g:"Je saurai me présenter en anglais.",k:[
+  ["👋","Hello! My name is…","Bonjour, je m’appelle…","Hello! My name is…"],
+  ["🏭","I work in a warehouse.","Je travaille dans un entrepôt.","I work in a warehouse."],
+  ["🤝","Nice to meet you!","Enchanté !","Nice to meet you!"]]},
+ ang3:{g:"Je saurai poser des questions simples au quai, en anglais.",k:[
+  ["🚛","Where is the loading dock?","Où est le quai ?","Where is the loading dock?"],
+  ["✍️","Please sign here.","Signez ici, s’il vous plaît.","Please sign here."],
+  ["🙋","Can you help me?","Pouvez-vous m’aider ?","Can you help me?"]]},
+ ang4:{g:"Je saurai lire les panneaux de sécurité en anglais.",k:[
+  ["⚠️","Danger · Exit","danger · sortie","Danger. Exit."],
+  ["🔥","Fire · First aid","incendie · premiers secours","Fire. First aid."],
+  ["🚭","No smoking · Wet floor","interdit de fumer · sol mouillé","No smoking. Wet floor."]]},
+ resp:{g:"Je saurai dire quand une responsabilité est engagée.",k:[
+  ["⚖️","3 choses","Une faute, un dommage, et un lien entre les deux."],
+  ["🩹","Réparer","Civile : réparer le dommage. Contractuelle : un contrat n’est pas respecté. Délictuelle : pas de contrat."],
+  ["👮","Pénale","Punir une infraction, quand la loi n’est pas respectée."]]},
+ duree:{g:"Je saurai retenir les règles de la durée du travail.",k:[
+  ["🗓️","Les chiffres","35 h par semaine. 10 h par jour au maximum. 48 h par semaine au maximum."],
+  ["➕","Heures supplémentaires","+ 25 % de la 36e à la 43e heure. + 50 % à partir de la 44e heure."],
+  ["🌙","Le repos","11 h entre deux journées. 24 h de repos par semaine."]]}
+};
+BLOCS.forEach(b=>b.seqs.forEach(s=>{
+  const d=GOALS[s.id];if(!d)return;
+  s.goal=d.g;s.slides=s.slides||[];
+  s.slides.push({title:'⭐ À retenir',say:'À retenir.',flow:false,keep:true,cards:d.k.map(c=>({i:c[0],b:c[1],t:c[2],c:'y',s:c[3]||(c[1]+'. '+c[2])}))});
+}));
+const goalHtml=s=>s.goal?`<div class="aim"><span class="big" style="font-size:34px">🎯</span><p>${s.goal}</p>${spk(s.goal)}</div>`:'';
+
 const findBloc=id=>BLOCS.find(b=>b.id===id);
 const findSeq=(b,s)=>findBloc(b).seqs.find(x=>x.id===s);
 const allGames=()=>BLOCS.flatMap(b=>b.seqs.flatMap(s=>s.games));
@@ -1265,6 +1425,7 @@ function openSeq(bid,sid){
   const b=findBloc(bid),s=findSeq(bid,sid);
   app.innerHTML=`
   <div class="gtop"><button class="back" onclick="openBloc('${bid}')" aria-label="Retour">⬅️</button><h2>${s.icon} ${s.name}</h2>${spk(s.name)}</div>
+  ${goalHtml(s)}
   ${s.slides&&s.slides.length?`<button class="course" onclick="fiche(0)"><span class="big">📘</span> Je révise</button>`:''}
   <div class="grid">${s.games.map(g=>`<button class="tile" style="--c:${g.c}" onclick="play('${g.id}')"><div class="ti">${g.icon}</div><div class="tn">${g.name}</div><div class="ts">${[1,2,3].map(k=>k<=stars(g)?'<b>★</b>':'★').join('')}</div></button>`).join('')}</div>`;
   updBar();
@@ -1284,6 +1445,7 @@ function fiche(n){
   app.innerHTML=`
   <div class="card slide">
     <div class="head"><button class="back" onclick="openSeq('${ctx.bid}','${ctx.sid}')" aria-label="Retour">⬅️</button><h2>${sl.title}</h2>${spk(sl.say)}</div>
+    ${n===0?goalHtml(s):''}
     ${body}
     <button class="mini" style="margin:10px auto 0;display:block" onclick="glossaire(${n})">📖 Mots du métier</button>
     <div class="nav">
