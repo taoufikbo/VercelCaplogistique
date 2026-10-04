@@ -225,6 +225,10 @@ body.comfort .tn,body.comfort .ans,body.comfort .jq,body.comfort .ja{font-size:1
 .bd{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#fff;border:2px solid var(--c,#E4DCC5);font-size:15px;font-weight:700}
 .bd.lock{opacity:.55;font-weight:400;border-style:dashed;border-color:#b9b4a4}
 .newbd{background:#FFF6CC;border:2px solid var(--yel);border-radius:14px;padding:10px 12px;margin:10px 0;font-weight:700}
+.hintb{display:block;margin:14px auto 0;min-height:48px;padding:10px 20px;border-radius:14px;background:#FFF6CC;border:3px solid var(--yel);font-weight:700;font-size:18px;box-shadow:0 4px 0 rgba(0,0,0,.14)}
+.hintbox{display:flex;align-items:center;gap:10px;margin-top:12px;background:#FFF6CC;border-left:8px solid var(--yel);border-radius:12px;padding:10px 12px}
+.hintbox p{margin:0;flex:1}
+.opt.gone{background:#c9ced6;border-color:#9aa1ad;opacity:.5}
 @media(prefers-reduced-motion:reduce){#side,#side .chev{transition:none}}
 </style>
 </head>
@@ -1210,7 +1214,7 @@ function prepQ(q){
 function showQ(){
   stopSay();window.scrollTo(0,0);
   const q=prepQ(cur.qs[cur.i]);
-  cur.tries=0;cur.locked=false;
+  cur.tries=0;cur.locked=false;cur.hinted=false;
   const cls=q.opts.length===2?'duo':'n'+q.opts.length;
   const ol=q.ol||'fr';
   app.innerHTML=`
@@ -1229,19 +1233,32 @@ function showQ(){
         <button class="ans" onclick="pick(${k})"><span class="oi">${o.i||''}</span><span>${o.t}</span></button>
         <button class="spk" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(o.t)}" data-l="${o.l||ol}" aria-label="Écouter">🔊</button>
       </div>`).join('')}</div>
+    ${q.opts.length>=3?'<button class="hintb" id="hintb" onclick="hint()">💡 Indice</button>':''}
+    <div id="hint"></div>
     <div id="fb"></div>
   </div>`;
   updBar();
   if(S.auto){if(q.hear)say(q.hear,q.hl||'fr');else say((q.story?q.story+' ':'')+q.text)}
 }
 const PRAISE=["Bravo !","Yes !","Excellent !","Top !","Bien joué !","Gagné !"];
+function hint(){
+  if(cur.locked||cur.hinted)return;
+  const q=cur.qs[cur.i];cur.hinted=true;
+  const b=$('hintb');if(b)b.remove();
+  if(q.hint){$('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>${q.hint}</p>${spk(q.hint)}</div>`;if(S.auto)say(q.hint);return}
+  const wrong=q.opts.map((_,k)=>k).filter(k=>k!==q.ok&&!$('o'+k).querySelector('.ans').disabled);
+  if(!wrong.length)return;
+  const el=$('o'+wrong[Math.floor(Math.random()*wrong.length)]);
+  el.classList.add('gone');el.querySelector('.ans').disabled=true;
+  if(S.auto)say('Une mauvaise réponse est enlevée');
+}
 function pick(k){
   if(cur.locked)return;
   actx();
   const q=cur.qs[cur.i],el=$('o'+k);
   if(k===q.ok){
     cur.locked=true;el.classList.add('good');beepOk();
-    const first=cur.tries===0,gain=first?2:1;
+    const first=cur.tries===0&&!cur.hinted,gain=first?2:1;
     cur.pts+=gain;
     if(first){cur.first++;cur.streak++}else cur.streak=0;
     const r=el.getBoundingClientRect();
