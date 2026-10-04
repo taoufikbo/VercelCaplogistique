@@ -1014,13 +1014,14 @@ function renderNav(){
   if(ctx.bid)navOpen=ctx.bid;
   const homeAct=!ctx.bid&&!ctx.v;
   const b0=ctx.bid&&findBloc(ctx.bid),s0=ctx.sid&&findSeq(ctx.bid,ctx.sid);
-  const here=ctx.v==='ref'?'📋 Le programme':b0?b0.icon+' '+b0.name+(s0?'<br>➡️ '+s0.icon+' '+s0.name:''):'🏠 Accueil';
+  const here=ctx.v==='ref'?'📋 Le programme':ctx.v==='glo'?'📖 Mots du métier':b0?b0.icon+' '+b0.name+(s0?'<br>➡️ '+s0.icon+' '+s0.name:''):'🏠 Accueil';
   $('side').innerHTML=`<div class="here"><b>📍 Tu es ici</b>${here}</div>
   <div class="nh">Mes matières</div><ul>
   <li><button class="nl ${homeAct?'act':''}" onclick="navGo(home)"><span class="ic">🏠</span><span class="tx">Accueil</span></button></li>
   ${BLOCS.map(b=>`<li class="${navOpen===b.id?'open':''}" style="--c:${b.c}"><button class="nl ${ctx.bid===b.id&&!ctx.sid?'act':''}" onclick="navGo(()=>openBloc('${b.id}'))"><span class="ic">${b.icon}</span><span class="tx">${b.name}</span><span class="sc"><b>★</b> ${blocStars(b)}/${blocMax(b)}</span><span class="chev" aria-hidden="true">▸</span></button>
     <ul>${b.seqs.map(s=>`<li><button class="nl ${ctx.sid===s.id&&ctx.bid===b.id?'act':''}" onclick="navGo(()=>openSeq('${b.id}','${s.id}'))"><span class="tx">${s.icon} ${s.name}</span></button></li>`).join('')}</ul></li>`).join('')}
-  </ul><hr><ul><li><button class="nl ${ctx.v==='ref'?'act':''}" onclick="navGo(refView)"><span class="ic">📋</span><span class="tx">Le programme</span></button></li></ul>`;
+  </ul><hr><ul><li><button class="nl ${ctx.v==='glo'?'act':''}" onclick="navGo(()=>glossaire())"><span class="ic">📖</span><span class="tx">Mots du métier</span></button></li>
+  <li style="margin-top:8px"><button class="nl ${ctx.v==='ref'?'act':''}" onclick="navGo(refView)"><span class="ic">📋</span><span class="tx">Le programme</span></button></li></ul>`;
 }
 
 function updBar(){
@@ -1118,6 +1119,51 @@ function badgesHtml(){
   return `<div class="card rb"><span class="lab">🏅 Mes badges · ${n}/${L.length}</span><div class="badges">${L.map(b=>`<span class="bd ${b.ok?'':'lock'}" style="--c:${b.c||'#E0B24A'}">${b.ok?b.icon:'🔒'} ${b.name}</span>`).join('')}</div></div>`;
 }
 
+/* ---------- glossaire : les mots du métier ---------- */
+const GLOSSAIRE={
+ bl:{i:'📄',t:'Bon de livraison (BL)',v:'Bon de livraison, B L',d:'Papier qui dit ce que le livreur apporte. On le vérifie avant de signer.'},
+ bc:{i:'🧾',t:'Bon de commande',d:'Papier où un client demande des produits.'},
+ fifo:{i:'⏩',t:'FIFO',d:'Premier entré, premier sorti. Les produits les plus anciens partent d’abord.'},
+ fefo:{i:'⏳',t:'FEFO',d:'Premier périmé, premier sorti. Le produit qui se périme le plus tôt part d’abord.'},
+ epi:{i:'🦺',t:'EPI',v:'E P I',d:'Équipement de protection individuelle. Ce sont mes protections : gilet, chaussures, gants.'},
+ tms:{i:'🖥️',t:'TMS',v:'T M S',d:'Logiciel qui sert à organiser les transports et les livraisons.'},
+ wms:{i:'💻',t:'WMS',v:'W M S',d:'Logiciel qui sert à gérer l’entrepôt et le stock.'},
+ caces:{i:'🪪',t:'CACES',d:'Certificat qui prouve que je sais conduire un engin, comme un chariot, en sécurité.'},
+ avarie:{i:'💥',t:'Avarie',d:'Un colis ou un produit abîmé pendant le transport ou le stockage.'},
+ reserves:{i:'✍️',t:'Réserves',d:'Remarques écrites sur le bon de livraison quand il y a un problème, par exemple un colis abîmé.'},
+ picking:{i:'🛒',t:'Picking',d:'Prendre les bons produits dans le stock pour préparer une commande.'},
+ palette:{i:'🟫',t:'Palette',d:'Plateau qui sert à poser et à déplacer des cartons.'},
+ europalette:{i:'🇪🇺',t:'Europalette',d:'Palette standard en Europe. Elle mesure 120 cm sur 80 cm.'},
+ quai:{i:'🚛',t:'Quai',d:'Zone où les camions se garent pour charger et décharger.'},
+ supply:{i:'🔗',t:'Supply chain',v:'Supplaï chaîne',d:'La chaîne logistique : tout le chemin d’un produit, de l’usine jusqu’au client.'},
+ cariste:{i:'🚜',t:'Cariste',d:'Personne qui conduit un chariot élévateur.'},
+ chariot:{i:'🏗️',t:'Chariot élévateur',d:'Engin avec des fourches pour lever et déplacer des charges lourdes.'},
+ transpalette:{i:'🔧',t:'Transpalette',d:'Petit chariot pour déplacer une palette au ras du sol.'},
+ inventaire:{i:'📋',t:'Inventaire',d:'Compter tout ce qu’il y a en stock pour vérifier que tout est juste.'},
+ stock:{i:'📦',t:'Stock',d:'Tous les produits gardés dans l’entrepôt.'},
+ rupture:{i:'🕳️',t:'Rupture de stock',d:'Il n’y a plus de produit en stock.'},
+ reception:{i:'📥',t:'Réception',d:'On accueille les marchandises qui arrivent et on les contrôle.'},
+ expedition:{i:'📤',t:'Expédition',d:'On prépare les commandes et on les envoie aux clients.'},
+ codebarres:{i:'🏷️',t:'Code-barres',d:'Les traits noirs sur une étiquette. Un lecteur les scanne pour reconnaître le produit.'},
+ dlc:{i:'📅',t:'DLC',v:'D L C',d:'Date limite de consommation. Après cette date, on ne doit plus consommer le produit.'},
+ samu:{i:'🚑',t:'SAMU',d:'Numéro 15. On l’appelle pour une urgence médicale.'}
+};
+let gloBack=null;
+function glossaire(n){
+  stopSay();window.scrollTo(0,0);
+  gloBack=(typeof n==='number'&&ctx.sid)?{bid:ctx.bid,sid:ctx.sid,n}:null;
+  ctx={bid:null,sid:null,v:'glo'};
+  const L=Object.values(GLOSSAIRE).sort((a,b)=>a.t.localeCompare(b.t,'fr'));
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="gloClose()" aria-label="Retour">⬅️</button><h2>📖 Mots du métier</h2>${spk('Mots du métier. Touche une carte pour l’écouter.')}</div>
+  <div class="cards">${L.map(g=>card({i:g.i,b:g.t,t:g.d,c:'l',s:(g.v||g.t)+'. '+g.d})).join('')}</div>
+  <p class="hint">👆 Touche une carte pour l’écouter</p>`;
+  updBar();
+}
+function gloClose(){
+  if(gloBack){const g=gloBack;ctx={bid:g.bid,sid:g.sid};fiche(g.n)}else home();
+}
+
 /* ---------- accueil : date, météo, blague ---------- */
 const BLAGUES=[
 ["Quel est le comble pour un cariste ?","D’être à bout de fourches !"],
@@ -1193,6 +1239,7 @@ function home(){
   <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
   <div class="grid big">${BLOCS.map(b=>`<button class="tile" style="--c:${b.c}" onclick="openBloc('${b.id}')"><div class="ti">${b.icon}</div><div class="tn">${b.name}</div>${starsTxt(blocStars(b),blocMax(b))}</button>`).join('')}</div>
   ${badgesHtml()}
+  <button class="refbtn" onclick="glossaire()">📖 Mots du métier</button>
   <button class="refbtn" onclick="refView()">📋 Le programme (référentiel)</button>
   <button class="reset" onclick="resetAll()">Effacer mes étoiles</button>`;
   loadWx();
@@ -1238,6 +1285,7 @@ function fiche(n){
   <div class="card slide">
     <div class="head"><button class="back" onclick="openSeq('${ctx.bid}','${ctx.sid}')" aria-label="Retour">⬅️</button><h2>${sl.title}</h2>${spk(sl.say)}</div>
     ${body}
+    <button class="mini" style="margin:10px auto 0;display:block" onclick="glossaire(${n})">📖 Mots du métier</button>
     <div class="nav">
       <button class="nb ${n===0?'ghost':''}" onclick="fiche(${n-1})" aria-label="Précédent">⬅️</button>
       <div class="dots">${s.slides.map((_,k)=>`<i class="${k===n?'on':''}"></i>`).join('')}</div>
