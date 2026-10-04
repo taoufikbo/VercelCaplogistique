@@ -187,12 +187,34 @@ noscript{display:block;padding:20px;font-weight:700}
 #side button:focus-visible{outline:4px solid var(--blu);outline-offset:2px}
 #menu{display:none}
 #scrim{display:none}
-/* confort de lecture (bouton Aa) */
-body.comfort{font-size:21px;line-height:1.8;letter-spacing:.06em;word-spacing:.16em}
-body.comfort #side{font-size:20px;letter-spacing:.07em}
-body.comfort :not(svg):not(svg *){letter-spacing:.05em;word-spacing:.14em}
-body.comfort p,body.comfort li,body.comfort small,body.comfort .tn,body.comfort .ans{line-height:1.7}
-body.comfort .tn,body.comfort .ans,body.comfort .jq,body.comfort .ja{font-size:1.1em}
+/* réglages d'affichage (bouton Aa) */
+body.sz1 main,body.sz1 #side>*{zoom:1.15}
+body.sz2 main,body.sz2 #side>*{zoom:1.3}
+body.easy{line-height:1.8;letter-spacing:.06em;word-spacing:.16em}
+body.easy :not(svg):not(svg *){letter-spacing:.05em;word-spacing:.14em}
+body.easy p,body.easy li,body.easy small,body.easy .tn,body.easy .ans{line-height:1.7}
+body.easy .tn,body.easy .ans,body.easy .jq,body.easy .ja{font-size:1.08em}
+body.hc{--bg:#fff;--ink:#000;background:#fff;color:#000}
+body.hc #bar{background:#000}
+body.hc .card,body.hc .tile,body.hc .kc,body.hc .refbtn,body.hc .mb,body.hc .mini,body.hc .back,body.hc .bd,body.hc .hintb,body.hc #side button.nl,body.hc #side .here,body.hc .aap{outline:3px solid #000;outline-offset:-3px}
+body.hc .opt{border-width:4px;border-color:#000}
+body.hc .opt.good{border-color:#000!important}
+body.hc .lab,body.hc .fine,body.hc .code,body.hc .sm,body.hc #side .sc,body.hc #side .here b,body.hc .hero .lab{color:#000}
+body.hc #side{background:#fff;border-right:4px solid #000}
+body.hc #side button.nl.act{background:#FFE066;outline-width:4px}
+body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
+@media(max-width:430px){#bar{gap:4px;padding-left:8px;padding-right:8px}#tot{font-size:15px}}
+.aap{position:fixed;top:70px;right:8px;z-index:45;width:min(340px,calc(100vw - 16px));background:#fff;color:#1F2430;border:3px solid #1F2430;border-radius:16px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:18px;line-height:1.4;letter-spacing:0}
+.aap[hidden]{display:none}
+.aap h3{margin:0 0 8px;font-size:19px;display:flex;align-items:center;gap:8px}
+.aap h3 span{flex:1}
+.aap .al{margin:12px 0 6px;font-weight:700;font-size:16px}
+.aap .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.aap .ab{min-height:48px;padding:6px 8px;border-radius:12px;background:#EEF1F5;border:3px solid #cfd6e0;font-weight:700;font-size:16px}
+.aap .ab[aria-pressed=true]{background:#FFF1B8;border-color:#1F2430}
+.aap .row{display:flex;gap:8px;margin-top:8px}
+.aap .row .ab{flex:1;text-align:left;display:flex;align-items:center;gap:8px}
+.aap .x{min-width:48px;min-height:48px;border-radius:12px;background:#EEF1F5;font-size:20px}
 /* accueil : date, météo, blague */
 .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:14px 0}
 .hero .card{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -238,12 +260,13 @@ body.comfort .tn,body.comfort .ans,body.comfort .jq,body.comfort .ja{font-size:1
   <button class="ib" onclick="home()" aria-label="Accueil">🏠</button>
   <button class="ib" id="b-auto" onclick="tog('auto')" title="Lecture automatique" aria-label="Lecture automatique">🗣️</button>
   <button class="ib" id="b-slow" onclick="tog('slow')" title="Voix lente" aria-label="Voix lente">🐢</button>
-  <button class="ib" id="b-comf" onclick="tog('comfort')" title="Confort de lecture (lettres plus espacées)" aria-label="Confort de lecture" style="font-size:18px;font-weight:700">Aa</button>
+  <button class="ib" id="b-comf" onclick="toggleAa(event)" title="Réglages d'affichage" aria-label="Réglages d'affichage" aria-haspopup="true" style="font-size:18px;font-weight:700">Aa</button>
   <button class="ib" id="b-fx" onclick="tog('fx')" title="Sons du jeu" aria-label="Sons du jeu">🎵</button>
   <span id="tot">★ 0/24</span>
 </header>
 <div id="layout">
 <nav id="side" aria-label="Matières"></nav>
+<div class="aap" id="aa" role="dialog" aria-label="Réglages d'affichage" hidden></div>
 <main id="app"></main>
 </div>
 <div id="scrim" onclick="toggleNav(false)"></div>
@@ -985,7 +1008,7 @@ const starsTxt=(n,m)=>`<span class="ts"><b>★</b> ${n}/${m}</span>`;
 let ctx={bid:null,sid:null};
 let navOpen=null;
 function toggleNav(f){document.body.classList.toggle('nav-open',f)}
-addEventListener('keydown',e=>{if(e.key==='Escape')toggleNav(false)});
+addEventListener('keydown',e=>{if(e.key==='Escape'){toggleNav(false);closeAa()}});
 function navGo(fn){toggleNav(false);fn()}
 function renderNav(){
   if(ctx.bid)navOpen=ctx.bid;
@@ -1006,10 +1029,38 @@ function updBar(){
   $('b-auto').classList.toggle('off',!S.auto);
   $('b-slow').classList.toggle('off',!S.slow);
   $('b-fx').classList.toggle('off',!S.fx);
-  $('b-comf').classList.toggle('off',!S.comfort);
-  document.body.classList.toggle('comfort',!!S.comfort);
+  applyDisplay();
 }
 function tog(k){S[k]=!S[k];save();updBar();if(k==='auto'&&!S.auto)stopSay();if(k==='fx'&&S.fx)beepOk()}
+
+/* ---------- réglages d'affichage (Aa) ---------- */
+function applyDisplay(){
+  if(S.comfort&&S.easy===undefined){S.easy=true;delete S.comfort}
+  const c=document.body.classList;
+  c.toggle('sz1',S.size===1);c.toggle('sz2',S.size===2);
+  c.toggle('hc',!!S.hc);c.toggle('easy',!!S.easy);
+  $('b-comf').classList.toggle('off',!(S.size||S.hc||S.easy));
+}
+function renderAa(){
+  const z=S.size||0,P=(v,t)=>`<button class="ab" aria-pressed="${v}" onclick="${t}">`;
+  $('aa').innerHTML=`<h3><span>🔠 Réglages d’affichage</span>${spk('Réglages d’affichage. Tu peux changer la taille du texte, le contraste et la lecture facile.')}<button class="x" onclick="closeAa()" aria-label="Fermer">✖</button></h3>
+  <div class="al">Taille du texte</div>
+  <div class="seg">${P(z===0,'setSize(0)')}<span style="font-size:15px">Normale</span></button>${P(z===1,'setSize(1)')}<span style="font-size:18px">Grande</span></button>${P(z===2,'setSize(2)')}<span style="font-size:21px">Très grande</span></button></div>
+  <div class="row">${P(!!S.hc,"toggleDisp('hc')")}<span>◐</span><span>Contraste fort</span></button></div>
+  <div class="row">${P(!!S.easy,"toggleDisp('easy')")}<span>📖</span><span>Lecture facile</span></button></div>
+  <div class="row"><button class="ab" onclick="resetDisp()">↩️ Remettre comme avant</button></div>`;
+}
+function toggleAa(e){
+  if(e)e.stopPropagation();
+  const a=$('aa');a.hidden=!a.hidden;
+  $('b-comf').setAttribute('aria-expanded',String(!a.hidden));
+  if(!a.hidden)renderAa();
+}
+function closeAa(){$('aa').hidden=true;$('b-comf').setAttribute('aria-expanded','false')}
+function setSize(n){S.size=n;save();applyDisplay();renderAa()}
+function toggleDisp(k){S[k]=!S[k];save();applyDisplay();renderAa()}
+function resetDisp(){S.size=0;S.hc=false;S.easy=false;save();applyDisplay();renderAa()}
+document.addEventListener('click',e=>{const a=$('aa');if(!a.hidden&&!a.contains(e.target)&&!$('b-comf').contains(e.target))closeAa()},true);
 
 /* ---------- humeur, conseil du jour, badges ---------- */
 const dayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
