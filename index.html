@@ -259,6 +259,18 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .opts.wait ~ .hintb{opacity:.5;pointer-events:none}
 .hintb.hl{border-color:#2B2B2B;box-shadow:0 0 0 4px #FFF1B8}
 .next:disabled{opacity:.55;cursor:default;box-shadow:none}
+.sign+.course{margin-top:12px;margin-bottom:12px}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:0 0 10px;font-size:15px}
+.crumbs button{min-height:44px;padding:4px 10px;border-radius:12px;background:#fff;border:2px solid #E4DCC5;font-weight:700;font-size:15px}
+.crumbs b{display:inline-flex;align-items:center;min-height:44px;padding:4px 10px;border-radius:12px;background:#FFF1B8;border:2px solid #2B2B2B;font-size:15px}
+.crumbs .sep{opacity:.6;font-size:18px}
+.step{display:flex;align-items:center;gap:10px;background:#E1ECFB;border-left:8px solid var(--blu);border-radius:12px;padding:10px 12px;margin:0 0 14px;font-weight:700;font-size:20px}
+.step p{margin:0;flex:1}
+.path{display:flex;align-items:center;gap:8px;margin:0 0 14px}
+.pstep{flex:1;text-align:center;padding:10px 6px;border-radius:14px;background:#EEF1F5;border:3px dashed #cfd6e0;font-weight:700}
+.pstep.cur{background:#FFF1B8;border:3px solid #2B2B2B}
+.pstep.done{background:#DDF6EC;border:3px solid var(--grn)}
+body.hc .crumbs button,body.hc .crumbs b,body.hc .pstep{outline:3px solid #000;outline-offset:-3px}
 @media(prefers-reduced-motion:reduce){#side,#side .chev{transition:none}}
 </style>
 </head>
@@ -1325,6 +1337,7 @@ function glossaire(n){
   ctx={bid:null,sid:null,v:'glo'};
   const L=Object.values(GLOSSAIRE).sort((a,b)=>a.t.localeCompare(b.t,'fr'));
   app.innerHTML=`
+  ${crumbs('📖 Mots du métier')}
   <div class="gtop"><button class="back" onclick="gloClose()" aria-label="Retour">⬅️</button><h2>📖 Mots du métier</h2>${spk('Mots du métier. Touche une carte pour l’écouter.')}</div>
   <div class="cards">${L.map(g=>card({i:g.i,b:g.t,t:g.d,c:'l',s:(g.v||g.t)+'. '+g.d})).join('')}</div>
   <p class="hint">👆 Touche une carte pour l’écouter</p>`;
@@ -1390,12 +1403,39 @@ function wxPlace(){
   navigator.geolocation.getCurrentPosition(p=>{S.loc={lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2),name:'Ma position'};save();loadWx()},()=>alert('Position refusée. La météo reste sur Paris.'),{timeout:8000});
 }
 
+/* ---------- fil d'Ariane et invitations ---------- */
+function crumbs(last){
+  const b=ctx.bid&&findBloc(ctx.bid),s=ctx.sid&&findSeq(ctx.bid,ctx.sid);
+  const a=[['🏠 Accueil','home()']];
+  if(b)a.push([b.icon+' '+b.name,`openBloc('${b.id}')`]);
+  if(s)a.push([s.icon+' '+s.name,`openSeq('${b.id}','${s.id}')`]);
+  if(last)a.push([last,null]);else a[a.length-1][1]=null;
+  return `<nav class="crumbs" aria-label="Fil d’Ariane">${a.map((x,k)=>(k?'<span class="sep" aria-hidden="true">›</span>':'')+(x[1]?`<button onclick="${x[1]}">${x[0]}</button>`:`<b aria-current="page">${x[0]}</b>`)).join('')}</nav>`;
+}
+const stepHtml=(n,t)=>`<div class="step"><span class="big" style="font-size:34px">${n}</span><p>${t}</p>${spk(t.replace(/^[^\wÀ-ÿ]+/,''))}</div>`;
+function resumeHtml(){
+  const l=S.last;if(!l)return '';
+  let b,sq;try{b=findBloc(l.bid);sq=b&&findSeq(l.bid,l.sid)}catch(e){}
+  if(!sq)return '';
+  return `<button class="course" onclick="openSeq('${l.bid}','${l.sid}')"><span class="big">▶️</span> Reprendre : ${sq.icon} ${sq.name}</button>`;
+}
+function pathHtml(sq){
+  const hasF=!!(sq.slides&&sq.slides.length),seen=!hasF||!!(S.seen&&S.seen[sq.id]);
+  const played=sq.games.every(g=>stars(g)>=1);
+  return `<div class="path"><span class="pstep ${seen?'done':'cur'}">📘 Je révise ${seen?'✅':''}</span><span aria-hidden="true">➡️</span><span class="pstep ${played?'done':seen?'cur':''}">🎮 Je joue ${played?'✅':''}</span></div>`;
+}
+
 /* ---------- accueil ---------- */
 function home(){
   stopSay();window.scrollTo(0,0);ctx={bid:null,sid:null};
   const t=total(),m=maxStars(),pct=t/m,lv=level(pct);
   app.innerHTML=`
   <div class="sign"><h1>🚚 Mon CAP Logistique</h1></div>
+  ${resumeHtml()}
+  ${stepHtml('1️⃣','Choisis une matière')}
+  <div class="grid big">${BLOCS.map(b=>`<button class="tile" style="--c:${b.c}" onclick="openBloc('${b.id}')"><div class="ti">${b.icon}</div><div class="tn">${b.name}</div>${starsTxt(blocStars(b),blocMax(b))}</button>`).join('')}</div>
+  <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
+  <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
   <div class="hero">
     <div class="card"><span class="lab">📅 Aujourd’hui</span><span class="dt">${dateFr()}</span></div>
     <div class="card" id="wx"><span class="lab">🌦️ Météo</span><span class="wxl">Chargement…</span></div>
@@ -1405,9 +1445,6 @@ function home(){
     <div class="card" id="mood">${moodHtml()}</div>
     <div class="card" id="conseil">${conseilHtml()}</div>
   </div>
-  <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
-  <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
-  <div class="grid big">${BLOCS.map(b=>`<button class="tile" style="--c:${b.c}" onclick="openBloc('${b.id}')"><div class="ti">${b.icon}</div><div class="tn">${b.name}</div>${starsTxt(blocStars(b),blocMax(b))}</button>`).join('')}</div>
   ${badgesHtml()}
   <button class="refbtn" onclick="glossaire()">📖 Mots du métier</button>
   <button class="refbtn" onclick="refView()">📋 Le programme (référentiel)</button>
@@ -1423,19 +1460,25 @@ function openBloc(bid){
   stopSay();window.scrollTo(0,0);ctx={bid,sid:null};
   const b=findBloc(bid);
   app.innerHTML=`
+  ${crumbs()}
   <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>${b.icon} ${b.name}</h2>${spk(b.name)}</div>
-  <p class="code">${b.code}</p>
-  <div class="grid">${b.seqs.map(s=>`<button class="tile" style="--c:${b.c}" onclick="openSeq('${bid}','${s.id}')"><div class="ti">${s.icon}</div><div class="tn">${s.name}</div>${starsTxt(seqStars(s),s.games.length*3)}</button>`).join('')}</div>`;
+  ${stepHtml('2️⃣','Choisis un cours')}
+  <div class="grid">${b.seqs.map(s=>`<button class="tile" style="--c:${b.c}" onclick="openSeq('${bid}','${s.id}')"><div class="ti">${s.icon}</div><div class="tn">${s.name}</div>${starsTxt(seqStars(s),s.games.length*3)}</button>`).join('')}</div>
+  <p class="code">${b.code}</p>`;
   updBar();
 }
 
 /* ---------- séquence ---------- */
 function openSeq(bid,sid){
   stopSay();window.scrollTo(0,0);ctx={bid,sid};
+  S.last={bid,sid};save();
   const b=findBloc(bid),s=findSeq(bid,sid);
   app.innerHTML=`
+  ${crumbs()}
   <div class="gtop"><button class="back" onclick="openBloc('${bid}')" aria-label="Retour">⬅️</button><h2>${s.icon} ${s.name}</h2>${spk(s.name)}</div>
   ${goalHtml(s)}
+  ${stepHtml('3️⃣','Je révise, puis je joue')}
+  ${pathHtml(s)}
   ${s.slides&&s.slides.length?`<button class="course" onclick="fiche(0)"><span class="big">📘</span> Je révise</button>`:''}
   <div class="grid">${s.games.map(g=>`<button class="tile" style="--c:${g.c}" onclick="play('${g.id}')"><div class="ti">${g.icon}</div><div class="tn">${g.name}</div><div class="ts">${[1,2,3].map(k=>k<=stars(g)?'<b>★</b>':'★').join('')}</div></button>`).join('')}</div>`;
   updBar();
@@ -1449,11 +1492,13 @@ function card(c,l){
 function fiche(n){
   stopSay();window.scrollTo(0,0);
   const s=findSeq(ctx.bid,ctx.sid),sl=s.slides[n],last=n===s.slides.length-1;
+  if(last){S.seen=S.seen||{};if(!S.seen[ctx.sid]){S.seen[ctx.sid]=true;save()}}
   const body=sl.svg
     ?`<div class="art ${sl.cls||''}">${sl.svg}</div><p class="hint">👆 Touche un dessin pour l’écouter</p>`
     :`<div class="cards">${sl.cards.map((c,k)=>(k&&sl.flow?'<div class="arw">⬇️</div>':'')+card(c,s.lang)).join('')}</div><p class="hint">👆 Touche une carte pour l’écouter</p>`;
   app.innerHTML=`
   <div class="card slide">
+    ${crumbs('📘 Je révise')}
     <div class="head"><button class="back" onclick="openSeq('${ctx.bid}','${ctx.sid}')" aria-label="Retour">⬅️</button><h2>${sl.title}</h2>${spk(sl.say)}</div>
     ${n===0?goalHtml(s):''}
     ${body}
@@ -1490,6 +1535,7 @@ function showQ(){
   const ol=q.ol||'fr';
   app.innerHTML=`
   <div class="card">
+    ${crumbs('🎮 '+cur.g.name)}
     <div class="gtop">
       <button class="back" onclick="openSeq('${ctx.bid}','${ctx.sid}')" aria-label="Retour">⬅️</button>
       <div class="pbar"><i style="width:${cur.i/cur.qs.length*100}%"></i></div>
@@ -1684,6 +1730,7 @@ function refView(){
       const sub=cov?c.s.map(seqName).join(' · ')+(c.p?'<br>🛠️ Complété par la pratique en classe ou sur le terrain':'')+(c.n?'<br>'+c.n:''):(c.p?(c.n||'À pratiquer en vrai, en classe ou sur le terrain'):(c.n||'À compléter'));
       return `<li><span class="ci">${ic}</span><span>${c.t}<small>${sub}</small></span></li>`}).join('')}</ul></div>`).join('');
   app.innerHTML=`
+  ${crumbs('📋 Le programme')}
   <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>📋 Le programme</h2></div>
   <div class="card">
     <p><b>CAP Opérateur, opératrice logistique</b><br>Arrêté du 13 février 2026 · fiche RNCP42586 · première session d’examen en 2028</p>
