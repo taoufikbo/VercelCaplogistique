@@ -253,6 +253,12 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .opt.gone{background:#c9ced6;border-color:#9aa1ad;opacity:.5}
 .aim{display:flex;align-items:center;gap:10px;background:#E4F2DA;border-left:8px solid var(--grn);border-radius:12px;padding:10px 12px;margin-bottom:14px}
 .aim p{margin:0;flex:1;font-weight:700}
+.lis{min-height:28px;margin:0 0 8px;font-weight:700;color:#555}
+.lis .ok{color:#0e7a55}
+.opts.wait{opacity:.5;pointer-events:none}
+.opts.wait ~ .hintb{opacity:.5;pointer-events:none}
+.hintb.hl{border-color:#2B2B2B;box-shadow:0 0 0 4px #FFF1B8}
+.next:disabled{opacity:.55;cursor:default;box-shadow:none}
 @media(prefers-reduced-motion:reduce){#side,#side .chev{transition:none}}
 </style>
 </head>
@@ -292,13 +298,14 @@ let vFr=null,vEn=null;
 function pickVoice(){if(!('speechSynthesis' in window))return;const v=speechSynthesis.getVoices();vFr=v.find(x=>/^fr[-_]FR/i.test(x.lang))||v.find(x=>/^fr/i.test(x.lang))||null;vEn=v.find(x=>/^en[-_]GB/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null}
 if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}
 function clean(t){return String(t).replace(/___/g,' blanc ').replace(/(^|[^\d,.])1\s*h\b/g,'$11 heure').replace(/(\d)\s*h\b/g,'$1 heures').replace(/(\d+)e\b/g,'$1ième').replace(/€/g,' euros ').replace(/%/g,' pour cent ').replace(/×/g,' fois ').replace(/−/g,' moins ').replace(/–/g,' à ').replace(/\+/g,' plus ').replace(/=/g,' égale ').replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{2BFF}\u{2700}-\u{27BF}\u{FE0F}\u{200D}]/gu,' ').replace(/\s+/g,' ').trim()}
-function say(t,l){
-  if(!('speechSynthesis' in window))return;
+function say(t,l,cb){
+  if(!('speechSynthesis' in window)){if(cb)setTimeout(cb,0);return}
   speechSynthesis.cancel();
   const en=l==='en';
   const u=new SpeechSynthesisUtterance(en?String(t).replace(/\s+/g,' ').trim():clean(t));
   u.lang=en?'en-GB':'fr-FR';const v=en?vEn:vFr;if(v)u.voice=v;
   u.rate=S.slow?0.78:0.95;
+  if(cb){u.onend=cb;u.onerror=cb}
   speechSynthesis.speak(u);
 }
 const stopSay=()=>{if('speechSynthesis' in window)speechSynthesis.cancel()};
@@ -1209,6 +1216,8 @@ function renderAa(){
   <div class="seg">${P(z===0,'setSize(0)')}<span style="font-size:15px">Normale</span></button>${P(z===1,'setSize(1)')}<span style="font-size:18px">Grande</span></button>${P(z===2,'setSize(2)')}<span style="font-size:21px">Très grande</span></button></div>
   <div class="row">${P(!!S.hc,"toggleDisp('hc')")}<span>◐</span><span>Contraste fort</span></button></div>
   <div class="row">${P(!!S.easy,"toggleDisp('easy')")}<span>📖</span><span>Lecture facile</span></button></div>
+  <div class="row">${P(calm(),"toggleCalm()")}<span>🐢</span><span>Rythme calme</span></button></div>
+  <p class="fine">J’écoute avant de répondre. Une pause toutes les 5 questions.</p>
   <div class="row"><button class="ab" onclick="resetDisp()">↩️ Remettre comme avant</button></div>`;
 }
 function toggleAa(e){
@@ -1220,6 +1229,7 @@ function toggleAa(e){
 function closeAa(){$('aa').hidden=true;$('b-comf').setAttribute('aria-expanded','false')}
 function setSize(n){S.size=n;save();applyDisplay();renderAa()}
 function toggleDisp(k){S[k]=!S[k];save();applyDisplay();renderAa()}
+function toggleCalm(){S.calm=!calm();save();renderAa()}
 function resetDisp(){S.size=0;S.hc=false;S.easy=false;save();applyDisplay();renderAa()}
 document.addEventListener('click',e=>{const a=$('aa');if(!a.hidden&&!a.contains(e.target)&&!$('b-comf').contains(e.target))closeAa()},true);
 
@@ -1475,7 +1485,7 @@ function prepQ(q){
 function showQ(){
   stopSay();window.scrollTo(0,0);
   const q=prepQ(cur.qs[cur.i]);
-  cur.tries=0;cur.locked=false;cur.hinted=false;
+  cur.tries=0;cur.locked=false;cur.hinted=false;cur.waiting=false;
   const cls=q.opts.length===2?'duo':'n'+q.opts.length;
   const ol=q.ol||'fr';
   app.innerHTML=`
@@ -1489,7 +1499,8 @@ function showQ(){
     ${q.viz?`<div class="vz">${q.viz}${q.vsay?spk(q.vsay):''}</div>`:''}
     ${q.hear?`<div class="listen"><button class="spk huge" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(q.hear)}" data-l="${q.hl||'fr'}" aria-label="Écouter">🔊</button>${q.show?`<span class="show">${q.show}</span>`:'<span class="show">🎧</span>'}</div>`:''}
     <div class="qline"><span class="big">${q.icon||''}</span><h2>${q.text}</h2>${spk(q.text)}</div>
-    <div class="opts ${cls}">${q.opts.map((o,k)=>`
+    <div id="lis" class="lis" aria-live="polite"></div>
+    <div class="opts ${cls}${calm()?' wait':''}">${q.opts.map((o,k)=>`
       <div class="opt ${o.c||''}" id="o${k}">
         <button class="ans" onclick="pick(${k})"><span class="oi">${o.i||''}</span><span>${o.t}</span></button>
         <button class="spk" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(o.t)}" data-l="${o.l||ol}" aria-label="Écouter">🔊</button>
@@ -1499,11 +1510,30 @@ function showQ(){
     <div id="fb"></div>
   </div>`;
   updBar();
-  if(S.auto){if(q.hear)say(q.hear,q.hl||'fr');else say((q.story?q.story+' ':'')+q.text)}
+  const sp=q.hear?[q.hear,q.hl||'fr']:[(q.story?q.story+' ':'')+q.text,'fr'];
+  if(calm()){
+    cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
+    $('lis').innerHTML='<span>🔊 J’écoute…</span>';
+    hold(sp[0],sp[1],()=>{if(cur&&cur.tk===tk&&cur.waiting)unlockQ()});
+  }else if(S.auto)say(sp[0],sp[1]);
+}
+/* ---------- rythme calme ---------- */
+const calm=()=>S.calm!==false;
+// attend la fin de la voix (ou un délai si la voix est coupée), puis appelle done une seule fois
+function hold(text,lang,done){
+  const ms=Math.min(7000,Math.max(2500,String(text).length*55));
+  let fin=false;const go=()=>{if(fin)return;fin=true;done()};
+  if(S.auto&&'speechSynthesis' in window){say(text,lang,()=>setTimeout(go,400));setTimeout(go,ms*2+2000)}
+  else setTimeout(go,ms);
+}
+function unlockQ(){
+  cur.waiting=false;
+  const o=document.querySelector('.opts');if(o)o.classList.remove('wait');
+  const l=$('lis');if(l)l.innerHTML='<span class="ok">👉 À toi !</span>';
 }
 const PRAISE=["Bravo !","Yes !","Excellent !","Top !","Bien joué !","Gagné !"];
 function hint(){
-  if(cur.locked||cur.hinted)return;
+  if(cur.locked||cur.hinted||cur.waiting)return;
   const q=cur.qs[cur.i];cur.hinted=true;cur.missed.add(q);
   const b=$('hintb');if(b)b.remove();
   if(q.hint){$('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>${q.hint}</p>${spk(q.hint)}</div>`;if(S.auto)say(q.hint);return}
@@ -1514,7 +1544,7 @@ function hint(){
   if(S.auto)say('Une mauvaise réponse est enlevée');
 }
 function pick(k){
-  if(cur.locked)return;
+  if(cur.locked||cur.waiting)return;
   actx();
   const q=cur.qs[cur.i],el=$('o'+k);
   if(k===q.ok){
@@ -1527,7 +1557,6 @@ function pick(k){
     fl.style.left=(r.left+r.width/2)+'px';fl.style.top=(r.top+window.scrollY)+'px';
     document.body.appendChild(fl);setTimeout(()=>fl.remove(),1000);
     confetti(r.left+r.width/2,r.top+r.height/2,first?40:15);
-    if(cur.streak>=3){const t=document.createElement('div');t.className='toast';t.textContent='🔥 série de '+cur.streak+' !';document.body.appendChild(t);setTimeout(()=>t.remove(),1700)}
     feedback(true,q);
   }else{
     cur.tries++;cur.streak=0;cur.missed.add(q);
@@ -1535,8 +1564,15 @@ function pick(k){
     if(q.opts.length===2||cur.tries>=2){
       cur.locked=true;$('o'+q.ok).classList.add('good');feedback(false,q);
     }else{
-      $('fb').innerHTML='<div class="fb retry">💪 Essaie encore !</div>';
-      if(S.auto)say('Essaie encore');
+      if(calm()){
+        cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
+        $('fb').innerHTML='<div class="fb retry">🤔 Prends ton temps…</div>';
+        const h=$('hintb');if(h)h.classList.add('hl');
+        setTimeout(()=>{if(cur&&cur.tk===tk&&!cur.locked){cur.waiting=false;$('fb').innerHTML='<div class="fb retry">💪 Essaie encore !</div>';if(S.auto)say('Essaie encore')}},1800);
+      }else{
+        $('fb').innerHTML='<div class="fb retry">💪 Essaie encore !</div>';
+        if(S.auto)say('Essaie encore');
+      }
     }
   }
 }
@@ -1546,11 +1582,36 @@ function feedback(ok,q){
   $('fb').innerHTML=`<div class="fb ${ok?'ok':'ko'}">
     <div class="fbt">${ok?'🎉':'💡'} <b>${msg}</b></div>
     <div class="why"><p>${q.why}</p>${spk(q.why)}</div>
-    <button class="next" onclick="nextQ()">${lastQ?'🏁 Terminer':'Suivant ➡️'}</button></div>`;
+    <button class="next" id="nxt" onclick="nextQ()" ${calm()?'disabled':''}>${calm()?'🔊 J’écoute…':lastQ?'🏁 Terminer':'Suivant ➡️'}</button></div>`;
   $('fb').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
-  if(S.auto)say((ok?msg+' ':'La bonne réponse : '+q.opts[q.ok].t+'. ')+q.why);
+  const speech=(ok?msg+' ':'La bonne réponse : '+q.opts[q.ok].t+'. ')+q.why;
+  if(calm()){
+    const tk=cur.ftk=(cur.ftk||0)+1;
+    hold(speech,'fr',()=>{if(cur&&cur.ftk===tk){const n=$('nxt');if(n){n.disabled=false;n.textContent=lastQ?'🏁 Terminer':'Suivant ➡️'}}});
+  }else if(S.auto)say(speech);
 }
-function nextQ(){cur.i++;if(cur.i>=cur.qs.length)finish();else showQ()}
+function nextQ(){
+  cur.i++;cur.ftk=(cur.ftk||0)+1;
+  if(cur.i>=cur.qs.length){finish();return}
+  if(calm()&&cur.i%5===0&&cur.qs.length-cur.i>=2){pauseScreen();return}
+  showQ();
+}
+function pauseScreen(){
+  stopSay();window.scrollTo(0,0);
+  const msg='Pause ! Respire un peu. Tu as fait '+cur.i+' questions sur '+cur.qs.length+'. Bravo !';
+  app.innerHTML=`
+  <div class="card endc">
+    <div class="big">🧃</div>
+    <h2>Pause</h2>
+    <p>${cur.i} questions sur ${cur.qs.length}. Bravo ! ${spk(msg)}</p>
+    <div class="btns">
+      <button class="nb go" onclick="showQ()">▶️ On continue</button>
+      <button class="nb" onclick="openSeq('${ctx.bid}','${ctx.sid}')">⬅️ Arrêter</button>
+    </div>
+  </div>`;
+  updBar();
+  if(S.auto)say(msg);
+}
 
 function finish(){
   if(cur.review){finishReview();return}
