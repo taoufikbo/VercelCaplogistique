@@ -314,6 +314,7 @@ body.hc .nd,body.hc .hub{outline:3px solid #000;outline-offset:2px}
 const $=id=>document.getElementById(id);
 const app=$('app');
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const UK='<svg viewBox="0 0 60 40" width="1.35em" height="0.9em" style="vertical-align:-.12em;border-radius:3px" role="img" aria-label="Royaume-Uni"><rect width="60" height="40" fill="#012169"/><path d="M0 0L60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="3"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="13"/><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="8"/></svg>';
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const KEY='mouad-cap-ol-v1';
 let S={stars:{},auto:true,slow:false,fx:true};
@@ -658,7 +659,7 @@ const ORD=(icon,title,steps)=>steps.map((s,k)=>{const n=steps.length,a=steps[k],
 const K=(t,s,p,n)=>({t,s:s||[],p:!!p,n:n||''});
 const fill=(text,a,b,ok,why)=>({icon:'✏️',text,opts:[O(a),O(b)],ok,why});
 const voc=(en,fr,w1,w2)=>({icon:'🎧',hear:en,hl:'en',show:en,text:'Que veut dire ce mot ?',opts:N(fr,w1,w2),ok:0,why:en+' = '+fr+'.'});
-const rev=(fr,en,w1,w2)=>({icon:'🇬🇧',text:'Comment dit-on « '+fr+' » en anglais ?',opts:N(en,w1,w2),ol:'en',ok:0,why:fr+' = '+en+'.'});
+const rev=(fr,en,w1,w2)=>({icon:UK,text:'Comment dit-on « '+fr+' » en anglais ?',opts:N(en,w1,w2),ol:'en',ok:0,why:fr+' = '+en+'.'});
 const lis=(en,fr,w1,w2,why)=>({icon:'🎧',hear:en,hl:'en',text:'Écoute. Qu’est-ce que ça veut dire ?',opts:N(fr,w1,w2),ok:0,why:why||en+' = '+fr+'.'});
 const pic=(icon,text,opts,why)=>({icon,text,opts,ok:0,why});
 
@@ -998,7 +999,7 @@ const BLOCS=[
    vf('💡','Éteindre la lumière en partant économise de l’énergie.',0,'Vrai : un petit geste qui compte.')])]}]},
 
 /* ---------------- 8. ANGLAIS ---------------- */
-{id:'ang',icon:'🇬🇧',name:'Anglais',c:'#0F766E',code:'BC08 · Langue vivante étrangère (niveau A2)',lang:'en',
+{id:'ang',icon:UK,name:'Anglais',c:'#0F766E',code:'BC08 · Langue vivante étrangère (niveau A2)',lang:'en',
  comps:[K('Comprendre la langue orale',['ang2','ang3']),K('Comprendre un document écrit',['ang1','ang4']),K('S’exprimer à l’écrit',[],true,'À travailler en classe'),K('S’exprimer à l’oral en continu',[],true,'À s’entraîner en parlant'),K('Interagir à l’oral',[],true,'À s’entraîner avec un camarade')],
  seqs:[
  {id:'ang1',icon:'📦',name:'Warehouse words',lang:'en',
@@ -1462,10 +1463,6 @@ function home(){
   app.innerHTML=`
   <div class="sign"><h1>🚚 Mon CAP Logistique</h1></div>
   ${resumeHtml()}
-  ${stepHtml('1️⃣','Choisis une matière')}
-  ${ringHtml()}
-  <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
-  <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
   <div class="hero">
     <div class="card"><span class="lab">📅 Aujourd’hui</span><span class="dt">${dateFr()}</span></div>
     <div class="card" id="wx"><span class="lab">🌦️ Météo</span><span class="wxl">Chargement…</span></div>
@@ -1475,6 +1472,10 @@ function home(){
     <div class="card" id="mood">${moodHtml()}</div>
     <div class="card" id="conseil">${conseilHtml()}</div>
   </div>
+  ${stepHtml('1️⃣','Choisis une matière')}
+  ${ringHtml()}
+  <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
+  <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
   ${badgesHtml()}
   <button class="refbtn" onclick="glossaire()">📖 Mots du métier</button>
   <button class="refbtn" onclick="refView()">📋 Le programme (référentiel)</button>
