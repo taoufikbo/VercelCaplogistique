@@ -272,17 +272,19 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .pstep.done{background:#DDF6EC;border:3px solid var(--grn)}
 body.hc .crumbs button,body.hc .crumbs b,body.hc .pstep{outline:3px solid #000;outline-offset:-3px}
 .ring{position:relative;width:min(100%,560px);aspect-ratio:1;margin:6px auto 22px;container-type:inline-size}
-.ring::before{content:"";position:absolute;inset:13%;border-radius:50%;border:3px dashed #d8cfb4}
+.ring::before{content:"";position:absolute;inset:calc(50% - var(--r,37)*1%);border-radius:50%;border:3px dashed #d8cfb4}
 .hub{position:absolute;left:50%;top:50%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:var(--yel);border:4px solid var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4%;line-height:1.15;overflow:hidden}
 .hub .hi{font-size:clamp(20px,8cqw,44px);line-height:1}
 .hub .hb{font-size:clamp(20px,9cqw,46px);line-height:1}
 .hub .hn{font-size:clamp(11px,3.1cqw,17px)}
 .hub .hs{font-size:clamp(11px,3.2cqw,16px)}
-.nd{position:absolute;width:24%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:conic-gradient(var(--c) calc(var(--p)*1%),#E4DCC5 0);box-shadow:0 4px 0 rgba(0,0,0,.18);transition:transform .2s,box-shadow .2s}
+.nd{position:absolute;width:var(--w,24%);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:conic-gradient(var(--c) calc(var(--p)*1%),#E4DCC5 0);box-shadow:0 4px 0 rgba(0,0,0,.18);transition:transform .2s,box-shadow .2s}
 .nd::before{content:"";position:absolute;inset:6px;border-radius:50%;background:#fff}
 .nd>span{position:relative}
 .nd .ni{font-size:clamp(22px,7.5cqw,42px);line-height:1}
-.nd .nt{font-size:clamp(12px,3.4cqw,17px);font-weight:700;line-height:1.1}
+.nd .nt{font-size:clamp(12px,3.4cqw,17px);font-weight:700;line-height:1.1;text-align:center;padding:0 8%;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+button.hub{font:inherit;color:inherit;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.25);transition:transform .2s}
+button.hub:hover,button.hub:focus-visible{transform:translate(-50%,-50%) scale(1.08)}
 .nd:hover,.nd:focus-visible{transform:translate(-50%,-50%) scale(1.2);z-index:5;box-shadow:0 10px 22px rgba(0,0,0,.28)}
 .nd:active{transform:translate(-50%,-50%) scale(1.08)}
 body.hc .nd,body.hc .hub{outline:3px solid #000;outline-offset:2px}
@@ -1444,17 +1446,36 @@ function pathHtml(sq){
 
 /* ---------- accueil : le rond CAP et les matières autour ---------- */
 const SHORT={rec:'Réception',cha:'Chariots',exp:'Expédition',fra:'Français',mat:'Maths',eps:'Sport',pse:'Santé',ang:'Anglais',droit:'Droit'};
-function hubHtml(b){
-  if(!b)return `<span class="hi">🚚</span><b class="hb">CAP</b><span class="hs">Logistique</span><span class="hs">★ ${total()}/${maxStars()}</span>`;
-  return `<span class="hi">${b.icon}</span><b class="hn">${b.name}</b><span class="hs">★ ${blocStars(b)}/${blocMax(b)}</span>`;
+let RING=null;
+function hubSet(k){const h=$('hub');if(!h||!RING)return;h.innerHTML=(k==null||!RING.items[k])?RING.center:RING.items[k]}
+// cfg : {center:{html,onclick?,aria?}, items:[{icon,label,full?,sub?,c,p,onclick,aria}]}
+function ringHtml(cfg){
+  const items=cfg.items,n=items.length,w=n<=4?30:n<=6?28:n<=7?26:24,R=Math.min(37,50-w/2-1);
+  RING={center:cfg.center.html,items:items.map(it=>`<span class="hi">${it.icon}</span><b class="hn">${it.full||it.label}</b><span class="hs">${it.sub||''}</span>`)};
+  const hub=cfg.center.onclick
+    ?`<button class="hub" id="hub" onclick="${cfg.center.onclick}" aria-label="${cfg.center.aria||''}">${cfg.center.html}</button>`
+    :`<div class="hub" id="hub">${cfg.center.html}</div>`;
+  return `<div class="ring" style="--r:${R}">${hub}${items.map((it,i)=>{
+    const a=-Math.PI/2+i*2*Math.PI/n,x=50+R*Math.cos(a),y=50+R*Math.sin(a);
+    return `<button class="nd" style="--c:${it.c};--p:${it.p};--w:${w}%;left:${x.toFixed(2)}%;top:${y.toFixed(2)}%" onclick="${it.onclick}" onmouseenter="hubSet(${i})" onfocus="hubSet(${i})" onmouseleave="hubSet()" onblur="hubSet()" aria-label="${it.aria}"><span class="ni">${it.icon}</span><span class="nt">${it.label}</span></button>`}).join('')}</div>`;
 }
-function hubSet(id){const h=$('hub');if(h)h.innerHTML=hubHtml(id?findBloc(id):null)}
-function ringHtml(){
-  const n=BLOCS.length;
-  return `<div class="ring"><div class="hub" id="hub">${hubHtml()}</div>${BLOCS.map((b,i)=>{
-    const a=-Math.PI/2+i*2*Math.PI/n,x=50+37*Math.cos(a),y=50+37*Math.sin(a),mx=blocMax(b),pc=mx?Math.round(blocStars(b)/mx*100):0;
-    return `<button class="nd" style="--c:${b.c};--p:${pc};left:${x.toFixed(2)}%;top:${y.toFixed(2)}%" onclick="openBloc('${b.id}')" onmouseenter="hubSet('${b.id}')" onfocus="hubSet('${b.id}')" onmouseleave="hubSet()" onblur="hubSet()" aria-label="${b.name}, ${blocStars(b)} étoiles sur ${mx}"><span class="ni">${b.icon}</span><span class="nt">${SHORT[b.id]||b.name}</span></button>`}).join('')}</div>`;
-}
+const pct=(v,m)=>m?Math.round(v/m*100):0;
+const homeRing=()=>({
+  center:{html:`<span class="hi">🚚</span><b class="hb">CAP</b><span class="hs">Logistique</span><span class="hs">★ ${total()}/${maxStars()}</span>`},
+  items:BLOCS.map(b=>({icon:b.icon,label:SHORT[b.id]||b.name,full:b.name,sub:`★ ${blocStars(b)}/${blocMax(b)}`,c:b.c,p:pct(blocStars(b),blocMax(b)),onclick:`openBloc('${b.id}')`,aria:`${b.name}, ${blocStars(b)} étoiles sur ${blocMax(b)}`}))
+});
+const blocRing=b=>({
+  center:{html:`<span class="hi">${b.icon}</span><b class="hn">${b.name}</b><span class="hs">★ ${blocStars(b)}/${blocMax(b)}</span>`},
+  items:b.seqs.map(q=>({icon:q.icon,label:q.name,sub:`★ ${seqStars(q)}/${q.games.length*3}`,c:b.c,p:pct(seqStars(q),q.games.length*3),onclick:`openSeq('${b.id}','${q.id}')`,aria:`${q.name}, ${seqStars(q)} étoiles sur ${q.games.length*3}`}))
+});
+const seqRing=(b,q)=>{
+  const hasF=!!(q.slides&&q.slides.length),seen=!!(S.seen&&S.seen[q.id]);
+  return {
+    center:hasF?{html:`<span class="hi">📘</span><b class="hn">Je révise</b><span class="hs">${seen?'✅ fait':'👆 d’abord'}</span>`,onclick:'fiche(0)',aria:'Je révise'}
+              :{html:`<span class="hi">${q.icon}</span><b class="hn">${q.name}</b>`},
+    items:q.games.map(g=>({icon:g.icon,label:g.name,sub:[1,2,3].map(k=>k<=stars(g)?'★':'☆').join(''),c:g.c,p:pct(stars(g),3),onclick:`play('${g.id}')`,aria:`${g.name}, ${stars(g)} étoiles sur 3`}))
+  };
+};
 
 /* ---------- accueil ---------- */
 function home(){
@@ -1473,7 +1494,7 @@ function home(){
     <div class="card" id="conseil">${conseilHtml()}</div>
   </div>
   ${stepHtml('1️⃣','Choisis une matière')}
-  ${ringHtml()}
+  ${ringHtml(homeRing())}
   <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
   <div class="lvl"><span class="big" style="font-size:34px">${lv[1]}</span><span>${lv[2]}</span>${spk('Ton niveau : '+lv[2])}</div>
   ${badgesHtml()}
@@ -1494,7 +1515,7 @@ function openBloc(bid){
   ${crumbs()}
   <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>${b.icon} ${b.name}</h2>${spk(b.name)}</div>
   ${stepHtml('2️⃣','Choisis un cours')}
-  <div class="grid">${b.seqs.map(s=>`<button class="tile" style="--c:${b.c}" onclick="openSeq('${bid}','${s.id}')"><div class="ti">${s.icon}</div><div class="tn">${s.name}</div>${starsTxt(seqStars(s),s.games.length*3)}</button>`).join('')}</div>
+  ${ringHtml(blocRing(b))}
   <p class="code">${b.code}</p>`;
   updBar();
 }
@@ -1510,8 +1531,7 @@ function openSeq(bid,sid){
   ${goalHtml(s)}
   ${stepHtml('3️⃣','Je révise, puis je joue')}
   ${pathHtml(s)}
-  ${s.slides&&s.slides.length?`<button class="course" onclick="fiche(0)"><span class="big">📘</span> Je révise</button>`:''}
-  <div class="grid">${s.games.map(g=>`<button class="tile" style="--c:${g.c}" onclick="play('${g.id}')"><div class="ti">${g.icon}</div><div class="tn">${g.name}</div><div class="ts">${[1,2,3].map(k=>k<=stars(g)?'<b>★</b>':'★').join('')}</div></button>`).join('')}</div>`;
+  ${ringHtml(seqRing(b,s))}`;
   updBar();
 }
 
