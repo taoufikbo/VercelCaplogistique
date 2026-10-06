@@ -289,6 +289,18 @@ button.hub:hover,button.hub:focus-visible{transform:translate(-50%,-50%) scale(1
 .nd:active{transform:translate(-50%,-50%) scale(1.08)}
 body.hc .nd,body.hc .hub{outline:3px solid #000;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.nd{transition:none}.nd:hover,.nd:focus-visible{transform:translate(-50%,-50%)}}
+.strip{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 8px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 14px;border-radius:999px;background:#fff;border:2px solid #E4DCC5;font-weight:700;font-size:15px;white-space:nowrap}
+span.chip{font-weight:400}
+button.chip:hover{border-color:#2B2B2B}
+button.chip.on{background:#FFF1B8;border-color:#2B2B2B}
+@media(max-width:430px){.strip{gap:6px}.chip{padding:6px 10px;font-size:14px;gap:4px}}
+.pan{margin:0 0 10px}
+.pan .card[hidden]{display:none}
+#hinfo{display:none;align-items:center;gap:10px;margin-left:12px;color:#dfe4ee;font-size:15px}
+#hwx{min-height:44px;padding:0 12px;border-radius:12px;background:#333b4f;color:#fff;font-weight:700}
+@media(min-width:820px){#hinfo{display:flex}.chip.dm{display:none}}
+body.hc .chip{outline:3px solid #000;outline-offset:-3px}
 @media(prefers-reduced-motion:reduce){#side,#side .chev{transition:none}}
 </style>
 </head>
@@ -300,6 +312,7 @@ body.hc .nd,body.hc .hub{outline:3px solid #000;outline-offset:2px}
   <button class="ib" id="b-slow" onclick="tog('slow')" title="Voix lente" aria-label="Voix lente">🐢</button>
   <button class="ib" id="b-comf" onclick="toggleAa(event)" title="Réglages d'affichage" aria-label="Réglages d'affichage" aria-haspopup="true" style="font-size:18px;font-weight:700">Aa</button>
   <button class="ib" id="b-fx" onclick="tog('fx')" title="Sons du jeu" aria-label="Sons du jeu">🎵</button>
+  <span id="hinfo"><span id="hdate"></span><button id="hwx" onclick="openWx()" aria-label="Météo">🌦️ …</button></span>
   <span id="tot">★ 0/24</span>
 </header>
 <div id="layout">
@@ -1229,6 +1242,8 @@ function updBar(){
   $('b-slow').classList.toggle('off',!S.slow);
   $('b-fx').classList.toggle('off',!S.fx);
   applyDisplay();
+  const hd=$('hdate');if(hd)hd.textContent=dateFr().replace(/ \d{4}$/,'');
+  renderWx();
 }
 function tog(k){S[k]=!S[k];save();updBar();if(k==='auto'&&!S.auto)stopSay();if(k==='fx'&&S.fx)beepOk()}
 
@@ -1276,7 +1291,7 @@ function moodHtml(){
   if(cur)return `<span class="lab">💬 Mon humeur du jour</span><div class="jrow"><span style="font-size:34px">${cur.i}</span><b>${cur.t}</b></div><p class="mmsg">${cur.m}</p><div class="jrow">${spk(cur.m)}<button class="mini" onclick="setMood('')">✏️ Changer</button></div>`;
   return `<span class="lab">💬 Comment ça va aujourd’hui ?</span><div class="moods">${MOODS.map(x=>`<button class="mb" onclick="setMood('${x.v}')"><span>${x.i}</span>${x.t}</button>`).join('')}</div><p class="fine">Tu n’es pas obligé de répondre. Ça reste sur ton appareil, personne ne le voit.</p>`;
 }
-function setMood(v){if(v)S.mood={d:dayKey(),v};else delete S.mood;save();$('mood').innerHTML=moodHtml();if(v&&S.auto)say(MOODS.find(x=>x.v===v).m)}
+function setMood(v){if(v)S.mood={d:dayKey(),v};else delete S.mood;save();$('mood').innerHTML=moodHtml();{const c=$('c-mood');if(c)c.innerHTML=moodChip()}if(v&&S.auto)say(MOODS.find(x=>x.v===v).m)}
 
 const CONSEILS=[
 "Un cariste vérifie toujours son chariot avant de démarrer.",
@@ -1398,24 +1413,46 @@ function newJoke(){stopSay();let n;do{n=Math.floor(Math.random()*BLAGUES.length)
 const WX={d:null,k:'',t:0};
 const WCODE=c=>c===0?['☀️','Grand soleil']:c<=2?['🌤️','Éclaircies']:c===3?['☁️','Nuageux']:c<=48?['🌫️','Brouillard']:c<=57?['🌦️','Bruine']:c<=67?['🌧️','Pluie']:c<=77?['❄️','Neige']:c<=82?['🌦️','Averses']:c<=86?['❄️','Neige']:['⛈️','Orage'];
 function wxTip(c,t){return c>=95?'⛈️ Orage : reste à l’abri.':(c>=51&&c<=67)||(c>=80&&c<=82)?'☔ Prends un parapluie ou une veste de pluie.':c>=71&&c<=86?'🧤 Il neige : couvre-toi bien.':t<=5?'🧥 Il fait froid : mets une veste chaude.':t>=28?'💧 Il fait chaud : pense à boire de l’eau.':'👍 Bonne journée pour aller en cours !'}
+let wxErr=false;
+function renderWx(){
+  const loc=S.loc||{name:'Paris'};let chip='🌦️ …',panel='<span class="lab">🌦️ Météo</span><span class="wxl">Chargement…</span>';
+  if(WX.d){
+    const c=WX.d.current,d=WX.d.daily,[ic,tx]=WCODE(c.weather_code),t=Math.round(c.temperature_2m);
+    chip=`${ic} ${t} °C`;
+    panel=`<span class="lab">🌦️ Météo · ${loc.name}</span>
+    <div class="wxm"><span class="wxi">${ic}</span><div><div class="wxt">${t} °C</div><div class="wxl">${tx} · min ${Math.round(d.temperature_2m_min[0])}° / max ${Math.round(d.temperature_2m_max[0])}°</div></div></div>
+    <div class="tip">${wxTip(c.weather_code,t)}</div>
+    <button class="mini" onclick="wxPlace()">${S.loc?'🏙️ Revenir à Paris':'📍 Ma position'}</button>`;
+  }else if(wxErr){
+    chip='🌦️ ?';
+    panel='<span class="lab">🌦️ Météo</span><span class="wxl">Météo indisponible pour le moment (pas de connexion ?).</span><button class="mini" onclick="loadWx()">🔄 Réessayer</button>';
+  }
+  ['hwx','c-wx'].forEach(id=>{const e=$(id);if(e)e.innerHTML=chip});
+  const el=$('wx');if(el)el.innerHTML=panel;
+}
 async function loadWx(){
   const loc=S.loc||{lat:48.8566,lon:2.3522,name:'Paris'},k=loc.lat+','+loc.lon;
+  if(WX.k!==k)WX.d=null;
   try{
-    if(!(WX.d&&WX.k===k&&Date.now()-WX.t<9e5)){
+    if(!(WX.d&&Date.now()-WX.t<9e5)){
       const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
       if(!r.ok)throw new Error(r.status);
       WX.d=await r.json();WX.k=k;WX.t=Date.now();
     }
-    const el=$('wx');if(!el)return;
-    const c=WX.d.current,d=WX.d.daily,[ic,tx]=WCODE(c.weather_code),t=Math.round(c.temperature_2m);
-    el.innerHTML=`<span class="lab">🌦️ Météo · ${loc.name}</span>
-    <div class="wxm"><span class="wxi">${ic}</span><div><div class="wxt">${t} °C</div><div class="wxl">${tx} · min ${Math.round(d.temperature_2m_min[0])}° / max ${Math.round(d.temperature_2m_max[0])}°</div></div></div>
-    <div class="tip">${wxTip(c.weather_code,t)}</div>
-    <button class="mini" onclick="wxPlace()">${S.loc?'🏙️ Revenir à Paris':'📍 Ma position'}</button>`;
-  }catch(e){
-    const el=$('wx');if(el)el.innerHTML=`<span class="lab">🌦️ Météo</span><span class="wxl">Météo indisponible pour le moment (pas de connexion ?).</span><button class="mini" onclick="loadWx()">🔄 Réessayer</button>`;
-  }
+    wxErr=false;
+  }catch(e){wxErr=!WX.d}
+  renderWx();
 }
+const PANS=['wx','joke','mood','conseil'];
+function showPan(id){
+  const el=$(id);if(!el)return;
+  const open=el.hidden;
+  PANS.forEach(k=>{const e=$(k);if(e)e.hidden=true;const c=$('c-'+k);if(c){c.classList.remove('on');c.setAttribute('aria-expanded','false')}});
+  if(open){el.hidden=false;const c=$('c-'+id);if(c){c.classList.add('on');c.setAttribute('aria-expanded','true')}}
+}
+function openWx(){if(!$('wx'))home();showPan('wx')}
+const dateShort=()=>new Date().toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+function moodChip(){const m=S.mood&&S.mood.d===dayKey()?MOODS.find(x=>x.v===S.mood.v):null;return m?'💬 '+m.i:'💬 Humeur'}
 function wxPlace(){
   if(S.loc){delete S.loc;save();loadWx();return}
   if(!navigator.geolocation){alert('Ton appareil ne donne pas sa position.');return}
@@ -1483,16 +1520,20 @@ function home(){
   const t=total(),m=maxStars(),pct=t/m,lv=level(pct);
   app.innerHTML=`
   <div class="sign"><h1>🚚 Mon CAP Logistique</h1></div>
+  <div class="strip">
+    <span class="chip dm" id="c-date">📅 ${dateShort()}</span>
+    <button class="chip dm" id="c-wx" onclick="showPan('wx')" aria-expanded="false">🌦️ …</button>
+    <button class="chip" id="c-joke" onclick="showPan('joke')" aria-expanded="false">😄 Blague</button>
+    <button class="chip" id="c-mood" onclick="showPan('mood')" aria-expanded="false">${moodChip()}</button>
+    <button class="chip" id="c-conseil" onclick="showPan('conseil')" aria-expanded="false">🦺 Conseil</button>
+  </div>
+  <div class="hero pan">
+    <div class="card" id="wx" hidden></div>
+    <div class="card" id="joke" hidden>${jokeHtml()}</div>
+    <div class="card" id="mood" hidden>${moodHtml()}</div>
+    <div class="card" id="conseil" hidden>${conseilHtml()}</div>
+  </div>
   ${resumeHtml()}
-  <div class="hero">
-    <div class="card"><span class="lab">📅 Aujourd’hui</span><span class="dt">${dateFr()}</span></div>
-    <div class="card" id="wx"><span class="lab">🌦️ Météo</span><span class="wxl">Chargement…</span></div>
-    <div class="card" id="joke">${jokeHtml()}</div>
-  </div>
-  <div class="hero">
-    <div class="card" id="mood">${moodHtml()}</div>
-    <div class="card" id="conseil">${conseilHtml()}</div>
-  </div>
   ${stepHtml('1️⃣','Choisis une matière')}
   ${ringHtml(homeRing())}
   <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
