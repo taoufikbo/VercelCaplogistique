@@ -259,7 +259,12 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .opts.wait ~ .hintb{opacity:.5;pointer-events:none}
 .hintb.hl{border-color:#2B2B2B;box-shadow:0 0 0 4px #FFF1B8}
 .next:disabled{opacity:.55;cursor:default;box-shadow:none}
-.sign+.course{margin-top:12px;margin-bottom:12px}
+.top{display:flex;gap:10px;align-items:stretch}
+.top .sign{flex:1;min-width:0}
+.rsm{flex:none;width:92px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--yel);border:4px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 var(--ink);padding:4px;line-height:1.1;font-weight:700}
+.rsm .ri{font-size:26px}.rsm .rt{font-size:13px}.rsm .rn{font-size:22px}
+.rsm:active{transform:translateY(3px);box-shadow:none}
+body.hc .rsm{outline:3px solid #000;outline-offset:-3px}
 .crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:0 0 10px;font-size:15px}
 .crumbs button{min-height:44px;padding:4px 10px;border-radius:12px;background:#fff;border:2px solid #E4DCC5;font-weight:700;font-size:15px}
 .crumbs b{display:inline-flex;align-items:center;min-height:44px;padding:4px 10px;border-radius:12px;background:#FFF1B8;border:2px solid #2B2B2B;font-size:15px}
@@ -1473,7 +1478,7 @@ function resumeHtml(){
   const l=S.last;if(!l)return '';
   let b,sq;try{b=findBloc(l.bid);sq=b&&findSeq(l.bid,l.sid)}catch(e){}
   if(!sq)return '';
-  return `<button class="course" onclick="openSeq('${l.bid}','${l.sid}')"><span class="big">▶️</span> Reprendre : ${sq.icon} ${sq.name}</button>`;
+  return `<button class="rsm" onclick="openSeq('${l.bid}','${l.sid}')" title="Reprendre : ${sq.name}" aria-label="Reprendre : ${sq.name}"><span class="ri">▶️</span><span class="rt">Reprendre</span><span class="rn">${sq.icon}</span></button>`;
 }
 function pathHtml(sq){
   const hasF=!!(sq.slides&&sq.slides.length),seen=!hasF||!!(S.seen&&S.seen[sq.id]);
@@ -1519,7 +1524,7 @@ function home(){
   stopSay();window.scrollTo(0,0);ctx={bid:null,sid:null};
   const t=total(),m=maxStars(),pct=t/m,lv=level(pct);
   app.innerHTML=`
-  <div class="sign"><h1>🚚 Mon CAP Logistique</h1></div>
+  <div class="top">${resumeHtml()}<div class="sign"><h1>🚚 Mon CAP Logistique</h1></div></div>
   <div class="strip">
     <span class="chip dm" id="c-date">📅 ${dateShort()}</span>
     <button class="chip dm" id="c-wx" onclick="showPan('wx')" aria-expanded="false">🌦️ …</button>
@@ -1533,7 +1538,6 @@ function home(){
     <div class="card" id="mood" hidden>${moodHtml()}</div>
     <div class="card" id="conseil" hidden>${conseilHtml()}</div>
   </div>
-  ${resumeHtml()}
   ${stepHtml('1️⃣','Choisis une matière')}
   ${ringHtml(homeRing())}
   <div class="pitch" aria-label="Progression : ${t} étoiles sur ${m}"><span class="ball" id="ball">⚽</span><span class="goal">🥅</span></div>
