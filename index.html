@@ -1891,12 +1891,14 @@ function finishMission(){
 }
 /* ---------- récompenses : tickets, sorties réelles (validées par un adulte), bonus dans l'application ---------- */
 // 1 ticket par mission du jour (une seule fois par jour) + 2 tickets à chaque palier de maîtrise. Les tickets ne se perdent jamais.
-const DEFAULT_CAT=()=>[{id:'bowling',icon:'🎳',name:'Sortie bowling',cost:7,on:true},{id:'cinema',icon:'🎬',name:'Sortie cinéma',cost:10,on:true}];
+const DEFAULT_CAT=()=>[{id:'bowling',icon:'🎳',name:'Sortie bowling',cost:7,on:true},{id:'cinema',icon:'🎬',name:'Sortie cinéma',cost:10,on:true},{id:'glace',icon:'🍦',name:'Une glace',cost:3,on:true}];
 function ensureRw(){
   const r=S.rw=Object.assign({goal:'bowling',hist:[],films:[],best:0,ask:null},S.rw||{});
   r.tk=Object.assign({e:0,s:0},r.tk||{});
   r.bonus=Object.assign({d:-1,bowl:false,film:false,fid:null},r.bonus||{});
   if(!Array.isArray(r.cat)||!r.cat.length)r.cat=DEFAULT_CAT();
+  // les récompenses de base (non supprimables) sont ajoutées si elles manquent, ex. sauvegarde créée avant la glace
+  DEFAULT_CAT().forEach(d=>{if(!r.cat.some(c=>c.id===d.id))r.cat.push(d)});
   save();
 }
 ensureRw();

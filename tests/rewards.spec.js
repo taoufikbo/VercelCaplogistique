@@ -25,10 +25,10 @@ async function doMission(page) {
 }
 const rw = page => page.evaluate(() => JSON.parse(JSON.stringify(S.rw)));
 
-test('catalogue par défaut : bowling et cinéma, 0 ticket', async ({ page }) => {
+test('catalogue par défaut : bowling, cinéma et glace, 0 ticket', async ({ page }) => {
   await seed(page); await page.goto(URL);
   const r = await rw(page);
-  expect(r.cat.map(c => c.id)).toEqual(['bowling', 'cinema']);
+  expect(r.cat.map(c => [c.id, c.cost])).toEqual([['bowling', 7], ['cinema', 10], ['glace', 3]]);
   expect(r.tk).toEqual({ e: 0, s: 0 });
   await expect(page.locator('.prog')).toContainText('Récompenses');
 });
@@ -73,7 +73,7 @@ test('élève : « Je demande » quand il y a assez de tickets, puis validation 
   await seed(page); await page.goto(URL);
   await page.evaluate(() => { S.rw.tk.e = 7; save(); recompenses(); });
   await expect(page.getByText('Encore 3 tickets')).toBeVisible();          // cinéma : 7 sur 10
-  await page.getByRole('button', { name: /Je demande à un adulte/ }).click();
+  await page.locator('.rwc.main').getByRole('button', { name: /Je demande à un adulte/ }).click();
   await expect(page.getByText('J’ai demandé. Un adulte va valider.')).toBeVisible();
   expect((await rw(page)).ask).toBe('bowling');
 
@@ -136,7 +136,7 @@ test('adulte : régler le prix, cacher, ajouter et supprimer une récompense', a
 test('objectif : on peut le changer, et il reste valable si on cache la récompense', async ({ page }) => {
   await seed(page); await page.goto(URL);
   await page.evaluate(() => recompenses());
-  await page.getByRole('button', { name: /C’est mon objectif/ }).click();
+  await page.locator('.rwc', { hasText: 'Sortie cinéma' }).getByRole('button', { name: /C’est mon objectif/ }).click();
   expect((await rw(page)).goal).toBe('cinema');
   await expect(page.locator('.rwc.main')).toContainText('Sortie cinéma');
   await page.evaluate(() => { adultOK = true; adultToggle('cinema'); recompenses(); });
@@ -225,6 +225,36 @@ test('migration : une sauvegarde v2 existante sans récompenses reçoit le catal
   await page.goto(URL);
   const r = await page.evaluate(() => ({ stars: S.stars, rw: S.rw }));
   expect(r.stars.quiz).toBe(3);
-  expect(r.rw.cat.length).toBe(2);
+  expect(r.rw.cat.length).toBe(3);
   expect(r.rw.tk).toEqual({ e: 0, s: 0 });
+});
+
+test('une sauvegarde avec bowling et cinéma reçoit la glace, sans toucher aux tickets ni aux prix réglés', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('__seeded')) {
+      localStorage.setItem('__seeded', '1');
+      localStorage.setItem('mouad-cap-ol-v2', JSON.stringify({ schema: 2, stars: {}, qm: {}, auto: false, calm: false,
+        rw: { tk: { e: 5, s: 1 }, goal: 'cinema', cat: [{ id: 'bowling', icon: '🎳', name: 'Sortie bowling', cost: 9, on: true }, { id: 'cinema', icon: '🎬', name: 'Sortie cinéma', cost: 10, on: false }], hist: [], films: [], best: 0, ask: null } }));
+    }
+  });
+  await page.goto(URL);
+  const r = await page.evaluate(() => S.rw);
+  expect(r.cat.map(c => c.id)).toEqual(['bowling', 'cinema', 'glace']);
+  expect(r.cat[0].cost).toBe(9);
+  expect(r.cat[1].on).toBe(false);
+  expect(r.tk).toEqual({ e: 5, s: 1 });
+  expect(r.goal).toBe('cinema');
+});
+
+test('glace : 3 tickets, atteinte dès le 3e jour de mission, validation par un adulte', async ({ page }) => {
+  await seed(page); await page.goto(URL);
+  for (let d = 0; d < 3; d++) { await page.evaluate(d => { window.__day = 1100 + d; }, d); await doMission(page); }
+  expect(await page.evaluate(() => tkBal())).toBe(3);
+  await page.evaluate(() => recompenses());
+  await page.locator('.rwc', { hasText: 'Une glace' }).getByRole('button', { name: /Je demande à un adulte/ }).click();
+  expect((await rw(page)).ask).toBe('glace');
+  await page.evaluate(() => { adultOK = true; adultValidate('glace'); });
+  const r = await rw(page);
+  expect(r.tk).toEqual({ e: 3, s: 3 });
+  expect(r.hist[0]).toMatchObject({ id: 'glace', c: 3 });
 });
