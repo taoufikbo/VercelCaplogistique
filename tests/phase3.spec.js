@@ -26,7 +26,7 @@ test('accueil : 3 horizons visibles (aujourd’hui, ma séquence, mon CAP)', asy
   await expect(prog).toContainText('Mon CAP');
   await expect(prog.locator('.pips i')).toHaveCount(8);
   await expect(prog.locator('.pips i.on')).toHaveCount(0);
-  await expect(prog.locator('[role=progressbar]')).toHaveCount(2);
+  await expect(prog.locator('[role=progressbar]')).toHaveCount(3);
 });
 
 test('aujourd’hui : la jauge de 8 pas se remplit à chaque réponse et le ✔ apparaît à la fin de la mission', async ({ page }) => {

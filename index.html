@@ -285,6 +285,32 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .opts2 .ab[aria-pressed=true]{background:#FFF1B8;border-color:var(--ink)}
 .opts2 .ab:disabled{opacity:.55}
 .fresh{font-weight:700;margin:6px 0}
+.gain{font-size:22px;font-weight:700;color:#0e7a55;margin:6px 0}
+.giftb{margin:12px 0;padding:10px;border-radius:16px;background:#FFF1B8;border:3px solid var(--ink)}
+.giftb p{margin:0 0 6px}
+.rwt{margin:18px 0 8px;font-size:19px}
+.tkc{display:flex;align-items:center;gap:14px}
+.rwc{margin-top:8px}.rwc.main{border:4px solid var(--grn)}
+.rwc .bar{margin:8px 0 10px}
+.rwc .nb,.giftb .nb{height:auto;min-height:52px;padding:8px 16px;line-height:1.2}
+.rwh{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.arow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}
+.arow .ab{min-height:44px;padding:4px 12px;border-radius:12px;background:#EEF1F5;border:3px solid #cfd6e0;font-weight:700;font-size:16px}
+.arow .ab[aria-pressed=true]{background:#FFF1B8;border-color:var(--ink)}
+.bilan .ab{min-height:44px;padding:2px 10px;border-radius:12px;background:#EEF1F5;border:3px solid #cfd6e0;font-weight:700;font-size:15px}
+.lane{background:#E8C58A;border:4px solid var(--ink);border-radius:14px;padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.prow{display:flex;gap:14px}
+.pin{display:block;width:22px;height:32px;border-radius:45% 45% 35% 35%;background:#fff;border:3px solid var(--ink);transition:transform .4s,opacity .4s}
+.pin.down{opacity:.12;transform:rotate(80deg) translateY(10px)}
+.aim{position:relative;height:46px;margin:12px 0 4px;background:#d8cfb4;border:3px solid var(--ink);border-radius:23px}
+.aim .mid{position:absolute;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;background:var(--grn)}
+.aim .bl{position:absolute;left:50%;top:3px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:var(--ink);border:3px solid #fff;box-shadow:0 0 0 2px var(--ink)}
+.scr{background:#16181d;color:#fff;border-radius:18px;padding:0 0 18px;text-align:center;border:4px solid var(--ink);overflow:hidden}
+.strip2{height:18px;background:repeating-linear-gradient(90deg,#16181d 0 14px,#f4f1e8 14px 24px);opacity:.85}
+.scr .fe{font-size:96px;line-height:1.3;padding-top:14px;animation:fadein .5s}
+.scr .fc{font-size:22px;line-height:1.4;margin:6px 16px 0;font-weight:700}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.scr .fe{animation:none}.pin{transition:none}}
 .bilan{list-style:none;margin:10px 0;padding:0;text-align:left;font-size:18px;line-height:1.5}
 .bilan li{margin:6px 0}
 .mission:active{transform:translateY(3px);box-shadow:none}
@@ -1267,7 +1293,7 @@ function renderNav(){
   if(ctx.bid)navOpen=ctx.bid;
   const homeAct=!ctx.bid&&!ctx.v;
   const b0=ctx.bid&&findBloc(ctx.bid),s0=ctx.sid&&findSeq(ctx.bid,ctx.sid);
-  const here=ctx.v==='moi'?'🙋 Moi':ctx.v==='ref'?'📋 Le programme':ctx.v==='glo'?'📖 Mots du métier':b0?b0.icon+' '+b0.name+(s0?'<br>➡️ '+s0.icon+' '+s0.name:''):'🏠 Accueil';
+  const here=ctx.v==='rw'?'🎁 Récompenses':ctx.v==='adult'?'🔒 Adulte':ctx.v==='moi'?'🙋 Moi':ctx.v==='ref'?'📋 Le programme':ctx.v==='glo'?'📖 Mots du métier':b0?b0.icon+' '+b0.name+(s0?'<br>➡️ '+s0.icon+' '+s0.name:''):'🏠 Accueil';
   $('side').innerHTML=`<div class="here"><b>📍 Tu es ici</b>${here}</div>
   <div class="nh">Mes matières</div><ul>
   <li><button class="nl ${homeAct?'act':''}" onclick="navGo(home)"><span class="ic">🏠</span><span class="tx">Accueil</span></button></li>
@@ -1562,7 +1588,7 @@ const seqRing=(b,q)=>{
 
 /* ---------- accueil ---------- */
 function home(){
-  stopSay();window.scrollTo(0,0);ctx={bid:null,sid:null};
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null};
   const t=total(),m=maxStars(),pct=t/m,lv=level(pct);
   app.innerHTML=`
   <div class="top"><div class="sign"><h1>🚚 Mon CAP Logistique</h1></div></div>
@@ -1599,7 +1625,7 @@ function pauseZone(){home();const d=$('pausez');if(d){d.open=true;d.scrollIntoVi
 
 /* ---------- matière ---------- */
 function openBloc(bid){
-  stopSay();window.scrollTo(0,0);ctx={bid,sid:null};
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid,sid:null};
   const b=findBloc(bid);
   app.innerHTML=`
   ${crumbs()}
@@ -1616,7 +1642,7 @@ function freshLine(sq){
   return f?`<p class="fresh">${f.icon} ${f.txt}${f.n?' : '+f.n+' question'+(f.n>1?'s':''):''} · ${m} % maîtrisé</p>`:'';
 }
 function openSeq(bid,sid){
-  stopSay();window.scrollTo(0,0);ctx={bid,sid};
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid,sid};
   S.last={bid,sid};save();
   const b=findBloc(bid),s=findSeq(bid,sid);
   app.innerHTML=`
@@ -1712,7 +1738,9 @@ function noteMastery(){
   if(m>old){
     S.maxMas=m;
     const nw=[...AV_ICONS,...AV_COLS].filter(x=>x[2]>old&&x[2]<=m);
-    if(nw.length)toast('🎉 Nouveau pour mon cariste !');
+    const pal=MIL.filter(x=>x>old&&x<=m).length;
+    if(pal){addTk(2*pal);toast('🎟️ +'+2*pal+' tickets : je maîtrise '+m+' questions !')}
+    else if(nw.length)toast('🎉 Nouveau pour mon cariste !');
   }
 }
 function recordQ(q,ok){
@@ -1798,6 +1826,7 @@ function progHtml(){
     <button class="avb" onclick="moi()" aria-label="Moi : mon cariste et mon moment">${avHtml()}<span>Moi${S.when?`<small style="display:block;font-weight:400;font-size:14px">📌 ${S.when}</small>`:'<small style="display:block;font-weight:400;font-size:14px">📌 Choisir mon moment</small>'}</span></button>
     <div class="pr"><b>☀️ Aujourd’hui</b><span class="tx"><span class="pips" role="img" aria-label="Aujourd’hui : ${Math.min(n,MISSION_MAX)} questions sur ${MISSION_MAX}">${pips}</span></span><span>${done?'✔':''}</span></div>
     <button class="pr" onclick="openSeq('${sq.id?(allSeqs().find(x=>x.sq===sq).b.id):''}','${sq.id}')"><b>📘 Ma séquence</b><span class="tx">${sq.icon} ${sq.name}<small>${sm} % maîtrisé${f?' · '+f.icon+' '+f.txt:''}</small><span class="bar" role="progressbar" aria-valuenow="${sm}" aria-valuemin="0" aria-valuemax="100" aria-label="Maîtrise de la séquence"><i style="width:${sm}%"></i></span></span></button>
+    ${rwRow()}
     <button class="pr" onclick="refView()"><b>🎓 Mon CAP</b><span class="tx">${cs.ok} compétence${cs.ok>1?'s':''} sur ${cs.n}<small>maîtrisée${cs.ok>1?'s':''} · le chemin se fait pas à pas</small><span class="bar" role="progressbar" aria-valuenow="${cs.n?Math.round(cs.ok/cs.n*100):0}" aria-valuemin="0" aria-valuemax="100" aria-label="Compétences du CAP maîtrisées"><i style="width:${cs.n?Math.round(cs.ok/cs.n*100):0}%"></i></span></span></button>
   </div>`;
 }
@@ -1827,7 +1856,12 @@ function moi(keep){
 function finishMission(){
   stopSay();window.scrollTo(0,0);
   const t=dayNum(),n=cur.qs.length,ok=cur.first;
+  const firstToday=!(S.mission&&S.mission.day===t);   // 1 seul ticket par jour : « Continuer quand même » n'en donne pas
   S.mission={day:t,n,ok};save();
+  if(firstToday){
+    addTk(1);const nf=unlockFilm();
+    S.rw.bonus={d:t,bowl:false,film:false,fid:nf?nf.id:FILMS[t%FILMS.length].id};save();
+  }
   const tom=[...QIDX.values()].filter(e=>S.qm[e.q.id]&&S.qm[e.q.id].due<=t+1).length;
   const mas=[...QIDX.values()].filter(e=>S.qm[e.q.id]&&S.qm[e.q.id].b>=3).length;
   const l1=`✔ J’ai réussi ${ok} question${ok>1?'s':''} du premier coup sur ${n}.`,
@@ -1840,9 +1874,13 @@ function finishMission(){
     <h2>Mission terminée ✔</h2>
     <p><b>À demain !</b> ${spk(say_)}</p>
     <ul class="bilan"><li>${l1}</li><li>${l2}</li><li>${l3}</li></ul>
+    ${firstToday?`<p class="gain" role="status">🎟️ +1 ticket · j’en ai ${tkBal()}</p>`:''}
+    ${goalLine()}
+    ${bonusHtml()}
     <div class="btns">
       <button class="nb go" onclick="home()">🏠 Accueil</button>
       <button class="nb" onclick="pauseZone()">😄 Pause</button>
+      <button class="nb" onclick="recompenses()">🎁 Récompenses</button>
     </div>
     ${S.when?'':`<div id="whenbox" style="margin-top:12px">${whenInner()}</div>`}
     <button class="mini" style="display:block;margin:14px auto 0" onclick="startMission()">Continuer quand même</button>
@@ -1850,6 +1888,213 @@ function finishMission(){
   updBar();
   beepOk();confetti(innerWidth/2,innerHeight/3,20);
   if(S.auto)setTimeout(()=>say(say_),500);
+}
+/* ---------- récompenses : tickets, sorties réelles (validées par un adulte), bonus dans l'application ---------- */
+// 1 ticket par mission du jour (une seule fois par jour) + 2 tickets à chaque palier de maîtrise. Les tickets ne se perdent jamais.
+const DEFAULT_CAT=()=>[{id:'bowling',icon:'🎳',name:'Sortie bowling',cost:7,on:true},{id:'cinema',icon:'🎬',name:'Sortie cinéma',cost:10,on:true}];
+function ensureRw(){
+  const r=S.rw=Object.assign({goal:'bowling',hist:[],films:[],best:0,ask:null},S.rw||{});
+  r.tk=Object.assign({e:0,s:0},r.tk||{});
+  r.bonus=Object.assign({d:-1,bowl:false,film:false,fid:null},r.bonus||{});
+  if(!Array.isArray(r.cat)||!r.cat.length)r.cat=DEFAULT_CAT();
+  save();
+}
+ensureRw();
+const MIL=[5,10,20,35,50,75,100,150,200,300];       // paliers de maîtrise (questions en boîte 3+)
+const tkBal=()=>S.rw.tk.e-S.rw.tk.s;
+const catOn=()=>S.rw.cat.filter(c=>c.on);
+const goalItem=()=>catOn().find(c=>c.id===S.rw.goal)||catOn()[0]||null;
+function addTk(n){S.rw.tk.e+=n;save()}
+const rnd=n=>Math.floor(Math.random()*n);
+const dateFr2=()=>new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+const FILMS=[
+ {id:'f1',icon:'🦺',title:'Léo et ses chaussures',steps:[['🏭','Léo arrive à l’entrepôt.'],['👟','Oups ! Il a oublié ses chaussures de sécurité.'],['🧑‍🏭','Son collègue Sam lui dit : « Va les mettre avant d’entrer. »'],['🦺','Léo met son gilet, ses gants et ses chaussures.'],['✅','Léo travaille en sécurité. Bravo Léo !']]},
+ {id:'f2',icon:'📦',title:'Premier entré, premier sorti',steps:[['🚚','Nora reçoit des cartons de lait.'],['📅','Elle regarde les dates. Les vieux cartons sont devant.'],['⬅️','Elle range les nouveaux cartons derrière les anciens.'],['🛒','Un client arrive : on sort d’abord les plus anciens.'],['✅','C’est la règle FIFO. Rien n’est jeté !']]},
+ {id:'f3',icon:'📝',title:'Le colis abîmé',steps:[['🚛','Inès décharge un camion.'],['📦','Un colis est écrasé !'],['📸','Elle prend une photo du colis.'],['📝','Elle écrit une réserve sur le bon de livraison.'],['🙋','Elle prévient son responsable. Bien joué Inès !']]},
+ {id:'f4',icon:'🚜',title:'Tom et le chariot',steps:[['🚜','Tom conduit son chariot dans l’allée.'],['👀','Avant de reculer, il regarde derrière lui.'],['📣','Au croisement, il klaxonne doucement.'],['🚶','Un collègue traverse : Tom s’arrête.'],['✅','Personne n’est blessé. Merci Tom !']]}
+];
+function unlockFilm(){const nx=FILMS.find(f=>!S.rw.films.includes(f.id));if(nx){S.rw.films.push(nx.id);save();return nx}return null}
+function goalLine(){
+  const g=goalItem();if(!g)return '';
+  const b=Math.min(tkBal(),g.cost),p=Math.round(b/g.cost*100);
+  return `<p class="sm">${g.icon} ${esc(g.name)} : ${b} sur ${g.cost} tickets</p><div class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100" aria-label="Tickets pour ${esc(g.name)}"><i style="width:${p}%"></i></div>`;
+}
+function bonusHtml(){
+  const bn=S.rw.bonus;if(bn.d!==dayNum())return '';
+  const b=[];
+  if(!bn.bowl)b.push(`<button class="nb go" onclick="miniBowl()">🎳 Bonus bowling</button>`);
+  if(!bn.film)b.push(`<button class="nb go" onclick="filmPlay('${bn.fid}',true)">🎬 Séance du jour</button>`);
+  return b.length?`<div class="giftb"><p><b>🎁 Mon cadeau du jour</b></p><div class="btns">${b.join('')}</div></div>`:'';
+}
+const rwRow=()=>{
+  const g=goalItem(),b=tkBal(),p=g?Math.round(Math.min(b,g.cost)/g.cost*100):0;
+  return `<button class="pr" onclick="recompenses()"><b>🎁 Récompenses</b><span class="tx">🎟️ ${b} ticket${b>1?'s':''}${g?`<small>${g.icon} ${esc(g.name)} : ${Math.min(b,g.cost)} sur ${g.cost}</small><span class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100" aria-label="Tickets pour ${esc(g.name)}"><i style="width:${p}%"></i></span>`:''}</span></button>`;
+};
+// ---- écran élève
+let adultOK=false;
+function recompenses(){
+  adultOK=false;stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null,v:'rw'};
+  const b=tkBal(),g=goalItem(),bn=S.rw.bonus,t=dayNum();
+  const others=catOn().filter(c=>c!==g);
+  const card=(c,main)=>{
+    const p=Math.round(Math.min(b,c.cost)/c.cost*100),can=b>=c.cost;
+    return `<div class="card rwc ${main?'main':''}"><div class="rwh"><span class="big">${c.icon}</span><div><b>${esc(c.name)}</b><br><span class="sm">${c.cost} tickets</span></div></div>
+      <div class="bar" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100" aria-label="${esc(c.name)}"><i style="width:${p}%"></i></div>
+      ${can?(S.rw.ask===c.id?'<p class="fresh">✔ J’ai demandé. Un adulte va valider.</p>':`<button class="nb go" onclick="askAdult('${c.id}')">🎉 Je demande à un adulte</button>`)
+           :`<p class="sm">Encore ${c.cost-b} ticket${c.cost-b>1?'s':''}</p>`}
+      ${main?'':`<button class="mini" onclick="setGoal('${c.id}')">🎯 C’est mon objectif</button>`}</div>`;
+  };
+  const films=FILMS.filter(f=>S.rw.films.includes(f.id));
+  app.innerHTML=`
+  ${crumbs('🎁 Récompenses')}
+  <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>🎁 Mes récompenses</h2>${spk('Mes récompenses. Je gagne un ticket quand je finis ma mission du jour. Mes tickets ne se perdent jamais.')}</div>
+  <div class="card tkc"><span class="big">🎟️</span><div><b style="font-size:26px">${b} ticket${b>1?'s':''}</b><p class="sm" style="margin:2px 0 0">1 ticket quand je finis ma mission du jour. Mes tickets ne se perdent jamais.</p></div></div>
+  ${g?`<h3 class="rwt">🎯 Mon objectif</h3>${card(g,true)}`:''}
+  ${others.length?`<h3 class="rwt">Autres récompenses</h3>${others.map(c=>card(c,false)).join('')}`:''}
+  <h3 class="rwt">🎮 Mes bonus</h3>
+  <div class="card"><div class="btns" style="justify-content:flex-start">
+    ${bn.d===t&&!bn.bowl?`<button class="nb go" onclick="miniBowl()">🎳 Bonus bowling</button>`:`<span class="sm">🎳 Bonus bowling : après ma mission</span>`}
+    ${bn.d===t&&!bn.film?`<button class="nb go" onclick="filmPlay('${bn.fid}',true)">🎬 Séance du jour</button>`:`<span class="sm">🎬 Séance du jour : après ma mission</span>`}
+  </div>
+  ${S.rw.best?`<p class="sm">Mon meilleur score au bowling : ${S.rw.best} quilles</p>`:''}
+  ${films.length?`<p class="al" style="margin:10px 0 4px"><b>🍿 Ma salle de cinéma</b></p><div class="opts2">${films.map(f=>`<button class="ab" onclick="filmPlay('${f.id}')">${f.icon} ${f.title}</button>`).join('')}</div>`:''}
+  </div>
+  ${S.rw.hist.length?`<h3 class="rwt">🌟 Mes souvenirs</h3><div class="card"><ul class="bilan">${S.rw.hist.map(h=>`<li>${h.i} ${esc(h.n)} · ${h.d} ✔</li>`).join('')}</ul></div>`:''}
+  <button class="mini" style="display:block;margin:18px auto 0" onclick="adulte()">🔒 Espace adulte</button>`;
+  updBar();
+}
+function setGoal(id){S.rw.goal=id;save();recompenses()}
+function askAdult(id){S.rw.ask=id;save();recompenses()}
+// ---- espace adulte : petit calcul à l'entrée ; valide les récompenses, règle les tickets et le catalogue
+let gate=null;
+function adulte(){
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null,v:'adult'};
+  if(adultOK){adultView();return}
+  gate={a:12+rnd(8),b:6+rnd(4)};
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="recompenses()" aria-label="Retour">⬅️</button><h2>🔒 Espace adulte</h2></div>
+  <div class="card"><p>Réservé aux adultes. Pour entrer, calcule : <b>${gate.a} × ${gate.b}</b></p>
+  <input id="gin" type="number" inputmode="numeric" aria-label="Résultat du calcul" style="font-size:22px;padding:8px;width:7em;border:3px solid var(--ink);border-radius:12px">
+  <button class="nb go" style="margin-left:8px" onclick="gateGo()">Entrer</button><p id="gmsg" class="sm" role="status"></p></div>`;
+  updBar();
+}
+function gateGo(){
+  const v=parseInt($('gin').value,10);
+  if(v===gate.a*gate.b){adultOK=true;adultView()}else $('gmsg').textContent='Ce n’est pas ça. Réessaie.';
+}
+function adultView(){
+  const b=tkBal(),r=S.rw,ask=r.cat.find(c=>c.id===r.ask);
+  const ICONS=['🎳','🎬','🍕','🎮','⚽','🍦','🛍️','🎢'];
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="recompenses()" aria-label="Retour à l’élève">⬅️</button><h2>🔒 Espace adulte</h2></div>
+  <div class="card"><h3>🎟️ Tickets : <span id="abal">${b}</span></h3>
+    <p class="sm">Gagnés : ${r.tk.e} · Utilisés : ${r.tk.s}</p>
+    <div class="opts2"><button class="ab" onclick="adultTk(1)">➕ Ajouter 1 ticket</button><button class="ab" onclick="adultTk(-1)" ${b<1?'disabled':''}>➖ Retirer 1 ticket</button></div></div>
+  ${ask?`<div class="card" style="margin-top:12px;border:3px solid var(--grn)"><h3>🙋 Demande de l’élève</h3><p>${ask.icon} <b>${esc(ask.name)}</b> · ${ask.cost} tickets</p>
+    ${b>=ask.cost?`<button class="nb go" onclick="adultValidate('${ask.id}')">✔ C’est fait : valider</button>`:'<p class="sm">Pas assez de tickets.</p>'}</div>`:''}
+  <div class="card" style="margin-top:12px"><h3>🎁 Récompenses</h3>
+    ${r.cat.map(c=>`<div class="arow"><span class="big" style="font-size:30px">${c.icon}</span><b style="flex:1;min-width:7em">${esc(c.name)}</b>
+      <button class="ab" onclick="adultCost('${c.id}',-1)" aria-label="Moins cher" ${c.cost<=1?'disabled':''}>−</button><span aria-label="${c.cost} tickets"><b>${c.cost}</b> 🎟️</span><button class="ab" onclick="adultCost('${c.id}',1)" aria-label="Plus cher">+</button>
+      <button class="ab" aria-pressed="${c.on}" onclick="adultToggle('${c.id}')">${c.on?'Visible':'Cachée'}</button>
+      ${b>=c.cost?`<button class="ab" onclick="adultValidate('${c.id}')">✔ Valider</button>`:''}
+      ${c.id[0]==='x'?`<button class="ab" onclick="adultDel('${c.id}')" aria-label="Supprimer">🗑️</button>`:''}</div>`).join('')}
+    <p class="al" style="margin:14px 0 4px"><b>Ajouter une récompense</b></p>
+    <div class="arow"><input id="rn" placeholder="Nom (ex. Pizza)" maxlength="30" aria-label="Nom" style="flex:1;min-width:8em;font-size:18px;padding:8px;border:3px solid #cfd6e0;border-radius:12px">
+      <select id="ri" aria-label="Icône" style="font-size:22px;padding:6px;border-radius:12px">${ICONS.map(i=>`<option>${i}</option>`).join('')}</select>
+      <input id="rc" type="number" min="1" max="99" value="5" aria-label="Prix en tickets" style="width:4.5em;font-size:18px;padding:8px;border:3px solid #cfd6e0;border-radius:12px">
+      <button class="ab" onclick="adultAdd()">Ajouter</button></div></div>
+  ${r.hist.length?`<div class="card" style="margin-top:12px"><h3>📜 Récompenses données</h3><ul class="bilan">${r.hist.map((h,k)=>`<li>${h.i} ${esc(h.n)} · ${h.d} · ${h.c} 🎟️ <button class="ab" onclick="adultUndo(${k})">↩️ Annuler</button></li>`).join('')}</ul></div>`:''}`;
+  updBar();
+}
+function adultTk(d){if(d<0&&tkBal()<1)return;S.rw.tk.e+=d;save();adultView()}
+function adultCost(id,d){const c=S.rw.cat.find(x=>x.id===id);if(c){c.cost=Math.max(1,Math.min(99,c.cost+d));save()}adultView()}
+function adultToggle(id){const c=S.rw.cat.find(x=>x.id===id);if(c){c.on=!c.on;save()}adultView()}
+function adultDel(id){S.rw.cat=S.rw.cat.filter(c=>c.id!==id);if(S.rw.ask===id)S.rw.ask=null;if(S.rw.goal===id)S.rw.goal=(catOn()[0]||{}).id;save();adultView()}
+function adultAdd(){
+  const n=$('rn').value.trim(),c=parseInt($('rc').value,10);
+  if(!n||!(c>=1))return;
+  S.rw.cat.push({id:'x'+Date.now().toString(36),icon:$('ri').value,name:n.slice(0,30),cost:Math.min(99,c),on:true});save();adultView();
+}
+function adultValidate(id){
+  const c=S.rw.cat.find(x=>x.id===id);if(!c||tkBal()<c.cost)return;
+  S.rw.tk.s+=c.cost;S.rw.hist.unshift({id:c.id,n:c.name,i:c.icon,d:dateFr2(),c:c.cost});
+  if(S.rw.ask===id)S.rw.ask=null;save();adultView();
+}
+function adultUndo(k){const h=S.rw.hist[k];if(!h)return;S.rw.tk.s=Math.max(0,S.rw.tk.s-h.c);S.rw.hist.splice(k,1);save();adultView()}
+// ---- bonus 1 : mini-bowling (adresse, pas de hasard : plus on vise le milieu, plus il y a de quilles)
+let B=null,bowlIv=0,filmT=0;
+function stopAnim(){clearInterval(bowlIv);bowlIv=0;clearTimeout(filmT);filmT=0}
+const bowlKnock=(x,rem)=>{const a=Math.abs(x);return a<.12?rem:Math.max(a<.85?1:0,Math.floor(rem*(1-a*1.1)))};
+function miniBowl(){
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null,v:'rw'};
+  B={k:0,up:[0,1,2,3,4,5,6,7,8,9],score:0,x:0,t0:performance.now(),busy:false};
+  const rows=[[0],[1,2],[3,4,5],[6,7,8,9]];
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="recompenses()" aria-label="Retour">⬅️</button><h2>🎳 Bonus bowling</h2>${spk('Bonus bowling. Touche Lancer quand la boule est au milieu.')}</div>
+  <div class="card">
+    <div class="lane" aria-hidden="true">${rows.map(r=>`<div class="prow">${r.map(i=>`<i class="pin" id="pin${i}"></i>`).join('')}</div>`).join('')}</div>
+    <div class="aim" aria-hidden="true"><span class="mid"></span><span class="bl" id="bl"></span></div>
+    <p id="binfo" class="fresh" role="status">Boule 1 sur 3 · 0 quille</p>
+    <p id="bmsg" class="sm" role="status">Touche Lancer quand la boule est au milieu.</p>
+    <button class="nb go" id="bgo" style="display:block;margin:10px auto 0;min-width:180px" onclick="bowlThrow()">🎳 Lancer</button>
+  </div>`;
+  updBar();
+  const per=(reduce||S.easy)?3600:1900;
+  bowlIv=setInterval(()=>{B.x=Math.sin((performance.now()-B.t0)/per*2*Math.PI);const e=$('bl');if(e)e.style.left=(50+B.x*44)+'%'},40);
+}
+function bowlThrow(){
+  if(!B||B.busy)return;B.busy=true;actx();
+  const n=Math.min(bowlKnock(B.x,B.up.length),B.up.length),down=B.up.splice(0,n);
+  down.forEach(i=>{const e=$('pin'+i);if(e)e.classList.add('down')});
+  B.k++;B.score+=n;
+  if(n)beepOk();
+  $('bmsg').textContent=n===0?'Dans la rigole ! Vise le milieu.':!B.up.length?'Plein ! 🎉':n+' quille'+(n>1?'s':'')+' !';
+  $('binfo').textContent=B.k>=3?'Fini !':`Boule ${B.k+1} sur 3 · ${B.score} quille${B.score>1?'s':''}`;
+  setTimeout(()=>{
+    if(!$('bgo'))return;
+    if(B.k>=3){bowlEnd();return}
+    if(!B.up.length){B.up=[0,1,2,3,4,5,6,7,8,9];B.up.forEach(i=>{const e=$('pin'+i);if(e)e.classList.remove('down')})}
+    B.busy=false;
+  },900);
+}
+function bowlEnd(){
+  stopAnim();
+  const sc=B.score;if(sc>(S.rw.best||0))S.rw.best=sc;
+  if(S.rw.bonus.d===dayNum())S.rw.bonus.bowl=true;save();
+  app.innerHTML=`
+  <div class="card endc"><div class="big">🎳</div><h2>Bravo ! ${sc} quille${sc>1?'s':''}</h2>
+    <p>${S.rw.best>sc?`Mon meilleur score : ${S.rw.best}`:'C’est mon meilleur score !'} ${spk('Bravo ! '+sc+' quilles.')}</p>
+    <div class="btns"><button class="nb go" onclick="recompenses()">🎁 Mes récompenses</button><button class="nb" onclick="home()">🏠 Accueil</button></div></div>`;
+  updBar();beepOk();confetti(innerWidth/2,innerHeight/3,30);
+}
+// ---- bonus 2 : mini-cinéma (une nouvelle séance débloquée chaque jour de mission)
+function filmPlay(id){
+  const f=FILMS.find(x=>x.id===id);if(!f)return;
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null,v:'rw'};
+  let i=0;
+  const end=()=>{
+    stopAnim();
+    if(!S.rw.films.includes(f.id))S.rw.films.push(f.id);
+    if(S.rw.bonus.d===dayNum()&&S.rw.bonus.fid===f.id)S.rw.bonus.film=true;save();
+    app.innerHTML=`<div class="card endc"><div class="big">🍿</div><h2>Fin de la séance !</h2><p>${f.icon} ${f.title}</p>
+      <div class="btns"><button class="nb go" onclick="recompenses()">🎁 Mes récompenses</button><button class="nb" onclick="home()">🏠 Accueil</button></div></div>`;
+    updBar();
+  };
+  const show=()=>{
+    clearTimeout(filmT);
+    const [e,t]=f.steps[i],last=i===f.steps.length-1;
+    app.innerHTML=`
+    <div class="gtop"><button class="back" onclick="recompenses()" aria-label="Fermer la séance">✖</button><h2>🎬 ${f.title}</h2></div>
+    <div class="scr" role="img" aria-label="${esc(t)}"><div class="strip2" aria-hidden="true"></div><div class="fe">${e}</div><p class="fc" aria-live="polite">${t}</p></div>
+    <div class="btns" style="margin-top:12px"><button class="nb ${i?'':'ghost'}" onclick="filmStep(-1)" aria-label="Avant">⬅️</button>
+      <span class="sm" style="align-self:center">${i+1} / ${f.steps.length}</span>
+      <button class="nb go" onclick="filmStep(1)" aria-label="${last?'Terminer':'Suivant'}">${last?'🍿 Fin':'➡️'}</button></div>`;
+    updBar();
+    if(S.auto)say(t);
+    filmT=setTimeout(()=>filmStep(1),4500);
+  };
+  window.filmStep=d=>{if(d>0&&i>=f.steps.length-1){end();return}i=Math.max(0,i+d);show()};
+  show();
 }
 // Régulation vers ~85 % de réussite : 2 échecs de suite → plus d'aide ; 5 réussites du premier coup → on réduit l'aide
 function reg(ok){
