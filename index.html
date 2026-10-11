@@ -266,6 +266,25 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .mission{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:76px;margin:14px 0 14px;padding:12px 16px;border-radius:18px;background:var(--grn);color:#fff;border:4px solid var(--ink);box-shadow:0 5px 0 var(--ink);font-weight:700;font-size:24px;line-height:1.2}
 .mission small{display:block;font-size:15px;font-weight:400}
 .mission.done{background:#DDF6EC;color:var(--ink);box-shadow:none;min-height:64px}
+.prog{margin:12px 0 0;display:grid;gap:10px}
+.prog .pr{display:flex;align-items:center;gap:10px;min-height:44px;text-align:left;width:100%;background:none;font-size:16px}
+.prog .pr>b{flex:none;width:7.5em;font-size:15px}
+.prog .pr .tx{flex:1;min-width:0}
+.prog .pr .tx small{display:block;font-size:14px;color:#555}
+.bar{height:14px;background:#cfd6e0;border-radius:8px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--grn);border-radius:8px}
+.pips{display:flex;gap:5px;margin-top:4px}
+.pips i{width:16px;height:16px;border-radius:50%;background:#cfd6e0;border:2px solid #9aa1ad}
+.pips i.on{background:var(--grn);border-color:#0e7a55}
+.av{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;background:var(--vc,#F0D27A);border:4px solid var(--ink);font-size:30px;flex:none}
+.avb{display:flex;align-items:center;gap:12px;width:100%;background:none;text-align:left;min-height:64px;font-weight:700;font-size:17px}
+.welcome{display:flex;align-items:center;gap:10px;margin:12px 0 0;background:#E8F0FF;border:3px solid #4F72B8;font-size:18px;font-weight:700}
+.welcome p{flex:1;margin:0}
+.opts2{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.opts2 .ab{min-height:48px;padding:6px 14px;border-radius:12px;background:#EEF1F5;border:3px solid #cfd6e0;font-weight:700;font-size:16px}
+.opts2 .ab[aria-pressed=true]{background:#FFF1B8;border-color:var(--ink)}
+.opts2 .ab:disabled{opacity:.55}
+.fresh{font-weight:700;margin:6px 0}
 .bilan{list-style:none;margin:10px 0;padding:0;text-align:left;font-size:18px;line-height:1.5}
 .bilan li{margin:6px 0}
 .mission:active{transform:translateY(3px);box-shadow:none}
@@ -1248,7 +1267,7 @@ function renderNav(){
   if(ctx.bid)navOpen=ctx.bid;
   const homeAct=!ctx.bid&&!ctx.v;
   const b0=ctx.bid&&findBloc(ctx.bid),s0=ctx.sid&&findSeq(ctx.bid,ctx.sid);
-  const here=ctx.v==='ref'?'📋 Le programme':ctx.v==='glo'?'📖 Mots du métier':b0?b0.icon+' '+b0.name+(s0?'<br>➡️ '+s0.icon+' '+s0.name:''):'🏠 Accueil';
+  const here=ctx.v==='moi'?'🙋 Moi':ctx.v==='ref'?'📋 Le programme':ctx.v==='glo'?'📖 Mots du métier':b0?b0.icon+' '+b0.name+(s0?'<br>➡️ '+s0.icon+' '+s0.name:''):'🏠 Accueil';
   $('side').innerHTML=`<div class="here"><b>📍 Tu es ici</b>${here}</div>
   <div class="nh">Mes matières</div><ul>
   <li><button class="nl ${homeAct?'act':''}" onclick="navGo(home)"><span class="ic">🏠</span><span class="tx">Accueil</span></button></li>
@@ -1530,7 +1549,7 @@ const homeRing=()=>({
 });
 const blocRing=b=>({
   center:{html:`<span class="hi">${b.icon}</span><b class="hn">${b.name}</b><span class="hs">★ ${blocStars(b)}/${blocMax(b)}</span>`},
-  items:b.seqs.map(q=>({icon:q.icon,label:q.name,sub:`★ ${seqStars(q)}/${q.games.length*3}`,c:b.c,p:pct(seqStars(q),q.games.length*3),onclick:`openSeq('${b.id}','${q.id}')`,aria:`${q.name}, ${seqStars(q)} étoiles sur ${q.games.length*3}`}))
+  items:b.seqs.map(q=>({icon:q.icon,label:q.name,sub:`★ ${seqStars(q)}/${q.games.length*3}${freshOf(q)?' '+freshOf(q).icon:''}`,c:b.c,p:pct(seqStars(q),q.games.length*3),onclick:`openSeq('${b.id}','${q.id}')`,aria:`${q.name}, ${seqStars(q)} étoiles sur ${q.games.length*3}`}))
 });
 const seqRing=(b,q)=>{
   const hasF=!!(q.slides&&q.slides.length),seen=!!(S.seen&&S.seen[q.id]);
@@ -1548,6 +1567,7 @@ function home(){
   app.innerHTML=`
   <div class="top"><div class="sign"><h1>🚚 Mon CAP Logistique</h1></div></div>
   ${missionHtml()}
+  ${progHtml()}
   ${stepHtml('1️⃣','Ou choisis une matière')}
   ${ringHtml(homeRing())}
   <details class="pausez" id="pausez"><summary>😄 Pause</summary>
@@ -1591,6 +1611,10 @@ function openBloc(bid){
 }
 
 /* ---------- séquence ---------- */
+function freshLine(sq){
+  const f=freshOf(sq),m=Math.round(masOf(seqQs(sq))*100);
+  return f?`<p class="fresh">${f.icon} ${f.txt}${f.n?' : '+f.n+' question'+(f.n>1?'s':''):''} · ${m} % maîtrisé</p>`:'';
+}
 function openSeq(bid,sid){
   stopSay();window.scrollTo(0,0);ctx={bid,sid};
   S.last={bid,sid};save();
@@ -1601,6 +1625,7 @@ function openSeq(bid,sid){
   ${goalHtml(s)}
   ${stepHtml('3️⃣','Je révise, puis je joue')}
   ${pathHtml(s)}
+  ${freshLine(s)}
   ${ringHtml(seqRing(b,s))}`;
   updBar();
 }
@@ -1651,6 +1676,45 @@ BLOCS.forEach(b=>b.seqs.forEach(sq=>sq.games.forEach(g=>{
     QIDX.set(q.id,{q,g,s:sq,b});
   });
 })));
+// ---- maîtrise = questions en boîte 3 ou plus (les étoiles, elles, ne baissent jamais)
+const isMas=id=>S.qm[id]&&S.qm[id].b>=3;
+const seqQs=sq=>sq.games.flatMap(g=>g.qs);
+const masOf=qs=>qs.length?qs.filter(q=>isMas(q.id)).length/qs.length:0;
+const allSeqs=()=>BLOCS.flatMap(b=>b.seqs.map(sq=>({b,sq})));
+const seqById=id=>{for(const b of BLOCS){const q=b.seqs.find(x=>x.id===id);if(q)return q}return null};
+// fraîcheur d'une séquence, dite positivement : jamais de « perdu », seulement « à revoir »
+function freshOf(sq){
+  const t=dayNum(),qs=seqQs(sq).filter(q=>S.qm[q.id]);
+  if(!qs.length)return null;
+  const n=qs.filter(q=>S.qm[q.id].due<=t).length;
+  return n?{k:'rev',icon:'🔄',txt:'À revoir',n}:{k:'ok',icon:'🌿',txt:'À jour',n:0};
+}
+// compétence du référentiel : moyenne de maîtrise de ses séquences ; null si aucune séquence ne la travaille
+const compMas=c=>{const ss=c.s.map(seqById).filter(Boolean);return ss.length?ss.reduce((a,sq)=>a+masOf(seqQs(sq)),0)/ss.length:null};
+const COMP_OK=.8;
+function capStats(){
+  let n=0,ok=0;
+  BLOCS.forEach(b=>{if(b.id==='droit')return;b.comps.forEach(c=>{const m=compMas(c);if(m===null)return;n++;if(m>=COMP_OK)ok++})});
+  return {n,ok};
+}
+const currentSeq=()=>{const l=S.last;let sq=l&&seqById(l.sid);return sq||BLOCS[0].seqs[0]};
+const absentDays=()=>S.lastDay==null?0:dayNum()-S.lastDay;
+const absent=()=>absentDays()>=3;
+// ---- personnalisation : débloquée par la maîtrise (maximum atteint, donc jamais retirée)
+const AV_ICONS=[['👷','Casque',0],['🧑‍🏭','Opérateur',4],['🧑‍🔧','Technicien',10],['🧑‍💼','Chef',16]];
+const AV_COLS=[['#F0D27A','Jaune',0],['#F2A65A','Orange',2],['#7BC8A4','Vert',6],['#7FA6E0','Bleu',12],['#B79AE0','Violet',20]];
+const masCount=()=>[...QIDX.values()].filter(e=>isMas(e.q.id)).length;
+const avatar=()=>Object.assign({i:'👷',c:'#F0D27A'},S.av||{});
+const avHtml=()=>{const a=avatar();return `<span class="av" style="--vc:${a.c}" aria-hidden="true">${a.i}</span>`};
+function toast(t){const e=document.createElement('div');e.className='toast';e.setAttribute('role','status');e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),1700)}
+function noteMastery(){
+  const m=masCount(),old=S.maxMas||0;
+  if(m>old){
+    S.maxMas=m;
+    const nw=[...AV_ICONS,...AV_COLS].filter(x=>x[2]>old&&x[2]<=m);
+    if(nw.length)toast('🎉 Nouveau pour mon cariste !');
+  }
+}
 function recordQ(q,ok){
   if(!q||!q.id)return;
   const t=dayNum(),m=S.qm[q.id]||(S.qm[q.id]={b:0,last:t,due:t,n:0,ok:0});
@@ -1658,6 +1722,9 @@ function recordQ(q,ok){
   m.n++;if(ok)m.ok++;m.last=t;
   if(ok){if(wasDue){m.b=Math.min(4,m.b+1);m.due=t+LEIT[m.b]}}   // réussir avant l'échéance ne fait pas monter la boîte
   else{m.b=m.b>=2?1:0;m.due=t+LEIT[m.b]}                          // erreur : retour boîte 0 ou 1, jamais en dessous de 0
+  if(!S.today||S.today.d!==t)S.today={d:t,n:0};
+  S.today.n++;S.lastDay=t;
+  noteMastery();
   save();
 }
 const fmtOf=q=>q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
@@ -1677,8 +1744,9 @@ function mixFormats(list){
 function buildMission(){
   const t=dayNum(),all=[...QIDX.values()];
   const due=all.filter(e=>S.qm[e.q.id]&&S.qm[e.q.id].due<=t).sort((a,b)=>(S.qm[a.q.id].due-S.qm[b.q.id].due));
-  const rev=due.slice(0,5);
-  const nNew=Math.min(MISSION_MAX-rev.length,rev.length>=4?3:5);
+  const light=absent();                                  // après 3 jours ou plus d'absence : mission allégée, sans reproche
+  const rev=due.slice(0,light?3:5);
+  const nNew=light?Math.min(2,5-rev.length):Math.min(MISSION_MAX-rev.length,rev.length>=4?3:5);
   const seqs=BLOCS.flatMap(b=>b.seqs.map(sq=>({b,sq})));
   const l=S.last,i=l?seqs.findIndex(x=>x.b.id===l.bid&&x.sq.id===l.sid):-1;
   const order=i>=0?seqs.slice(i).concat(seqs.slice(0,i)):seqs;
@@ -1713,7 +1781,48 @@ function missionHtml(){
     return `<div class="mission done" role="status"><span aria-hidden="true">✔</span><span>Mission du jour faite<small>À demain !</small></span></div>
     <button class="mini" style="display:block;margin:2px auto 8px" onclick="startMission()">Continuer quand même</button>`;
   const n=buildMission().length;if(!n)return '';
-  return `<button class="mission" id="mission" onclick="startMission()" aria-label="Ma mission du jour. ${n} questions."><span aria-hidden="true">▶️</span><span>Ma mission du jour<small>${n} questions · 3 à 5 minutes</small></span></button>`;
+  const mn=n<=5?'2 à 3':'3 à 5';
+  return `${welcomeHtml()}<button class="mission" id="mission" onclick="startMission()" aria-label="Ma mission du jour. ${n} questions."><span aria-hidden="true">▶️</span><span>Ma mission du jour<small>${n} questions · ${mn} minutes</small></span></button>`;
+}
+function welcomeHtml(){
+  if(!absent())return '';
+  const m='Content de te revoir ! On reprend doucement.';
+  return `<div class="card welcome" role="status"><span class="big" aria-hidden="true">👋</span><p>${m}</p>${spk(m)}</div>`;
+}
+// ---- progression sur 3 horizons : aujourd'hui, ma séquence, mon CAP
+function progHtml(){
+  const t=dayNum(),n=S.today&&S.today.d===t?S.today.n:0,done=S.mission&&S.mission.day===t;
+  const sq=currentSeq(),sm=Math.round(masOf(seqQs(sq))*100),f=freshOf(sq),cs=capStats();
+  const pips=Array.from({length:MISSION_MAX},(_,k)=>`<i class="${k<n?'on':''}"></i>`).join('');
+  return `<div class="card prog" aria-label="Ma progression">
+    <button class="avb" onclick="moi()" aria-label="Moi : mon cariste et mon moment">${avHtml()}<span>Moi${S.when?`<small style="display:block;font-weight:400;font-size:14px">📌 ${S.when}</small>`:'<small style="display:block;font-weight:400;font-size:14px">📌 Choisir mon moment</small>'}</span></button>
+    <div class="pr"><b>☀️ Aujourd’hui</b><span class="tx"><span class="pips" role="img" aria-label="Aujourd’hui : ${Math.min(n,MISSION_MAX)} questions sur ${MISSION_MAX}">${pips}</span></span><span>${done?'✔':''}</span></div>
+    <button class="pr" onclick="openSeq('${sq.id?(allSeqs().find(x=>x.sq===sq).b.id):''}','${sq.id}')"><b>📘 Ma séquence</b><span class="tx">${sq.icon} ${sq.name}<small>${sm} % maîtrisé${f?' · '+f.icon+' '+f.txt:''}</small><span class="bar" role="progressbar" aria-valuenow="${sm}" aria-valuemin="0" aria-valuemax="100" aria-label="Maîtrise de la séquence"><i style="width:${sm}%"></i></span></span></button>
+    <button class="pr" onclick="refView()"><b>🎓 Mon CAP</b><span class="tx">${cs.ok} compétence${cs.ok>1?'s':''} sur ${cs.n}<small>maîtrisée${cs.ok>1?'s':''} · le chemin se fait pas à pas</small><span class="bar" role="progressbar" aria-valuenow="${cs.n?Math.round(cs.ok/cs.n*100):0}" aria-valuemin="0" aria-valuemax="100" aria-label="Compétences du CAP maîtrisées"><i style="width:${cs.n?Math.round(cs.ok/cs.n*100):0}%"></i></span></span></button>
+  </div>`;
+}
+// ---- « Quand… je fais ma mission » (intention d'implémentation) et personnalisation
+const MOMENTS=['après le repas','dans le bus','avant de dormir','après les cours','au petit déjeuner'];
+function setWhen(v){if(v)S.when=v;else delete S.when;save();if(ctx.v==='moi')moi(true);else{const e=$('whenbox');if(e)e.innerHTML=whenInner()}}
+function whenInner(){
+  return `<p>${S.when?`✔ Quand je suis <b>${S.when}</b>, je fais ma mission.`:'Quand je fais ma mission ?'}</p><div class="opts2">${MOMENTS.map(m=>`<button class="ab" aria-pressed="${S.when===m}" onclick="setWhen('${m}')">${m}</button>`).join('')}<button class="ab" onclick="setWhen('')">Pas de moment fixe</button></div>`;
+}
+function setAv(k,v){S.av=Object.assign(avatar(),{[k]:v});save();moi(true)}
+function moi(keep){
+  if(!keep){stopSay();window.scrollTo(0,0)}
+  ctx={bid:null,sid:null,v:'moi'};
+  const mc=Math.max(S.maxMas||0,masCount()),a=avatar();
+  const opt=(arr,k)=>arr.map(x=>{const ok=x[2]<=mc;return `<button class="ab" ${ok?'':'disabled'} aria-pressed="${a[k==='i'?'i':'c']===x[0]}" aria-label="${x[1]}${ok?'':' : pas encore'}" onclick="setAv('${k}','${x[0]}')">${k==='i'?x[0]:`<span class="av" style="--vc:${x[0]};width:34px;height:34px;border-width:3px;font-size:0"></span>`} ${ok?'':'🔒 '+(x[2]-mc)+' à maîtriser'}</button>`}).join('');
+  app.innerHTML=`
+  ${crumbs('🙋 Moi')}
+  <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>🙋 Moi</h2>${spk('Moi. Je choisis mon moment et mon cariste.')}</div>
+  <div class="card"><h3>📌 Mon moment</h3><div id="whenbox">${whenInner()}</div></div>
+  <div class="card" style="margin-top:12px"><h3>🦺 Mon cariste</h3>
+    <div style="display:flex;align-items:center;gap:12px">${avHtml()}<p style="margin:0">Je débloque de nouveaux choix quand je maîtrise des questions : <b>${mc}</b> pour l’instant.</p></div>
+    <div class="al">Mon personnage</div><div class="opts2">${opt(AV_ICONS,'i')}</div>
+    <div class="al">La couleur de mon gilet</div><div class="opts2">${opt(AV_COLS,'c')}</div>
+  </div>`;
+  updBar();
 }
 function finishMission(){
   stopSay();window.scrollTo(0,0);
@@ -1735,6 +1844,7 @@ function finishMission(){
       <button class="nb go" onclick="home()">🏠 Accueil</button>
       <button class="nb" onclick="pauseZone()">😄 Pause</button>
     </div>
+    ${S.when?'':`<div id="whenbox" style="margin-top:12px">${whenInner()}</div>`}
     <button class="mini" style="display:block;margin:14px auto 0" onclick="startMission()">Continuer quand même</button>
   </div>`;
   updBar();
@@ -1983,7 +2093,7 @@ function refView(){
     <h2>${b.icon} ${b.name}</h2><p class="code">${b.code}</p>
     <ul class="cl">${b.comps.map(c=>{
       const cov=c.s.length>0;
-      const ic=cov?'✅':(c.p?'🛠️':'⏳');
+      const cm=compMas(c),ic=cov?(cm>=COMP_OK?'🏅':cm>0?'🔄':'✅'):(c.p?'🛠️':'⏳');
       const sub=cov?c.s.map(seqName).join(' · ')+(c.p?'<br>🛠️ Complété par la pratique en classe ou sur le terrain':'')+(c.n?'<br>'+c.n:''):(c.p?(c.n||'À pratiquer en vrai, en classe ou sur le terrain'):(c.n||'À compléter'));
       return `<li><span class="ci">${ic}</span><span>${c.t}<small>${sub}</small></span></li>`}).join('')}</ul></div>`).join('');
   app.innerHTML=`
@@ -1992,7 +2102,7 @@ function refView(){
   <div class="card">
     <p><b>CAP Opérateur, opératrice logistique</b><br>Arrêté du 13 février 2026 · fiche RNCP42586 · première session d’examen en 2028</p>
     <p class="sm">Ce site reprend, bloc par bloc, les compétences attendues par le référentiel. Chaque compétence renvoie aux séquences qui la travaillent. <b>${nCov}</b> compétences sur <b>${nTot}</b> ont déjà une séquence. Pour <b>${nPra}</b> d’entre elles, il faut aussi de la pratique réelle (plateau technique, terrain, oral). Les contenus sont des révisions : ils sont à valider avec les cours de l’équipe pédagogique.</p>
-    <p class="sm">✅ séquence disponible &nbsp; 🛠️ à pratiquer en vrai &nbsp; ⏳ à compléter</p>
+    <p class="sm">🏅 maîtrisée &nbsp; 🔄 en cours &nbsp; ✅ séquence disponible &nbsp; 🛠️ à pratiquer en vrai &nbsp; ⏳ à compléter</p>
   </div>${rows}`;
   updBar();
 }
