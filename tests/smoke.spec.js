@@ -2,7 +2,7 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 const URL = 'file://' + path.resolve(process.env.APP_FILE || path.join(__dirname, '..', 'index.html'));
-const KEY = 'mouad-cap-ol-v1';
+const KEY1 = 'mouad-cap-ol-v1', KEY = 'mouad-cap-ol-v2';
 
 // Réglages de test : pas de voix, pas d'attente. Posés une seule fois pour que le rechargement garde l'état.
 async function seed(page, extra = {}) {
@@ -11,7 +11,7 @@ async function seed(page, extra = {}) {
       localStorage.setItem('__seeded', '1');
       localStorage.setItem(k, JSON.stringify(Object.assign({ stars: {}, auto: false, calm: false, fx: false }, ex)));
     }
-  }, [KEY, extra]);
+  }, [KEY1, extra]);
 }
 const state = page => page.evaluate(k => JSON.parse(localStorage.getItem(k) || '{}'), KEY);
 const answer = (page, good) => page.evaluate(g => {
@@ -102,9 +102,15 @@ test('revoir mes erreurs : une erreur de session est proposée puis rejouable', 
   await expect(page.getByRole('button', { name: /Revoir mes erreurs/ })).toBeVisible();
 });
 
-test('migration : une sauvegarde v1 existante est conservée', async ({ page }) => {
+test('migration : une sauvegarde v1 est reprise en v2, la v1 reste intacte', async ({ page }) => {
   await seed(page, { stars: { quiz: 2 }, badges: ['x'] });
   await page.goto(URL);
   const s = await state(page);
+  expect(s.schema).toBe(2);
   expect(s.stars.quiz).toBe(2);
+  expect(s.badges).toEqual(['x']);
+  expect(s.qm).toEqual({});
+  const v1 = await page.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY1);
+  expect(v1.stars.quiz).toBe(2);
+  expect(v1.schema).toBeUndefined();
 });

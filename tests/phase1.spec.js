@@ -2,7 +2,7 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 const URL = 'file://' + path.resolve(process.env.APP_FILE || path.join(__dirname, '..', 'index.html'));
-const KEY = 'mouad-cap-ol-v1';
+const KEY1 = 'mouad-cap-ol-v1', KEY = 'mouad-cap-ol-v2';
 
 // Voix factice qui ne finit jamais de parler : prouve qu'on ne dépend plus de la fin de la voix.
 async function seed(page, extra = {}, fakeVoice = true) {
@@ -13,7 +13,7 @@ async function seed(page, extra = {}, fakeVoice = true) {
       localStorage.setItem('__seeded', '1');
       localStorage.setItem(k, JSON.stringify(Object.assign({ stars: {}, fx: false }, ex)));
     }
-  }, [KEY, extra, fakeVoice]);
+  }, [KEY1, extra, fakeVoice]);
 }
 test.beforeEach(async ({ page }) => { page.errors = []; page.on('pageerror', e => page.errors.push(e.message)); });
 test.afterEach(async ({ page }) => { expect(page.errors).toEqual([]); });
@@ -118,7 +118,7 @@ test('fin de jeu : grosse fête seulement pour un record', async ({ page }) => {
     }
     await expect(page.locator('.bigstars')).toBeVisible();
   };
-  await page.locator('#mission').click();
+  await page.evaluate(() => { const b = BLOCS[0], sq = b.seqs[0]; ctx = { bid: b.id, sid: sq.id }; play(sq.games[0].id); });
   await finishGame();
   expect(await page.evaluate(() => __fan)).toBeGreaterThan(0);          // 1er passage : record
 

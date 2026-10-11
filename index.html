@@ -265,6 +265,9 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .rsm .ri{font-size:26px}.rsm .rt{font-size:13px}.rsm .rn{font-size:22px}
 .mission{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:76px;margin:14px 0 14px;padding:12px 16px;border-radius:18px;background:var(--grn);color:#fff;border:4px solid var(--ink);box-shadow:0 5px 0 var(--ink);font-weight:700;font-size:24px;line-height:1.2}
 .mission small{display:block;font-size:15px;font-weight:400}
+.mission.done{background:#DDF6EC;color:var(--ink);box-shadow:none;min-height:64px}
+.bilan{list-style:none;margin:10px 0;padding:0;text-align:left;font-size:18px;line-height:1.5}
+.bilan li{margin:6px 0}
 .mission:active{transform:translateY(3px);box-shadow:none}
 body.hc .mission{outline:3px solid #000;outline-offset:-3px}
 .pausez{margin:14px 0 0}
@@ -344,10 +347,17 @@ const app=$('app');
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const UK='<svg viewBox="0 0 60 40" width="1.35em" height="0.9em" style="vertical-align:-.12em;border-radius:3px" role="img" aria-label="Royaume-Uni"><rect width="60" height="40" fill="#012169"/><path d="M0 0L60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0L60 40M60 0L0 40" stroke="#C8102E" stroke-width="3"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="13"/><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="8"/></svg>';
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-const KEY='mouad-cap-ol-v1';
+const KEY1='mouad-cap-ol-v1',KEY='mouad-cap-ol-v2';
 let S={stars:{},auto:true,slow:false,fx:true};
-try{const j=localStorage.getItem(KEY);if(j)S=Object.assign(S,JSON.parse(j))}catch(e){}
+// v2 = v1 + schema + qm (mémoire par question). La v1 n'est jamais modifiée ni supprimée.
+try{
+  const j2=localStorage.getItem(KEY);
+  if(j2)S=Object.assign(S,JSON.parse(j2));
+  else{const j1=localStorage.getItem(KEY1);if(j1){S=Object.assign(S,JSON.parse(j1));S.migratedFrom=1}}
+}catch(e){}
+S.schema=2;if(!S.qm||typeof S.qm!=='object')S.qm={};
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+save();
 const spk=(t,l)=>`<button class="spk" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(t)}" data-l="${l||'fr'}" aria-label="Écouter">🔊</button>`;
 
 /* ---------- voix ---------- */
@@ -1566,23 +1576,6 @@ function home(){
 }
 function resetAll(){S.stars={};S.badges=[];save();resetStep=0;closeAa();home()}
 function pauseZone(){home();const d=$('pausez');if(d){d.open=true;d.scrollIntoView({block:'start'})}}
-// Une seule action depuis l'accueil : reprendre là où on en était, sur le prochain jeu pas encore réussi
-function nextGame(){
-  const seqs=BLOCS.flatMap(b=>b.seqs.map(sq=>({bid:b.id,sid:sq.id,sq})));
-  const l=S.last,i=l?seqs.findIndex(x=>x.bid===l.bid&&x.sid===l.sid):-1;
-  const order=i>=0?seqs.slice(i).concat(seqs.slice(0,i)):seqs;
-  for(const lim of [1,3])for(const x of order){const g=x.sq.games.find(g=>stars(g)<lim);if(g)return {bid:x.bid,sid:x.sid,g,sq:x.sq}}
-  return order.length?{bid:order[0].bid,sid:order[0].sid,g:order[0].sq.games[0],sq:order[0].sq}:null;
-}
-function startMission(){
-  const n=nextGame();if(!n)return;
-  ctx={bid:n.bid,sid:n.sid};S.last={bid:n.bid,sid:n.sid};save();play(n.g.id);
-}
-function missionHtml(){
-  const n=nextGame();if(!n)return '';
-  const txt='Ma mission du jour. '+n.sq.name;
-  return `<button class="mission" id="mission" onclick="startMission()" aria-label="${esc(txt)}"><span aria-hidden="true">▶️</span><span>Ma mission du jour<small>${n.sq.icon} ${n.sq.name} · ${n.g.icon} ${n.g.name}</small></span></button>`;
-}
 
 /* ---------- matière ---------- */
 function openBloc(bid){
@@ -1641,6 +1634,125 @@ function fiche(n){
   if(S.auto)say(sl.say);
 }
 
+/* ---------- mémoire par question (Leitner) et mission du jour ---------- */
+// Jour local sous forme d'entier. window.__day permet de simuler les jours dans les tests.
+const dayNum=()=>{if(window.__day!==undefined)return window.__day;const d=new Date();return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5)};
+const LEIT=[0,1,3,7,21];            // jours avant la prochaine révision, par boîte 0..4
+const MISSION_MAX=8;
+const hash32=t=>{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)};
+const norm=t=>String(t).toLowerCase().replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+// QIDX : id de question -> {q,g,s,b}. L'id = hash(jeu + texte) ; si deux questions d'un même jeu ont le même texte, on ajoute -2, -3…
+const QIDX=new Map();
+BLOCS.forEach(b=>b.seqs.forEach(sq=>sq.games.forEach(g=>{
+  const seen={};
+  g.qs.forEach(q=>{
+    const base=hash32(g.id+'|'+norm(q.text));seen[base]=(seen[base]||0)+1;
+    q.id=seen[base]>1?base+'-'+seen[base]:base;
+    QIDX.set(q.id,{q,g,s:sq,b});
+  });
+})));
+function recordQ(q,ok){
+  if(!q||!q.id)return;
+  const t=dayNum(),m=S.qm[q.id]||(S.qm[q.id]={b:0,last:t,due:t,n:0,ok:0});
+  const wasDue=m.due<=t||m.n===0;
+  m.n++;if(ok)m.ok++;m.last=t;
+  if(ok){if(wasDue){m.b=Math.min(4,m.b+1);m.due=t+LEIT[m.b]}}   // réussir avant l'échéance ne fait pas monter la boîte
+  else{m.b=m.b>=2?1:0;m.due=t+LEIT[m.b]}                          // erreur : retour boîte 0 ou 1, jamais en dessous de 0
+  save();
+}
+const fmtOf=q=>q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
+// évite deux fois le même format d'affilée quand c'est possible
+function mixFormats(list){
+  const out=[],rest=list.slice();let prev=null;
+  while(rest.length){
+    // parmi les formats différents du précédent, on prend le plus fréquent encore à placer (sinon les doublons s'accumulent à la fin)
+    const cnt={};rest.forEach(e=>{const f=fmtOf(e.q);cnt[f]=(cnt[f]||0)+1});
+    let k=-1,best=0;rest.forEach((e,j)=>{const f=fmtOf(e.q);if(f!==prev&&cnt[f]>best){best=cnt[f];k=j}});
+    if(k<0)k=0;
+    const e=rest.splice(k,1)[0];out.push(e);prev=fmtOf(e.q);
+  }
+  return out;
+}
+// Mission : 4-5 questions à revoir (les plus en retard) + 2-3 nouvelles de la séquence en cours, 8 au maximum
+function buildMission(){
+  const t=dayNum(),all=[...QIDX.values()];
+  const due=all.filter(e=>S.qm[e.q.id]&&S.qm[e.q.id].due<=t).sort((a,b)=>(S.qm[a.q.id].due-S.qm[b.q.id].due));
+  const rev=due.slice(0,5);
+  const nNew=Math.min(MISSION_MAX-rev.length,rev.length>=4?3:5);
+  const seqs=BLOCS.flatMap(b=>b.seqs.map(sq=>({b,sq})));
+  const l=S.last,i=l?seqs.findIndex(x=>x.b.id===l.bid&&x.sq.id===l.sid):-1;
+  const order=i>=0?seqs.slice(i).concat(seqs.slice(0,i)):seqs;
+  const fresh=[];
+  // séquence par séquence ; dans une séquence on alterne les formats (puis les jeux) pour de la variété
+  for(const x of order){
+    const groups={};
+    x.sq.games.forEach(g=>g.qs.forEach(q=>{if(!S.qm[q.id]){const f=fmtOf(q);(groups[f]=groups[f]||[]).push(q)}}));
+    const gs=Object.values(groups);
+    while(fresh.length<nNew&&gs.some(a=>a.length))for(const a of gs)if(a.length&&fresh.length<nNew)fresh.push(Object.assign({isNew:true},QIDX.get(a.shift().id)));
+    if(fresh.length>=nNew)break;
+  }
+  let list=[];const r=rev.slice(),n=fresh.slice();
+  while(r.length||n.length){if(r.length)list.push(r.shift());if(n.length)list.push(n.shift())}
+  // complément : s'il y a peu à faire, on ajoute les questions les plus proches de leur échéance (4 au minimum)
+  if(list.length<4){
+    const ids=new Set(list.map(e=>e.q.id));
+    all.filter(e=>S.qm[e.q.id]&&!ids.has(e.q.id)).sort((a,b)=>S.qm[a.q.id].due-S.qm[b.q.id].due).slice(0,4-list.length).forEach(e=>list.push(e));
+  }
+  return mixFormats(list);
+}
+function startMission(){
+  const list=buildMission();if(!list.length)return;
+  ctx={bid:null,sid:null};
+  const nw=list.filter(e=>e.isNew).pop();if(nw){S.last={bid:nw.b.id,sid:nw.s.id};save()}
+  cur={g:{id:'_mission',icon:'▶️',name:'Ma mission du jour',mix:true},s:null,qs:list.map(e=>e.q),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,mission:true,cf:0,cs:0};
+  showQ();
+}
+function missionHtml(){
+  const t=dayNum();
+  if(S.mission&&S.mission.day===t)
+    return `<div class="mission done" role="status"><span aria-hidden="true">✔</span><span>Mission du jour faite<small>À demain !</small></span></div>
+    <button class="mini" style="display:block;margin:2px auto 8px" onclick="startMission()">Continuer quand même</button>`;
+  const n=buildMission().length;if(!n)return '';
+  return `<button class="mission" id="mission" onclick="startMission()" aria-label="Ma mission du jour. ${n} questions."><span aria-hidden="true">▶️</span><span>Ma mission du jour<small>${n} questions · 3 à 5 minutes</small></span></button>`;
+}
+function finishMission(){
+  stopSay();window.scrollTo(0,0);
+  const t=dayNum(),n=cur.qs.length,ok=cur.first;
+  S.mission={day:t,n,ok};save();
+  const tom=[...QIDX.values()].filter(e=>S.qm[e.q.id]&&S.qm[e.q.id].due<=t+1).length;
+  const mas=[...QIDX.values()].filter(e=>S.qm[e.q.id]&&S.qm[e.q.id].b>=3).length;
+  const l1=`✔ J’ai réussi ${ok} question${ok>1?'s':''} du premier coup sur ${n}.`,
+        l2=`🔁 Je revois demain : ${tom} question${tom>1?'s':''}.`,
+        l3=`📈 Je maîtrise ${mas} question${mas>1?'s':''} sur ${QIDX.size}.`;
+  const say_='Mission terminée. À demain ! '+[l1,l2,l3].join(' ').replace(/[✔🔁📈]/g,'');
+  app.innerHTML=`
+  <div class="card endc">
+    <div class="big">✅</div>
+    <h2>Mission terminée ✔</h2>
+    <p><b>À demain !</b> ${spk(say_)}</p>
+    <ul class="bilan"><li>${l1}</li><li>${l2}</li><li>${l3}</li></ul>
+    <div class="btns">
+      <button class="nb go" onclick="home()">🏠 Accueil</button>
+      <button class="nb" onclick="pauseZone()">😄 Pause</button>
+    </div>
+    <button class="mini" style="display:block;margin:14px auto 0" onclick="startMission()">Continuer quand même</button>
+  </div>`;
+  updBar();
+  beepOk();confetti(innerWidth/2,innerHeight/3,20);
+  if(S.auto)setTimeout(()=>say(say_),500);
+}
+// Régulation vers ~85 % de réussite : 2 échecs de suite → plus d'aide ; 5 réussites du premier coup → on réduit l'aide
+function reg(ok){
+  if(ok){cur.cf=0;cur.assist=false;cur.cs=(cur.cs||0)+1;if(cur.cs>=5)cur.lean=true}
+  else{cur.cs=0;cur.lean=false;cur.cf=(cur.cf||0)+1;if(cur.cf>=2){cur.assist=true;easeQueue()}}
+}
+function easeQueue(){
+  if(cur.g.seq)return;
+  const rest=cur.qs.slice(cur.i+1);if(rest.length<2)return;
+  const e=q=>(q.opts.length===2?0:1)+(S.qm[q.id]&&S.qm[q.id].b>=2?0:1);
+  cur.qs=cur.qs.slice(0,cur.i+1).concat(rest.sort((a,b)=>e(a)-e(b)));
+}
+
 /* ---------- moteur de jeu ---------- */
 let cur=null;
 function play(id){
@@ -1649,7 +1761,8 @@ function play(id){
   showQ();
 }
 function prepQ(q){
-  if(cur.g.mix&&q.opts.length>=3){
+  const gm=cur.mission&&QIDX.get(q.id)?QIDX.get(q.id).g:cur.g;
+  if(gm.mix&&q.opts.length>=3){
     const right=q.opts[q.ok],order=shuffle(q.opts);
     q.opts=order;q.ok=order.indexOf(right);
   }
@@ -1665,7 +1778,7 @@ function showQ(){
   <div class="card">
     ${crumbs('🎮 '+cur.g.name)}
     <div class="gtop">
-      <button class="back" onclick="openSeq('${ctx.bid}','${ctx.sid}')" aria-label="Retour">⬅️</button>
+      <button class="back" onclick="${cur.mission?'home()':`openSeq('${ctx.bid}','${ctx.sid}')`}" aria-label="Retour">⬅️</button>
       <div class="pbar"><i style="width:${cur.i/cur.qs.length*100}%"></i></div>
       <span class="stk" id="stk" aria-live="polite">${cur.streak>=2?cur.streak+' de suite ✔':''}</span>
       <span class="pts">⚽ ${cur.pts}</span>
@@ -1680,11 +1793,15 @@ function showQ(){
         <button class="ans" onclick="pick(${k})"><span class="oi">${o.i||''}</span><span>${o.t}</span></button>
         <button class="spk" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(o.t)}" data-l="${o.l||ol}" aria-label="Écouter">🔊</button>
       </div>`).join('')}</div>
-    ${q.opts.length>=3?'<button class="hintb" id="hintb" onclick="hint()">💡 Indice</button>':''}
+    ${q.opts.length>=3&&!cur.lean?'<button class="hintb" id="hintb" onclick="hint()">💡 Indice</button>':''}
     <div id="hint"></div>
     <div id="fb"></div>
   </div>`;
   updBar();
+  if(cur.assist&&q.opts.length>=3){   // plus d'aide après 2 échecs de suite : une mauvaise réponse est déjà enlevée
+    const w=q.opts.map((_,k)=>k).filter(k=>k!==q.ok);
+    const k=w[Math.floor(Math.random()*w.length)];$('o'+k).classList.add('gone');$('o'+k).querySelector('.ans').disabled=true;
+  }
   const sp=q.hear?[q.hear,q.hl||'fr']:[(q.story?q.story+' ':'')+q.text,'fr'];
   if(calm()){
     cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
@@ -1730,6 +1847,7 @@ function pick(k){
   if(k===q.ok){
     cur.locked=true;el.classList.add('good');beepOk();
     const first=cur.tries===0&&!cur.hinted,gain=first?2:1;
+    recordQ(q,first);reg(first);
     cur.pts+=gain;
     if(first){cur.first++;cur.streak++}else cur.streak=0;
     const r=el.getBoundingClientRect();
@@ -1742,7 +1860,7 @@ function pick(k){
     cur.tries++;cur.streak=0;updStk();cur.missed.add(q);
     el.classList.add('bad');el.querySelector('.ans').disabled=true;beepNo();
     if(q.opts.length===2||cur.tries>=2){
-      cur.locked=true;$('o'+q.ok).classList.add('good');feedback(false,q);
+      cur.locked=true;recordQ(q,false);reg(false);$('o'+q.ok).classList.add('good');feedback(false,q);
     }else{
       if(calm()){
         cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
@@ -1773,7 +1891,7 @@ function feedback(ok,q){
 function nextQ(){
   cur.i++;cur.ftk=(cur.ftk||0)+1;
   if(cur.i>=cur.qs.length){finish();return}
-  if(calm()&&cur.i%5===0&&cur.qs.length-cur.i>=2){pauseScreen();return}
+  if(calm()&&!cur.mission&&cur.i%5===0&&cur.qs.length-cur.i>=2){pauseScreen();return}
   showQ();
 }
 function pauseScreen(){
@@ -1794,6 +1912,7 @@ function pauseScreen(){
 }
 
 function finish(){
+  if(cur.mission){finishMission();return}
   if(cur.review){finishReview();return}
   stopSay();window.scrollTo(0,0);
   const g=cur.g,max=cur.qs.length*2,r=cur.pts/max;
