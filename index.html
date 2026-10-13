@@ -295,6 +295,19 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .mc.up{background:#fff}.mc.up .mf{display:none}.mc.up .mq{display:flex}
 .mc.ok{background:#DDF6EC;border-color:var(--grn)}
 .typ .nb{white-space:nowrap}
+.od-sl,.od-pl{display:flex;flex-direction:column;gap:8px}
+.od-lb{margin:14px 0 6px;font-weight:700;color:#555}
+.od-it{display:flex;border:3px solid var(--ink);border-radius:16px;overflow:hidden;background:#fff;min-height:52px}
+.od-it.on{background:#E3EEFF;border-color:var(--blu)}
+.od-it.good{background:var(--grn);border-color:#0e7a55}.od-it.good .od-b{color:#fff}
+.od-it.bad{background:#FFE4E5;border-color:var(--red)}
+.od-b{flex:1;display:flex;align-items:center;gap:10px;padding:10px 12px;text-align:left;font-weight:700;min-height:48px}
+.od-it .spk{width:46px;height:auto;border-radius:0;box-shadow:none}
+.od-n{flex:none;min-width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:17px}
+.od-n:empty{display:none}
+.od-empty{display:flex;align-items:center;min-height:52px;padding:0 12px;border:3px dashed #9aa1ad;border-radius:16px;opacity:.7}
+.od-go{display:block;margin:14px auto 0}
+.od.wait{opacity:.5}
 .model{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0}
 .model .mw{font-size:34px;font-weight:700;letter-spacing:.04em}
 .hintbox .pat{letter-spacing:.15em;font-size:22px}
@@ -780,7 +793,7 @@ const GAMES_DUREE=[
 const C=(i,b,t,c,s)=>({i,b,t,c:c||'l',s:s||(b+'. '+t+'.')});
 const SL=(title,say,cards,flow)=>({title,say,cards,flow:!!flow});
 const GM=(id,icon,name,c,qs,o)=>Object.assign({id,icon,name,c,qs,mix:true},o||{});
-const ORD=(icon,title,steps)=>steps.map((s,k)=>{const n=steps.length,a=steps[k],b=steps[(k+1)%n],d=steps[(k+2)%n];return {story:title,sicon:'🔢',icon,text:"Quelle est l’étape "+(k+1)+" ?",opts:[O(a[1],a[0]),O(b[1],b[0]),O(d[1],d[0])],ok:0,why:"Étape "+(k+1)+" : "+a[1]+"."}});
+const ORD=(icon,title,steps)=>steps.map((s,k)=>{const n=steps.length,a=steps[k],b=steps[(k+1)%n],d=steps[(k+2)%n];return {story:title,sicon:'🔢',icon,text:"Quelle est l’étape "+(k+1)+" ?",opts:[O(a[1],a[0]),O(b[1],b[0]),O(d[1],d[0])],ok:0,why:"Étape "+(k+1)+" : "+a[1]+".",ord:k===0?{icon,title,steps}:null}});
 const K=(t,s,p,n)=>({t,s:s||[],p:!!p,n:n||''});
 const fill=(text,a,b,ok,why)=>({icon:'✏️',text,opts:[O(a),O(b)],ok,why});
 const voc=(en,fr,w1,w2)=>({icon:'🎧',hear:en,hl:'en',show:en,text:'Que veut dire ce mot ?',opts:N(fr,w1,w2),ok:0,why:en+' = '+fr+'.'});
@@ -1463,6 +1476,14 @@ function genEcrire(sq){
   (NUMQ[sq.id]||[]).forEach(n=>qs.push({type:'type',mode:'num',num:true,icon:'🧮',text:n[0],answers:[String(n[1])],hint:n[2],why:n[3]}));
   return qs.length>=3?{id:sq.id+'_ecr',icon:'⌨️',name:'J’écris',c:'#4F72B8',qs}:null;
 }
+// « Dans l'ordre » : une question à toucher par liste d'étapes déjà présente dans les jeux de la séquence
+BLOCS.forEach(b=>b.seqs.forEach(sq=>{
+  const qs=[];
+  sq.games.forEach(g=>g.qs.forEach(q=>{if(q.ord){const o=q.ord;
+    qs.push({type:'order',icon:o.icon,text:'Remets dans l’ordre : '+o.title,items:o.steps.map(x=>({i:x[0],t:x[1]})),answers:['dans cet ordre'],
+      why:o.title+' : '+o.steps.map((x,k)=>(k+1)+'. '+x[1]).join(', ')+'.'})}}));
+  if(qs.length)sq.games.push({id:sq.id+'_ord',icon:'🔢',name:'Dans l’ordre',c:'#4F72B8',qs});
+}));
 BLOCS.forEach(b=>b.seqs.forEach(sq=>{const g=genEcrire(sq);if(g)sq.games.push(g)}));
 
 const goalHtml=s=>s.goal?`<div class="sob"><span class="big" style="font-size:34px">🎯</span><p>${s.goal}</p>${spk(s.goal)}</div>`:'';
@@ -2114,7 +2135,7 @@ function recordQ(q,ok){
   noteMastery();
   save();
 }
-const fmtOf=q=>q.type?'type':q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
+const fmtOf=q=>q.type==='order'?'order':q.type?'type':q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
 // évite deux fois le même format d'affilée quand c'est possible
 function mixFormats(list){
   const out=[],rest=list.slice();let prev=null;
@@ -2589,6 +2610,7 @@ function showQ(){
   stopSay();window.scrollTo(0,0);
   const q=prepQ(cur.qs[cur.i]);
   cur.tries=0;cur.locked=false;cur.hinted=false;cur.waiting=false;cur.tk2=(cur.tk2||0)+1;
+  if(q.type==='order'){showOrder(q);return}
   if(q.type){showTyped(q);return}
   const cls=q.opts.length===2?'duo':'n'+q.opts.length;
   const ol=q.ol||'fr';
@@ -2642,7 +2664,7 @@ function hold(text,lang,done){
 }
 function unlockQ(){
   cur.waiting=false;
-  const o=document.querySelector('.opts,.typ');if(o)o.classList.remove('wait');
+  const o=document.querySelector('.opts,.typ,.od');if(o)o.classList.remove('wait');
   const ti=$('ti');if(ti){ti.disabled=false;try{ti.focus({preventScroll:true})}catch(e){}}
   const l=$('lis');if(l)l.innerHTML='<span class="ok">👉 À toi !</span>';
   armHint(3000);
@@ -2655,6 +2677,13 @@ function hint(){
   if(cur.locked||cur.hinted||cur.waiting||cur.hintsLeft<=0)return;
   const q=cur.qs[cur.i];cur.hinted=true;cur.hintsLeft--;cur.missed.add(q);
   const b=$('hintb');if(b)b.remove();
+  if(q.type==='order'){
+    const od=cur.od;let p=0;while(p<od.placed.length&&od.placed[p]===p)p++;
+    od.placed=od.placed.slice(0,p);od.placed.push(p);od.cls=null;odDraw();
+    $('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>Je t’aide : l’étape ${p+1} est placée.</p></div>`;
+    if(S.auto)say('Je place l’étape '+(p+1));
+    return;
+  }
   if(q.type){
     const a=q.answers[0],pat=a.split('').map((ch,k)=>k===0||ch===' '?ch:'_').join(' ');
     const t=q.num?(q.hint||'Pose le calcul.'):`Le mot commence par « ${a[0]} » et a ${a.replace(/ /g,'').length} lettres.<br><b class="pat">${pat}</b>`;
@@ -2668,6 +2697,86 @@ function hint(){
   const el=$('o'+wrong[Math.floor(Math.random()*wrong.length)]);
   el.classList.add('gone');el.querySelector('.ans').disabled=true;
   if(S.auto)say('Une mauvaise réponse est enlevée');
+}
+
+/* ---------- « Dans l’ordre » : on touche les étapes dans l’ordre ---------- */
+function showOrder(q){
+  let sh;
+  do{sh=shuffle(q.items.map((_,k)=>k))}while(sh.every((v,k)=>v===k));
+  cur.od={placed:[],pool:sh,cls:null};
+  app.innerHTML=`
+  <div class="card">
+    ${crumbs('🎮 '+cur.g.name)}
+    <div class="gtop">
+      <button class="back" onclick="${cur.mission?'home()':`openSeq('${ctx.bid}','${ctx.sid}')`}" aria-label="Retour">⬅️</button>
+      <div class="pbar"><i style="width:${cur.i/cur.qs.length*100}%"></i></div>
+      <span class="stk" id="stk" aria-live="polite">${cur.streak>=2?cur.streak+' de suite ✔':''}</span>
+      <span class="pts">⚽ ${cur.pts}</span>
+    </div>
+    <div class="qline"><span class="big">${q.icon||''}</span><h2>${q.text}</h2>${spk(q.text)}</div>
+    <p class="sm" style="text-align:center">👆 Touche les étapes, de la première à la dernière.</p>
+    <div id="lis" class="lis" aria-live="polite"></div>
+    <div class="od${calm()?' wait':''}" id="odz"></div>
+    ${cur.lean?'':(cur.hintsLeft>0?`<button class="hintb" id="hintb" onclick="hint()" disabled title="Réfléchis d’abord">💡 Indice (${cur.hintsLeft})</button>`:'<p class="fine" style="text-align:center;margin-top:12px">💡 Plus d’indice dans ce jeu</p>')}
+    <div id="hint"></div>
+    <div id="fb"></div>
+  </div>`;
+  updBar();odDraw();
+  const sp=[q.text+'. Touche les étapes, de la première à la dernière.','fr'];
+  if(calm()){
+    cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
+    $('lis').innerHTML='<span>🔊 J’écoute…</span>';
+    hold(sp[0],sp[1],()=>{if(cur&&cur.tk===tk&&cur.waiting)unlockQ()});
+  }else{armHint(4000);if(S.auto)say(sp[0],sp[1])}
+}
+function odDraw(){
+  const q=cur.qs[cur.i],od=cur.od,n=q.items.length,z=$('odz');if(!z)return;
+  const row=(k,cls,num)=>{const it=q.items[k];return `<div class="od-it ${cls}"><button class="od-b" onclick="odTap(${k})" ${cur.locked?'disabled':''}><span class="od-n">${num||''}</span><span class="oi">${it.i}</span><span>${it.t}</span></button>${spk(it.t)}</div>`};
+  const slots=[];
+  for(let p=0;p<n;p++)slots.push(p<od.placed.length?row(od.placed[p],od.cls&&od.cls[p]||'on',p+1):`<div class="od-empty"><span class="od-n">${p+1}</span></div>`);
+  const pool=od.pool.filter(k=>!od.placed.includes(k)).map(k=>row(k,'',''));
+  z.innerHTML=`<div class="od-sl">${slots.join('')}</div>${pool.length?`<p class="od-lb">À placer</p><div class="od-pl">${pool.join('')}</div>`:''}${od.placed.length===n&&!cur.locked?'<button class="nb go od-go" onclick="odCheck()">✅ Vérifier</button>':''}`;
+}
+function odTap(k){
+  if(cur.locked||cur.waiting)return;
+  const od=cur.od,at=od.placed.indexOf(k);actx();stopSay();
+  od.cls=null;
+  if(at>=0)od.placed.splice(at,1);else od.placed.push(k);
+  odDraw();
+}
+function odCheck(){
+  if(cur.locked||cur.waiting)return;
+  const q=cur.qs[cur.i],od=cur.od;actx();stopSay();
+  const good=od.placed.map((v,p)=>v===p);
+  if(good.every(Boolean)){
+    cur.locked=true;beepOk();od.cls=good.map(()=>'good');odDraw();
+    const first=cur.tries===0&&!cur.hinted,gain=first?2:1;
+    recordQ(q,first);reg(first);
+    cur.pts+=gain;
+    if(first){cur.first++;cur.streak++}else cur.streak=0;
+    const r=$('odz').getBoundingClientRect();
+    const fl=document.createElement('span');fl.className='fl';fl.textContent='+'+gain+' ⚽';
+    fl.style.left=(r.left+r.width/2)+'px';fl.style.top=(r.top+window.scrollY)+'px';
+    document.body.appendChild(fl);setTimeout(()=>fl.remove(),1000);
+    confetti(r.left+r.width/2,r.top+40,first?40:15);
+    updStk();feedback(true,q);
+    return;
+  }
+  cur.tries++;cur.streak=0;updStk();cur.missed.add(q);beepNo();
+  if(cur.tries>=2){
+    cur.locked=true;recordQ(q,false);reg(false);
+    od.placed=q.items.map((_,k)=>k);od.cls=od.placed.map(()=>'good');odDraw();
+    feedback(false,q);return;
+  }
+  od.cls=good.map(g=>g?'good':'bad');odDraw();
+  $('fb').innerHTML='<div class="fb retry">🤔 Presque ! Les bonnes étapes restent en vert.</div>';
+  const h=$('hintb');if(h&&!h.disabled)h.classList.add('hl');
+  cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
+  setTimeout(()=>{if(cur&&cur.tk===tk&&!cur.locked){
+    cur.waiting=false;let p=0;while(p<od.placed.length&&od.placed[p]===p)p++;
+    od.placed=od.placed.slice(0,p);od.cls=null;odDraw();
+    $('fb').innerHTML='<div class="fb retry">💪 Place les autres !</div>';
+  }},pace()==='self'?1600:2600);
 }
 /* ---------- questions à taper au clavier ---------- */
 const fold=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,"'").replace(/[^a-z0-9' ]/g,'').replace(/\s+/g,' ').trim();
@@ -2830,7 +2939,10 @@ function recapHtml(g,sq){
   const lang=sq.lang||'fr',qs=g.qs,L=[];let title='📌 Je retiens',flow=false,schema='',kind='';
   const c=(i,b,t,sp,l)=>({i,b,t,c:'y',s:sp||(b+'. '+t),l});
   const miss=[...cur.missed];
-  if(g.id.endsWith('_ecr')){
+  if(g.id.endsWith('_ord')){
+    title='🔢 Les étapes, dans l’ordre';flow=true;
+    cur.qs[cur.qs.length-1].items.forEach((it,k)=>L.push(c(it.i,it.t,'','Étape '+(k+1)+' : '+it.t)));
+  }else if(g.id.endsWith('_ecr')){
     title='✍️ Les mots et les calculs à retenir';
     const seen={};
     qs.filter(q=>q.mode==='copy'||q.mode==='dict').forEach(q=>{const w=q.answers[0];if(!seen[w]&&L.length<4){seen[w]=1;L.push(c('✏️',w,q.sub||'',w+(q.sub?'. '+q.sub:'')))}});
