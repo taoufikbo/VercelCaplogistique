@@ -265,6 +265,19 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .recap{background:#fff;border:3px solid #E4DCC5;border-radius:16px;padding:12px;margin:14px 0;text-align:left}
 .recap .rt{margin:0 0 8px;font-size:20px}
 .recap .cards{margin-top:6px}
+.vsw{display:flex;gap:8px;margin:10px 0 6px}
+.vsw button{flex:1;min-height:48px;border-radius:14px;background:#fff;border:3px solid #E4DCC5;font-weight:700;font-size:17px}
+.vsw button.on{background:#FFF1B8;border-color:#1F2430}
+.gtools{margin:6px 0}
+.gtools input{width:100%;font-size:18px;padding:12px 14px;border:3px solid #E4DCC5;border-radius:14px;background:#fff;color:var(--ink);font-family:inherit}
+#gres{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.gwrap{position:relative;height:min(66vh,520px);border:3px solid #E4DCC5;border-radius:16px;background:#fff;touch-action:none;overflow:hidden;margin:6px 0}
+.gwrap svg{width:100%;height:100%;display:block}
+.gz{position:absolute;top:8px;right:8px;z-index:3;display:flex;gap:6px}
+.gz .mini{min-width:44px;min-height:44px;background:#fff}
+.gn:focus-visible{outline:none}.gn:focus-visible circle{stroke:#4F72B8}
+.gins p{margin:4px 0}
+.chs{display:flex;flex-wrap:wrap;gap:6px}
 .typ.wait{opacity:.5}
 .pgoal{position:relative;height:130px;border:4px solid var(--ink);border-bottom:0;border-radius:14px 14px 0 0;background:repeating-linear-gradient(0deg,#f4f1e8 0 10px,#e3ddc9 10px 12px),#f4f1e8;overflow:hidden}
 .pgoal .pl{position:absolute;top:0;bottom:0;width:2px;background:rgba(31,36,48,.25)}
@@ -1768,6 +1781,168 @@ const seqRing=(b,q)=>{
   };
 };
 
+/* ---------- vue « Carte » : un graphe à explorer (matières, cours, mots du métier) ---------- */
+// Données : matières -> cours -> mots du métier (reliés quand le mot figure dans le contenu du cours).
+// Un mot relie plusieurs cours, parfois de matières différentes : c'est ce que la carte montre.
+const GALIAS={bl:['bon de livraison'],bc:['bon de commande'],fifo:['fifo'],fefo:['fefo'],epi:['epi','equipement de protection'],caces:['caces'],avarie:['avarie'],reserves:['reserves'],picking:['picking'],palette:['palette'],europalette:['europalette'],quai:['quai'],supply:['supply chain','chaine logistique'],cariste:['cariste'],chariot:['chariot'],transpalette:['transpalette'],inventaire:['inventaire'],stock:['stock'],rupture:['rupture de stock','ruptures de stock'],reception:['reception'],expedition:['expedition'],codebarres:['code-barres','code barres'],dlc:['dlc','date limite'],samu:['samu']};
+// TMS et WMS (logiciels) ne sont volontairement pas reliés : « TMS » désigne aussi les troubles musculosquelettiques dans le cours sur les gestes et postures.
+const gfold=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,"'");
+const gstrip=h=>String(h||'').replace(/<[^>]+>/g,' ');
+const gtext=sq=>gfold([sq.name,sq.goal,...(sq.slides||[]).flatMap(sl=>[sl.title,gstrip(sl.svg),...(sl.cards||[]).flatMap(c=>[c.b,c.t])]),...sq.games.filter(g=>!g.id.endsWith('_ecr')).flatMap(g=>[g.name,...g.qs.flatMap(q=>[q.text,q.why,q.story])])].join(' | '));
+const GT={},GS={};      // GT[cours] = mots ; GS[mot] = cours
+BLOCS.forEach(b=>b.seqs.forEach(sq=>{
+  const tx=gtext(sq);GT[sq.id]=[];
+  Object.keys(GALIAS).forEach(k=>{if(GLOSSAIRE[k]&&GALIAS[k].some(a=>tx.includes(a))){GT[sq.id].push(k);(GS[k]=GS[k]||[]).push(sq.id)}});
+}));
+const gBloc=sid=>BLOCS.find(b=>b.seqs.some(q=>q.id===sid));
+let G={links:false,open:null,seq:null,sel:'hub',vx:0,vy:0,vw:420,px:360,py:480,moved:false,raf:0};
+const gU=()=>G.vw/G.px;
+function gLayout(){
+  const N=[],E=[],hub={id:'hub',x:500,y:500,r:50,type:'hub'};N.push(hub);
+  const nb=BLOCS.length,pos={};
+  BLOCS.forEach((b,i)=>{
+    const a=-Math.PI/2+i*2*Math.PI/nb,x=500+160*Math.cos(a),y=500+160*Math.sin(a);pos[b.id]={x,y,a};
+    const mx=blocMax(b);
+    N.push({id:'b:'+b.id,type:'bloc',x,y,r:36,icon:b.icon,label:SHORT[b.id]||b.name,full:b.name,c:b.c,p:mx?blocStars(b)/mx:0,dim:G.open&&G.open!==b.id});
+    E.push(['hub','b:'+b.id,G.open===b.id?'on':'']);
+  });
+  if(G.open){
+    const b=findBloc(G.open),P=pos[b.id],m=b.seqs.length,step=m>1?Math.min(.34,1.5/(m-1)):0;
+    b.seqs.forEach((q,j)=>{
+      const a=P.a+(j-(m-1)/2)*step,x=500+340*Math.cos(a),y=500+340*Math.sin(a),mx=q.games.length*3;
+      pos[q.id]={x,y,a};
+      N.push({id:'s:'+q.id,type:'seq',x,y,r:28,icon:q.icon,label:q.name,full:q.name,c:b.c,p:mx?seqStars(q)/mx:0,dim:G.seq&&G.seq!==q.id});
+      E.push(['b:'+b.id,'s:'+q.id,G.seq===q.id?'on':'']);
+    });
+    if(G.seq&&pos[G.seq]){
+      const Q=pos[G.seq],T=GT[G.seq]||[],t=T.length,st=t>1?Math.min(.62,2.4/(t-1)):0;
+      T.forEach((k,j)=>{
+        const a=Q.a+(j-(t-1)/2)*st,x=Q.x+105*Math.cos(a),y=Q.y+105*Math.sin(a);
+        pos['t:'+k]={x,y};
+        N.push({id:'t:'+k,type:'term',x,y,r:24,icon:GLOSSAIRE[k].i,label:SHORT_T(k),full:GLOSSAIRE[k].t,c:b.c,p:0,dim:false});
+        E.push(['s:'+G.seq,'t:'+k,G.sel==='t:'+k?'on':'']);
+      });
+    }
+  }
+  // un mot sélectionné : ses autres cours apparaissent près de leur matière (liens entre matières)
+  if(G.sel.startsWith('t:')){
+    const k=G.sel.slice(2),others=(GS[k]||[]).filter(id=>id!==G.seq);
+    if(pos['t:'+k]){
+      others.forEach(id=>{
+        const bl=gBloc(id);if(!bl)return;
+        if(G.open===bl.id){E.push(['t:'+k,'s:'+id,'x']);return}
+        const idx=others.filter(o=>gBloc(o).id===bl.id).indexOf(id),cnt=others.filter(o=>gBloc(o).id===bl.id).length,P=pos[bl.id];
+        const a=P.a+(idx-(cnt-1)/2)*.2,x=500+300*Math.cos(a),y=500+300*Math.sin(a),q=findSeq(bl.id,id);
+        N.push({id:'s:'+id,type:'ghost',x,y,r:20,icon:q.icon,label:q.name,full:q.name,c:bl.c,p:0,dim:false});
+        E.push(['t:'+k,'s:'+id,'x']);E.push(['b:'+bl.id,'s:'+id,'']);
+      });
+    }
+  }
+  return {N,E};
+}
+const gIco=(n,size)=>String(n.icon).startsWith('<svg')?`<svg x="${n.x-size*0.85}" y="${n.y-size*0.58}" width="${size*1.7}" height="${size*1.13}" viewBox="0 0 60 40">${String(n.icon).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'')}</svg>`:T(n.x,n.y+n.r*0.34,size,n.icon);
+function SHORT_T(k){const t=GLOSSAIRE[k].t;return t.replace(/ \(.*\)$/,'')}
+function gSvg(){
+  const {N,E}=gLayout(),idx={};N.forEach(n=>idx[n.id]=n);
+  const edges=E.map(([a,b,c])=>{const A=idx[a],B=idx[b];if(!A||!B)return '';
+    const cross=c==='x';
+    return `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${cross?'#B95458':c==='on'?'#1F2430':'#bdb4a0'}" stroke-width="${c==='on'||cross?5:3}" ${cross?'stroke-dasharray="9 7"':''} stroke-linecap="round"/>`}).join('');
+  const nodes=N.map(n=>{
+    const sel=G.sel===n.id,op=n.dim?.35:1,circ=2*Math.PI*(n.r-4);
+    let body='';
+    if(n.type==='hub')body=`<circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="#F0D27A" stroke="#1F2430" stroke-width="${sel?8:5}"/>`+T(n.x,n.y+8,26,'CAP','#1F2430',800)+T(n.x,n.y+26,13,'Logistique','#1F2430',400);
+    else{
+      body=`<circle cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${n.type==='term'?'#fff':'#fff'}" stroke="${n.type==='term'||n.type==='ghost'?'#9aa1ad':'#E4DCC5'}" stroke-width="${n.type==='term'||n.type==='ghost'?4:8}" ${n.type==='term'||n.type==='ghost'?'stroke-dasharray="7 5"':''}/>`
+        +(n.p>0&&n.type!=='term'?`<circle cx="${n.x}" cy="${n.y}" r="${n.r-4}" fill="none" stroke="${n.c}" stroke-width="8" stroke-dasharray="${circ*n.p} ${circ}" transform="rotate(-90 ${n.x} ${n.y})"/>`:'')
+        +(sel?`<circle cx="${n.x}" cy="${n.y}" r="${n.r+8}" fill="none" stroke="#1F2430" stroke-width="5"/>`:'')
+        +gIco(n,Math.round(n.r*0.95))
+        +wrap(n.label,n.type==='bloc'?12:14).slice(0,3).map((l,i)=>T(n.x,n.y+n.r+(n.type==='bloc'?22:18)+i*(n.type==='bloc'?19:16),n.type==='bloc'?17:n.type==='seq'?15:13,X(l),'#1F2430',n.type==='bloc'?800:700)).join('');
+    }
+    return `<g class="gn" data-n="${n.id}" role="button" tabindex="0" aria-label="${esc(n.full||'Logistique')}" opacity="${op}" onclick="gSel('${n.id}')" onkeydown="if(event.key==='Enter')gSel('${n.id}')" style="cursor:pointer">${body}</g>`;
+  }).join('');
+  return {svg:`<svg id="gsvg" viewBox="${G.vx} ${G.vy} ${G.vw} ${G.vw*G.py/G.px}" role="group" aria-label="Carte des matières, des cours et des mots du métier">${DEFS}${edges}${nodes}</svg>`,N};
+}
+function gInspector(){
+  const id=G.sel,chip=(i,l,fn)=>`<button class="mini" onclick="${fn}">${i} ${X(l)}</button>`;
+  if(id==='hub')return `<p><b>🕸️ La carte du CAP</b></p><p class="sm">Touche une matière pour voir ses cours. Touche un cours pour voir ses mots. Les mots relient les cours entre eux.</p>`;
+  if(id.startsWith('b:')){const b=findBloc(id.slice(2));return `<p><b>${b.icon} ${X(b.name)}</b> ${spk(b.name)}</p><p class="sm">★ ${blocStars(b)}/${blocMax(b)} · ${b.seqs.length} cours</p><div class="btns" style="justify-content:flex-start"><button class="nb go" onclick="openBloc('${b.id}')">📂 Ouvrir la matière</button></div>`}
+  if(id.startsWith('s:')){const sid=id.slice(2),b=gBloc(sid),q=findSeq(b.id,sid),T=GT[sid]||[];
+    return `<p><b>${q.icon} ${X(q.name)}</b> ${spk(q.name)}</p>${q.goal?`<p class="sm">🎯 ${X(q.goal)}</p>`:''}<p class="sm">★ ${seqStars(q)}/${q.games.length*3}</p><div class="btns" style="justify-content:flex-start"><button class="nb go" onclick="openSeq('${b.id}','${sid}')">▶️ Ouvrir le cours</button></div>${T.length?`<p class="sm" style="margin:10px 0 4px">Les mots de ce cours :</p><div class="chs">${T.map(k=>chip(GLOSSAIRE[k].i,SHORT_T(k),`gSel('t:${k}')`)).join('')}</div>`:''}`}
+  if(id.startsWith('t:')){const k=id.slice(2),g=GLOSSAIRE[k],S2=GS[k]||[];
+    return `<p><b>${g.i} ${X(g.t)}</b> ${spk((g.v||g.t)+'. '+g.d)}</p><p>${X(g.d)}</p>${S2.length>1?'<button class="mini" onclick="gLinks()">🔭 Voir les liens sur la carte</button>':''}${S2.length?`<p class="sm" style="margin:10px 0 4px">Ce mot revient dans ${S2.length} cours :</p><div class="chs">${S2.map(sid=>{const q=findSeq(gBloc(sid).id,sid);return chip(q.icon,q.name,`gSel('s:${sid}')`)}).join('')}</div>`:''}`}
+  return '';
+}
+function carteHtml(){
+  return `<div class="gtools"><input id="gq" type="search" placeholder="🔎 Chercher un cours ou un mot" aria-label="Chercher dans la carte" oninput="gSearch(this.value)" autocomplete="off"><div id="gres"></div></div>
+  <div class="gwrap" id="gwrap"><div class="gz"><button class="mini" onclick="gZoom(1/1.3)" aria-label="Zoom avant">➕</button><button class="mini" onclick="gZoom(1.3)" aria-label="Zoom arrière">➖</button><button class="mini" onclick="gAll()" aria-label="Tout voir">⟲</button></div><div id="gcv"></div></div>
+  <div class="card gins" id="gins" aria-live="polite"></div>`;
+}
+function gRender(){const r=gSvg();$('gcv').innerHTML=r.svg;$('gins').innerHTML=gInspector();return r.N}
+function gSetVB(){const v=$('gsvg');if(v)v.setAttribute('viewBox',`${G.vx} ${G.vy} ${G.vw} ${G.vw*G.py/G.px}`)}
+function gFit(ids,pad,inst){
+  const {N}=gLayout(),S2=N.filter(n=>ids.includes(n.id));if(!S2.length)return;
+  const x0=Math.min(...S2.map(n=>n.x-n.r-20)),x1=Math.max(...S2.map(n=>n.x+n.r+20)),y0=Math.min(...S2.map(n=>n.y-n.r-20)),y1=Math.max(...S2.map(n=>n.y+n.r+70));
+  const bw=x1-x0+(pad||40),bh=y1-y0+(pad||40),vw=Math.max(380,bw,bh*G.px/G.py),vh=vw*G.py/G.px;
+  const tx=(x0+x1)/2-vw/2,ty=(y0+y1)/2-vh/2;
+  if(inst){cancelAnimationFrame(G.raf);G.vx=tx;G.vy=ty;G.vw=vw;gSetVB()}else gTween(tx,ty,vw);
+}
+function gTween(tx,ty,tw){
+  cancelAnimationFrame(G.raf);
+  if(reduce){G.vx=tx;G.vy=ty;G.vw=tw;gSetVB();return}
+  const a={x:G.vx,y:G.vy,w:G.vw},t0=performance.now();
+  const step=t=>{const k=Math.min(1,(t-t0)/280),e=1-Math.pow(1-k,3);G.vx=a.x+(tx-a.x)*e;G.vy=a.y+(ty-a.y)*e;G.vw=a.w+(tw-a.w)*e;gSetVB();if(k<1)G.raf=requestAnimationFrame(step)};
+  G.raf=requestAnimationFrame(step);
+}
+function gFocus(inst){
+  if(G.sel.startsWith('t:')&&G.links){const {N:L}=gLayout();return gFit(L.filter(n=>n.type==='term'||n.type==='ghost'||n.id==='s:'+G.seq||n.id==='b:'+G.open).map(n=>n.id),30,inst)}
+  if(G.sel==='hub'||(!G.open&&!G.seq))return gFit(['hub',...BLOCS.map(b=>'b:'+b.id)],20,inst);
+  const ids=['b:'+G.open];const {N}=gLayout();
+  N.forEach(n=>{if(n.type==='seq'||n.type==='term'||n.type==='ghost')ids.push(n.id)});
+  if(G.seq)gFit(['b:'+G.open,'s:'+G.seq,...N.filter(n=>n.type==='term').map(n=>n.id)],30,inst);
+  else gFit(ids,30,inst);
+}
+function gLinks(){G.links=true;gRender();gFocus()}
+function gAll(){G.sel='hub';G.open=null;G.seq=null;gRender();gFocus()}
+function gSel(id){
+  if(G.moved){G.moved=false;return}
+  if(id==='hub'){G.open=null;G.seq=null;G.sel='hub'}
+  else if(id.startsWith('b:')){const b=id.slice(2);if(G.open===b&&G.sel===id){G.open=null;G.seq=null;G.sel='hub'}else{G.open=b;G.seq=null;G.sel=id}}
+  else if(id.startsWith('s:')){const q=id.slice(2);G.open=gBloc(q).id;G.seq=q;G.sel=id}
+  else if(id.startsWith('t:')){G.sel=id;G.links=false}
+  gRender();gFocus();stopSay();
+}
+function gSearch(q){
+  const r=$('gres');if(!r)return;q=gfold(q).trim();
+  if(q.length<2){r.innerHTML='';return}
+  const hits=[];
+  BLOCS.forEach(b=>{if(gfold(b.name).includes(q))hits.push({i:b.icon,l:b.name,id:'b:'+b.id});b.seqs.forEach(s=>{if(gfold(s.name).includes(q))hits.push({i:s.icon,l:s.name,id:'s:'+s.id})})});
+  Object.keys(GLOSSAIRE).forEach(k=>{if(GS[k]&&gfold(GLOSSAIRE[k].t+' '+GLOSSAIRE[k].d).includes(q))hits.push({i:GLOSSAIRE[k].i,l:GLOSSAIRE[k].t,id:'t:'+k})});
+  r.innerHTML=hits.length?hits.slice(0,6).map(h=>`<button class="mini" onclick="gGo('${h.id}')">${h.i} ${X(h.l)}</button>`).join(''):'<span class="sm">Rien trouvé</span>';
+}
+function gGo(id){
+  $('gres').innerHTML='';$('gq').value='';
+  if(id.startsWith('t:')){const k=id.slice(2),sid=(GS[k]||[])[0];if(sid){G.open=gBloc(sid).id;G.seq=(G.seq&&(GS[k]||[]).includes(G.seq))?G.seq:sid}G.sel=id;gRender();gFocus();return}
+  G.moved=false;gSel(id);
+}
+function gZoom(f){const cx=G.vx+G.vw/2,cy=G.vy+G.vw*G.py/G.px/2;G.vw=Math.max(220,Math.min(1500,G.vw*f));G.vx=cx-G.vw/2;G.vy=cy-G.vw*G.py/G.px/2;gSetVB()}
+function carteInit(){
+  const w=$('gwrap');if(!w)return;
+  G.px=w.clientWidth||360;G.py=w.clientHeight||480;
+  gRender();gFocus(true);
+  const P=new Map();let a0=null;
+  w.addEventListener('pointerdown',e=>{if(e.target.closest('.gz'))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});G.moved=false;a0={vx:G.vx,vy:G.vy,vw:G.vw,d:0,sx:e.clientX,sy:e.clientY}});
+  w.addEventListener('pointermove',e=>{
+    if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===1&&a0){const dx=e.clientX-a0.sx,dy=e.clientY-a0.sy;if(Math.abs(dx)+Math.abs(dy)>8)G.moved=true;if(G.moved){const u=a0.vw/G.px;G.vx=a0.vx-dx*u;G.vy=a0.vy-dy*u;G.vw=a0.vw;gSetVB()}}
+    else if(P.size===2){const [p,q]=[...P.values()],d=Math.hypot(p.x-q.x,p.y-q.y);if(!a0.d)a0.d=d;G.moved=true;const nw=Math.max(220,Math.min(1500,a0.vw*a0.d/d)),cx=a0.vx+a0.vw/2,cy=a0.vy+a0.vw*G.py/G.px/2;G.vw=nw;G.vx=cx-nw/2;G.vy=cy-nw*G.py/G.px/2;gSetVB()}
+  });
+  const up=e=>{P.delete(e.pointerId);if(!P.size)a0=null;else{const [p]=[...P.values()];a0={vx:G.vx,vy:G.vy,vw:G.vw,d:0,sx:p.x,sy:p.y}}};
+  w.addEventListener('pointerup',up);w.addEventListener('pointercancel',up);
+  w.addEventListener('wheel',e=>{e.preventDefault();gZoom(e.deltaY>0?1.12:1/1.12)},{passive:false});
+}
+function setView(v){S.view=v;save();home()}
+const viewSwitch=()=>`<div class="vsw" role="group" aria-label="Choisir la vue"><button class="${S.view==='carte'?'':'on'}" aria-pressed="${S.view!=='carte'}" onclick="setView('cercle')">⭕ Cercle</button><button class="${S.view==='carte'?'on':''}" aria-pressed="${S.view==='carte'}" onclick="setView('carte')">🕸️ Carte</button></div>`;
+
 /* ---------- accueil ---------- */
 function home(){
   stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null};
@@ -1776,8 +1951,8 @@ function home(){
   <div class="top"><div class="sign"><h1>🚚 Mon CAP Logistique</h1></div></div>
   ${missionHtml()}
   ${progHtml()}
-  ${stepHtml('1️⃣','Ou choisis une matière')}
-  ${ringHtml(homeRing())}
+  ${viewSwitch()}
+  ${S.view==='carte'?stepHtml('🕸️','Explore la carte')+carteHtml():stepHtml('1️⃣','Ou choisis une matière')+ringHtml(homeRing())}
   <details class="pausez" id="pausez"><summary>😄 Pause</summary>
   <div class="strip">
     <span class="chip dm" id="c-date">📅 ${dateShort()}</span>
@@ -1799,6 +1974,7 @@ function home(){
   <button class="refbtn" onclick="refView()">📋 Le programme (référentiel)</button>
   `;
   loadWx();
+  if(S.view==='carte')carteInit();
   requestAnimationFrame(()=>requestAnimationFrame(()=>{const b=$('ball');if(b)b.style.left=`calc((100% - 96px) * ${pct} + 6px)`}));
   updBar();
 }
