@@ -251,8 +251,8 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .hintbox{display:flex;align-items:center;gap:10px;margin-top:12px;background:#FFF6CC;border-left:8px solid var(--yel);border-radius:12px;padding:10px 12px}
 .hintbox p{margin:0;flex:1}
 .opt.gone{background:#c9ced6;border-color:#9aa1ad;opacity:.5}
-.aim{display:flex;align-items:center;gap:10px;background:#E4F2DA;border-left:8px solid var(--grn);border-radius:12px;padding:10px 12px;margin-bottom:14px}
-.aim p{margin:0;flex:1;font-weight:700}
+.sob{display:flex;align-items:center;gap:10px;background:#E4F2DA;border-left:8px solid var(--grn);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.sob p{margin:0;flex:1;font-weight:700}
 .lis{min-height:28px;margin:0 0 8px;font-weight:700;color:#555}
 .lis .ok{color:#0e7a55}
 .opts.wait{opacity:.5;pointer-events:none}
@@ -1316,7 +1316,7 @@ function genEcrire(sq){
 }
 BLOCS.forEach(b=>b.seqs.forEach(sq=>{const g=genEcrire(sq);if(g)sq.games.push(g)}));
 
-const goalHtml=s=>s.goal?`<div class="aim"><span class="big" style="font-size:34px">🎯</span><p>${s.goal}</p>${spk(s.goal)}</div>`:'';
+const goalHtml=s=>s.goal?`<div class="sob"><span class="big" style="font-size:34px">🎯</span><p>${s.goal}</p>${spk(s.goal)}</div>`:'';
 
 const findBloc=id=>BLOCS.find(b=>b.id===id);
 const findSeq=(b,s)=>findBloc(b).seqs.find(x=>x.id===s);
