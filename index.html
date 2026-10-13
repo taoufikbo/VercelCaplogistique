@@ -321,6 +321,30 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .od-n:empty{display:none}
 .od-empty{display:flex;align-items:center;min-height:52px;padding:0 12px;border:3px dashed #9aa1ad;border-radius:16px;opacity:.7}
 .od-go{display:block;margin:14px auto 0}
+.sw-st{display:flex;justify-content:center;margin:6px 0 10px;overflow:hidden;padding:8px 0}
+.sw-c{width:100%;max-width:340px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;background:#fff;border:4px solid var(--ink);border-radius:22px;padding:18px 14px;font-size:26px;touch-action:pan-y;cursor:grab;user-select:none;transition:transform .25s}
+.sw-c[data-d=y]{border-color:var(--grn);background:#EAFBF3}
+.sw-c[data-d=n]{border-color:var(--red);background:#FFF0F0}
+.sw-c.good{background:var(--grn);border-color:#0e7a55;color:#fff}
+.sw-c.bad{background:#c9ced6;border-color:#9aa1ad;opacity:.7}
+.sw-bt{display:flex;gap:12px;justify-content:center}
+.sw-bt .nb{flex:1;max-width:170px}
+.sw-no{background:#B7424A}
+.bk-a{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:60px;padding:10px;border:3px dashed #9aa1ad;border-radius:16px;margin-top:8px}
+.bk-p{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.bk-t{min-width:46px;height:50px;padding:0 10px;border-radius:12px;border:3px solid var(--ink);background:#fff;font-size:24px;font-weight:700;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.bk-t.on{background:#E3EEFF;border-color:var(--blu)}
+.bk-t.good{background:var(--grn);border-color:#0e7a55;color:#fff}
+.bk-t.bad{background:#FFE4E5;border-color:var(--red)}
+.bk-e{width:30px;height:4px;align-self:flex-end;margin-bottom:10px;background:#9aa1ad;border-radius:2px}
+.ck-l{display:flex;flex-direction:column;gap:8px}
+.ck-it{display:flex;border:3px solid var(--ink);border-radius:16px;overflow:hidden;background:#fff;min-height:56px}
+.ck-it.good{background:#DDF6EC;border-color:var(--grn)}
+.ck-it.bad{background:#FFE4E5;border-color:var(--red)}
+.ck-r{flex:1;display:flex;align-items:center;gap:10px;padding:8px 12px;text-align:left;font-weight:700;min-height:52px}
+.ck-it .spk{width:46px;height:auto;border-radius:0;box-shadow:none}
+.ck-b{flex:none;width:34px;height:34px;border-radius:8px;border:3px solid var(--ink);background:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:22px;color:#fff}
+.ck-b.on{background:var(--grn);border-color:#0e7a55}
 .parcb{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:64px;margin:0 0 14px;padding:10px 16px;border-radius:18px;background:#E3EEFF;border:3px solid var(--blu);font-weight:700;font-size:20px;text-align:left;box-shadow:0 4px 0 rgba(0,0,0,.14)}
 .parcb small{display:block;font-size:15px;font-weight:400}
 .parcb.ok{background:#DDF6EC;border-color:var(--grn);box-shadow:none}
@@ -1567,6 +1591,42 @@ BLOCS.forEach(b=>b.seqs.forEach(sq=>{
     CALC('🧮','12 colis par couche, 5 couches. Combien de colis ?',{per:12,n:5,say:'12 colis par couche, 5 couches. Ajoute les couches.'},['60','17','50'],'12 × 5 = 60 colis.')]});
 }));
 BLOCS.forEach(b=>b.seqs.forEach(sq=>{const g=genEcrire(sq);if(g)sq.games.push(g)}));
+// « Cartes, mots, cases » : trois formats tirés des questions, mots et fiches déjà écrits (aucun contenu nouveau)
+// explications d'autres matières : sûrement fausses pour la fiche en cours (une phrase échangée dans la même fiche pourrait rester vraie)
+const CARDT=BLOCS.filter(b=>b.id!=='ang').flatMap(b=>b.seqs.flatMap(sq=>(sq.slides||[]).flatMap(sl=>(sl.cards||[]).filter(c=>c.t).map(c=>({b:b.id,t:c.t})))));
+function genMix(sq,bid){
+  const en=sq.lang==='en',own=g=>/_(ord|ecr|pal|calc|mix)$/.test(g.id);
+  const sw=[],bk=[],ck=[];
+  if(!en){
+    const pool=[];sq.games.forEach(g=>{if(!own(g))g.qs.forEach(q=>{if(!q.type&&q.opts&&q.opts.length>=3&&!q.hear&&!q.viz&&!q.story&&!q.ol)pool.push(q)})});
+    const vals=shuffle([true,false,Math.random()<.5]);
+    shuffle(pool).slice(0,3).forEach((q,k)=>{
+      const good=q.opts[q.ok],wrong=shuffle(q.opts.filter((_,j)=>j!==q.ok))[0],val=vals[k],o=val?good:wrong;
+      sw.push({type:'swipe',icon:q.icon,text:q.text,say:q.text+' '+o.t,prop:o.t,pi:o.i||'',val,answers:[val?'Juste':'Faux'],why:(val?'':'Non : '+good.t+'. ')+q.why});
+    });
+  }
+  const ecr=sq.games.find(g=>/_ecr$/.test(g.id)),seenW={};
+  if(ecr)ecr.qs.filter(q=>q.mode==='copy'||q.mode==='dict').forEach(q=>{
+    const w=q.answers[0];if(seenW[w]||bk.length>=2||w.length>16)return;seenW[w]=1;
+    const multi=/ /.test(w);
+    bk.push({type:'bank',icon:'🔤',text:'Construis le mot'+(q.sub?' : '+q.sub:' ('+w.replace(/ /g,'').length+' lettres)'),hear:w,hl:q.hl||'fr',toks:multi?w.split(' '):Array.from(w),sep:multi?' ':'',answers:[w],why:w+(q.sub?'. '+q.sub:'.')});
+  });
+  if(!en)(sq.slides||[]).forEach(sl=>{
+    if(ck.length>=2||!sl.cards)return;
+    const cs=sl.cards.filter(c=>c.t&&c.b).slice(0,4);
+    if(cs.length<3||new Set(cs.map(c=>c.t)).size<cs.length)return;
+    const nt=cs.length-2,items=cs.map((c,k)=>{
+      const v=k<nt,t=v?c.t:shuffle(CARDT.filter(x=>x.b!==bid&&x.t!==c.t))[0].t;   // faux : une explication d'une autre matière
+      return {v,i:c.i,t:c.i+' '+c.b+' : '+t,say:c.b+'. '+t,ok:c.b+' : '+c.t};
+    });
+    ck.push({type:'check',icon:'☑️',text:'Coche ce qui est juste : '+sl.title,say:'Coche ce qui est juste. '+sl.title,items:shuffle(items),answers:[items.filter(x=>x.v).map(x=>x.ok).join(' ; ')],why:'Les bonnes : '+cs.map(c=>c.b+' : '+c.t).join(' ; ')+'.'});
+  });
+  const qs=[],kinds=[sw,ck,bk];
+  while(kinds.some(a=>a.length))kinds.forEach(a=>{if(a.length)qs.push(a.shift())});
+  return qs.length>=4?{id:sq.id+'_mix',icon:'🃏',name:'Cartes, mots, cases',c:'#7B4FB8',qs}:null;
+}
+BLOCS.forEach(b=>b.seqs.forEach(sq=>{const g=genMix(sq,b.id);if(g)sq.games.push(g)}));
+
 
 const goalHtml=s=>s.goal?`<div class="sob"><span class="big" style="font-size:34px">🎯</span><p>${s.goal}</p>${spk(s.goal)}</div>`:'';
 
@@ -2219,7 +2279,7 @@ function recordQ(q,ok){
   noteMastery();
   save();
 }
-const fmtOf=q=>q.type==='order'||q.type==='pal'?'order':q.type?'type':q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
+const fmtOf=q=>q.type==='order'||q.type==='pal'?'order':q.type==='swipe'||q.type==='bank'||q.type==='check'?q.type:q.type?'type':q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
 // évite deux fois le même format d'affilée quand c'est possible
 function mixFormats(list){
   const out=[],rest=list.slice();let prev=null;
@@ -2836,6 +2896,7 @@ function showQ(){
   const q=prepQ(cur.qs[cur.i]);
   cur.tries=0;cur.locked=false;cur.hinted=false;cur.waiting=false;cur.tk2=(cur.tk2||0)+1;
   if(q.type==='order'||q.type==='pal'){showOrder(q);return}
+  if(q.type==='swipe'||q.type==='bank'||q.type==='check'){showMix(q);return}
   if(q.type){showTyped(q);return}
   const cls=q.opts.length===2?'duo':'n'+q.opts.length;
   const ol=q.ol||'fr';
@@ -3014,6 +3075,136 @@ function odCheck(){
     $('fb').innerHTML='<div class="fb retry">💪 Place les autres !</div>';
   }},pace()==='self'?1600:2600);
 }
+
+/* ---------- cartes à glisser, mots à construire, cases à cocher ---------- */
+// coque commune : en-tête, question, zone de jeu (#odz), indice éventuel
+function mixShell(q,inner,hintOk,sp,lang){
+  app.innerHTML=`
+  <div class="card">
+    ${crumbs('🎮 '+cur.g.name)}
+    <div class="gtop">
+      <button class="back" onclick="${cur.mission?'home()':`openSeq('${ctx.bid}','${ctx.sid}')`}" aria-label="Retour">⬅️</button>
+      <div class="pbar"><i style="width:${cur.i/cur.qs.length*100}%"></i></div>
+      <span class="stk" id="stk" aria-live="polite">${cur.streak>=2?cur.streak+' de suite ✔':''}</span>
+      <span class="pts">⚽ ${cur.pts}</span>
+    </div>
+    <div class="qline"><span class="big">${q.icon||''}</span><h2>${q.text}</h2>${spk(q.say||q.text)}</div>
+    <div id="lis" class="lis" aria-live="polite"></div>
+    <div class="od${calm()?' wait':''}" id="odz">${inner}</div>
+    ${hintOk&&!cur.lean?(cur.hintsLeft>0?`<button class="hintb" id="hintb" onclick="hint()" disabled title="Réfléchis d’abord">💡 Indice (${cur.hintsLeft})</button>`:'<p class="fine" style="text-align:center;margin-top:12px">💡 Plus d’indice dans ce jeu</p>'):''}
+    <div id="hint"></div>
+    <div id="fb"></div>
+  </div>`;
+  updBar();
+  if(calm()){
+    cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
+    $('lis').innerHTML='<span>🔊 J’écoute…</span>';
+    hold(sp,lang||'fr',()=>{if(cur&&cur.tk===tk&&cur.waiting)unlockQ()});
+  }else{armHint(4000);if(S.auto)say(sp,lang||'fr')}
+}
+// résultat commun : renvoie 'ok', 'retry' ou 'final' (la mise en page de la suite est faite par l'appelant)
+function resolveQ(q,ok,anchor){
+  if(ok){
+    cur.locked=true;beepOk();
+    const first=cur.tries===0&&!cur.hinted,gain=first?2:1;
+    recordQ(q,first);reg(first);
+    cur.pts+=gain;
+    if(first){cur.first++;cur.streak++}else cur.streak=0;
+    const r=anchor.getBoundingClientRect();
+    const fl=document.createElement('span');fl.className='fl';fl.textContent='+'+gain+' ⚽';
+    fl.style.left=(r.left+r.width/2)+'px';fl.style.top=(r.top+window.scrollY)+'px';
+    document.body.appendChild(fl);setTimeout(()=>fl.remove(),1000);
+    confetti(r.left+r.width/2,r.top+30,first?40:15);
+    updStk();feedback(true,q);
+    return 'ok';
+  }
+  cur.tries++;cur.streak=0;updStk();cur.missed.add(q);beepNo();
+  if(cur.tries>=2){cur.locked=true;recordQ(q,false);reg(false);return 'final'}
+  return 'retry';
+}
+// après une erreur : on attend un peu, puis on rend la main
+function retryLater(fn,msg){
+  $('fb').innerHTML='<div class="fb retry">'+msg+'</div>';
+  cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
+  setTimeout(()=>{if(cur&&cur.tk===tk&&!cur.locked){cur.waiting=false;fn();$('fb').innerHTML='<div class="fb retry">💪 Essaie encore !</div>'}},pace()==='self'?1500:2400);
+}
+function showMix(q){
+  if(q.type==='swipe'){
+    mixShell(q,`<div class="sw-st"><div class="sw-c" id="swc"><span class="big">${q.pi||''}</span><b>${q.prop}</b></div></div>
+      <p class="sm" style="text-align:center">👆 Glisse la carte, ou touche un bouton.</p>
+      <div class="sw-bt"><button class="nb sw-no" onclick="swAns(false)">❌ Faux</button><button class="nb go" onclick="swAns(true)">✅ Juste</button></div>`,
+      false,q.say);
+    swInit();
+  }else if(q.type==='bank'){
+    let sh;do{sh=shuffle(q.toks.map((_,k)=>k))}while(q.toks.length>1&&sh.every((v,k)=>q.toks[v]===q.toks[k]));
+    cur.bk={placed:[],pool:sh};
+    mixShell(q,`<div class="listen"><button class="spk huge" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(q.hear)}" data-l="${q.hl||'fr'}" aria-label="Écouter le mot">🔊</button><span class="show">🎧</span></div><div id="bkz"></div>`,true,q.text+'. '+q.hear,q.hl==='en'?'fr':'fr');
+    bkDraw();
+  }else{
+    cur.ck={on:q.items.map(()=>false),cls:null};
+    mixShell(q,'<div id="ckz"></div>',false,q.say);
+    ckDraw();
+  }
+}
+/* -- carte à glisser -- */
+function swInit(){
+  const c=$('swc');if(!c)return;let x0=null,dx=0;
+  c.onpointerdown=e=>{if(cur.locked||cur.waiting)return;x0=e.clientX;dx=0;try{c.setPointerCapture(e.pointerId)}catch(_){}c.style.transition='none'};
+  c.onpointermove=e=>{if(x0===null)return;dx=e.clientX-x0;c.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;c.dataset.d=dx>40?'y':dx<-40?'n':''};
+  c.onpointerup=c.onpointercancel=()=>{if(x0===null)return;const d=dx;x0=null;c.style.transition='';if(Math.abs(d)>90)swAns(d>0);else{c.style.transform='';c.dataset.d=''}};
+}
+function swAns(v){
+  if(cur.locked||cur.waiting)return;
+  const q=cur.qs[cur.i],c=$('swc');actx();stopSay();
+  const ok=v===q.val;if(!ok)cur.tries=1;   // vrai ou faux : une seule chance
+  c.style.transition='';c.style.transform=`translateX(${v?'':'-'}60px) rotate(${v?6:-6}deg)`;
+  c.classList.add(ok?'good':'bad');c.dataset.d=v?'y':'n';
+  document.querySelectorAll('.sw-bt button').forEach(b=>b.disabled=true);
+  if(resolveQ(q,ok,c)==='final')feedback(false,q);
+}
+/* -- mot à construire -- */
+function bkDraw(){
+  const q=cur.qs[cur.i],b=cur.bk,n=q.toks.length,z=$('bkz');if(!z)return;
+  const tile=(k,cls)=>`<button class="bk-t ${cls||''}" onclick="bkTap(${k})" ${cur.locked?'disabled':''}>${q.toks[k]}</button>`;
+  const slots=[];for(let p=0;p<n;p++)slots.push(p<b.placed.length?tile(b.placed[p],b.cls||'on'):'<span class="bk-e"></span>');
+  const pool=b.pool.filter(k=>!b.placed.includes(k)).map(k=>tile(k));
+  z.innerHTML=`<div class="bk-a" aria-live="polite">${slots.join('')}</div><div class="bk-p">${pool.join('')}</div>${b.placed.length===n&&!cur.locked?'<button class="nb go od-go" onclick="bkCheck()">✅ Vérifier</button>':''}`;
+}
+function bkTap(k){
+  if(cur.locked||cur.waiting)return;
+  const b=cur.bk,at=b.placed.indexOf(k);actx();b.cls=null;
+  if(at>=0)b.placed.splice(at,1);else b.placed.push(k);
+  bkDraw();
+}
+function bkCheck(){
+  if(cur.locked||cur.waiting)return;
+  const q=cur.qs[cur.i],b=cur.bk,got=b.placed.map(k=>q.toks[k]).join(q.sep||'');actx();stopSay();
+  const ok=got===q.answers[0];
+  b.cls=ok?'good':'bad';bkDraw();
+  const r=resolveQ(q,ok,$('bkz'));
+  if(r==='ok')bkDraw();
+  else if(r==='final'){   // montre le mot juste
+    const want=q.answers[0].split(q.sep||'');const used=new Set();
+    b.placed=want.map(tk=>{const k=q.toks.findIndex((t,i)=>t===tk&&!used.has(i));used.add(k);return k});
+    b.cls='good';bkDraw();feedback(false,q)}
+  else if(r==='retry')retryLater(()=>{b.placed=[];b.cls=null;bkDraw()},'🤔 Presque ! Regarde bien chaque lettre.');
+}
+/* -- cases à cocher -- */
+function ckDraw(){
+  const q=cur.qs[cur.i],c=cur.ck,z=$('ckz');if(!z)return;
+  z.innerHTML=`<p class="sm" style="text-align:center">👆 Coche tout ce qui est juste.</p><div class="ck-l">${q.items.map((it,k)=>`<div class="ck-it ${c.cls?c.cls[k]:''}"><button class="ck-r" role="checkbox" aria-checked="${c.on[k]}" onclick="ckTog(${k})" ${cur.locked?'disabled':''}><span class="ck-b${c.on[k]?' on':''}">${c.on[k]?'✔':''}</span><span>${it.t}</span></button>${spk(it.say)}</div>`).join('')}</div>${cur.locked?'':'<button class="nb go od-go" onclick="ckCheck()">✅ Vérifier</button>'}`;
+}
+function ckTog(k){if(cur.locked||cur.waiting)return;actx();cur.ck.on[k]=!cur.ck.on[k];cur.ck.cls=null;ckDraw()}
+function ckCheck(){
+  if(cur.locked||cur.waiting)return;
+  const q=cur.qs[cur.i],c=cur.ck;actx();stopSay();
+  const good=q.items.map((it,k)=>c.on[k]===it.v),ok=good.every(Boolean);
+  c.cls=good.map(g=>g?'good':'bad');ckDraw();
+  const r=resolveQ(q,ok,$('ckz'));
+  if(r==='ok')ckDraw();
+  else if(r==='final'){c.on=q.items.map(it=>it.v);c.cls=q.items.map(()=>'good');ckDraw();feedback(false,q)}
+  else if(r==='retry')retryLater(()=>{c.cls=null;ckDraw()},'🤔 Presque ! Regarde les cases en rouge.');
+}
 /* ---------- questions à taper au clavier ---------- */
 const fold=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,"'").replace(/[^a-z0-9' ]/g,'').replace(/\s+/g,' ').trim();
 const lower=t=>String(t).toLowerCase().replace(/[’']/g,"'").replace(/\s+/g,' ').trim();
@@ -3175,7 +3366,11 @@ function recapHtml(g,sq){
   const lang=sq.lang||'fr',qs=g.qs,L=[];let title='📌 Je retiens',flow=false,schema='',kind='';
   const c=(i,b,t,sp,l)=>({i,b,t,c:'y',s:sp||(b+'. '+t),l});
   const miss=[...cur.missed];
-  if(g.id.endsWith('_pal')){
+  if(g.id.endsWith('_mix')){
+    title='📌 Ce que je retiens';
+    const seen={};
+    miss.forEach(q=>{if(L.length<3&&!seen[q.why]){seen[q.why]=1;L.push(c(q.icon||'💡','À retenir',q.why))}});
+  }else if(g.id.endsWith('_pal')){
     title='🧱 Ma palette stable';
     L.push(c('🔻','Lourd en bas','le léger en haut'),c('🥚','Fragile tout en haut','jamais en dessous'),c('🏷️','Étiquette visible','sur la palette'));
   }else if(g.id.endsWith('_ord')){
