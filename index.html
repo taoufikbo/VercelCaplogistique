@@ -307,6 +307,18 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .od-n:empty{display:none}
 .od-empty{display:flex;align-items:center;min-height:52px;padding:0 12px;border:3px dashed #9aa1ad;border-radius:16px;opacity:.7}
 .od-go{display:block;margin:14px auto 0}
+.od-w{display:block;font-weight:400;font-size:15px;color:#555}
+.od-it.good .od-w{color:#fff}
+.od-base{background:#C79A5B;border:3px solid #7A5A2E;border-radius:10px;text-align:center;font-weight:700;padding:8px;color:#3b2a10}
+.cz{flex:1;min-width:0;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:10px;text-align:center}
+.cz-eq{font-size:22px;font-weight:700;min-height:34px;overflow-wrap:anywhere}
+.cz-st{display:flex;flex-direction:column-reverse;gap:3px;align-items:center;margin:8px 0}
+.cz-pal{background:#C79A5B;border:3px solid #7A5A2E;border-radius:6px;font-weight:700;padding:4px 12px;color:#3b2a10;min-width:60%}
+.cz-ly{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;padding:3px;border-radius:6px;background:#EBDDC4}
+.cz-bx{width:15px;height:16px;border-radius:4px;background:#E7B565;border:2px solid #9A6A25}
+.cz-hb{background:#E7B565;border:2px solid #9A6A25;border-radius:6px;font-weight:700;padding:2px 12px;min-width:60%}
+.cz-bt{display:flex;gap:8px;justify-content:center;margin-top:6px}
+.cz-bt .nb{height:auto;min-height:52px;white-space:nowrap;padding:8px 12px;font-size:18px}
 .od.wait{opacity:.5}
 .model{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0}
 .model .mw{font-size:34px;font-weight:700;letter-spacing:.04em}
@@ -1484,6 +1496,46 @@ BLOCS.forEach(b=>b.seqs.forEach(sq=>{
       why:o.title+' : '+o.steps.map((x,k)=>(k+1)+'. '+x[1]).join(', ')+'.'})}}));
   if(qs.length)sq.games.push({id:sq.id+'_ord',icon:'🔢',name:'Dans l’ordre',c:'#4F72B8',qs});
 }));
+// « Ma palette » : lourd en bas, fragile en haut (exp3) ; « Calculateur visuel » : on empile les couches (mat3)
+const PAL=(title,items)=>{
+  const it=items.map(x=>({i:x[0],t:x[1],w:x[2],f:!!x[3],say:x[1]+', '+x[2]+' kilos'+(x[3]?', fragile':'')}));
+  const target=it.map((_,k)=>k).sort((a,b)=>(it[a].f-it[b].f)||(it[b].w-it[a].w));
+  return {type:'pal',icon:'🧱',text:'Construis la palette : '+title,items:it,target,answers:['le plus lourd en bas, le fragile en haut'],
+    why:'Le lourd en bas, le léger en haut, et le fragile tout en haut.'};
+};
+const CALC=(icon,text,c,opts,why)=>({icon,text,viz:calcViz(c),vsay:c.say,opts:N(...opts),ok:0,why,calc:c});
+function calcViz(c){
+  return `<div class="cz" data-n="${c.n}" data-per="${c.per||0}" data-h="${c.h||0}" data-base="${c.base||0}" data-u="${c.u||''}">
+    <div class="cz-eq" aria-live="polite">… (0/${c.n} couches)</div>
+    <div class="cz-st"><div class="cz-pal">🧱 palette${c.base?' · '+c.base+' cm':''}</div></div>
+    <div class="cz-bt"><button class="nb go" onclick="calcAdd(this,1)">➕ Une couche</button><button class="nb" onclick="calcAdd(this,-1)" aria-label="Enlever une couche">↩️</button></div>
+  </div>`;
+}
+function calcAdd(b,d){
+  const z=b.closest('.cz'),st=z.querySelector('.cz-st'),n=+z.dataset.n,per=+z.dataset.per,h=+z.dataset.h,base=+z.dataset.base;
+  let k=st.querySelectorAll('.cz-ly,.cz-hb').length;
+  if(d>0&&k<n){
+    const e=document.createElement('div');
+    if(h){e.className='cz-hb';e.textContent=h+' cm'}
+    else{e.className='cz-ly';e.innerHTML='<i class="cz-bx"></i>'.repeat(per)}
+    st.appendChild(e);k++;beepOk();
+  }else if(d<0&&k>0){const l=[...st.querySelectorAll('.cz-ly,.cz-hb')].pop();l.remove();k--}
+  const terms=Array(k).fill(h||per);if(h&&base)terms.unshift(base);
+  z.querySelector('.cz-eq').textContent=(terms.length?terms.join(' + '):'…')+(k===n?' = ?':'')+'  ('+k+'/'+n+' couches)';
+}
+BLOCS.forEach(b=>b.seqs.forEach(sq=>{
+  if(sq.id==='exp3')sq.games.push({id:'exp3_pal',icon:'🧱',name:'Ma palette',c:'#36876B',qs:[
+    PAL('les cartons',[['🥫','Conserves',12],['🛢️','Bidons d’huile',20],['🍬','Bonbons',3]]),
+    PAL('les courses',[['💧','Packs d’eau',9],['🥔','Sac de pommes de terre',25],['🍷','Verres',4,true]]),
+    PAL('le magasin',[['🧴','Lessive',15],['🥚','Œufs',3,true],['🍚','Sac de riz',20],['🧻','Papier toilette',5]]),
+    PAL('la cuisine',[['🥤','Bouteilles',14],['🍽️','Assiettes',8,true],['🧂','Sel',6],['🫙','Bocaux',18],['🥛','Lait',10]])]});
+  if(sq.id==='mat3')sq.games.push({id:'mat3_calc',icon:'🧮',name:'Je compte en images',c:'#B95458',qs:[
+    CALC('🧮','5 colis par couche, 4 couches. Combien de colis ?',{per:5,n:4,say:'5 colis par couche, 4 couches. Ajoute les couches.'},['20','9','25'],'5 × 4 = 20 colis.'),
+    CALC('📏','Palette de 15 cm, puis 4 couches de 30 cm. Quelle hauteur ?',{n:4,h:30,base:15,say:'La palette fait 15 centimètres. Ajoute 4 couches de 30 centimètres.'},['135 cm','120 cm','150 cm'],'15 + 4 × 30 = 135 cm.'),
+    CALC('🧮','8 colis par couche, 3 couches. Combien de colis ?',{per:8,n:3,say:'8 colis par couche, 3 couches. Ajoute les couches.'},['24','11','32'],'8 × 3 = 24 colis.'),
+    CALC('📏','Palette de 15 cm, puis 5 couches de 20 cm. Quelle hauteur ?',{n:5,h:20,base:15,say:'La palette fait 15 centimètres. Ajoute 5 couches de 20 centimètres.'},['115 cm','100 cm','120 cm'],'15 + 5 × 20 = 115 cm.'),
+    CALC('🧮','12 colis par couche, 5 couches. Combien de colis ?',{per:12,n:5,say:'12 colis par couche, 5 couches. Ajoute les couches.'},['60','17','50'],'12 × 5 = 60 colis.')]});
+}));
 BLOCS.forEach(b=>b.seqs.forEach(sq=>{const g=genEcrire(sq);if(g)sq.games.push(g)}));
 
 const goalHtml=s=>s.goal?`<div class="sob"><span class="big" style="font-size:34px">🎯</span><p>${s.goal}</p>${spk(s.goal)}</div>`:'';
@@ -2135,7 +2187,7 @@ function recordQ(q,ok){
   noteMastery();
   save();
 }
-const fmtOf=q=>q.type==='order'?'order':q.type?'type':q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
+const fmtOf=q=>q.type==='order'||q.type==='pal'?'order':q.type?'type':q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
 // évite deux fois le même format d'affilée quand c'est possible
 function mixFormats(list){
   const out=[],rest=list.slice();let prev=null;
@@ -2610,7 +2662,7 @@ function showQ(){
   stopSay();window.scrollTo(0,0);
   const q=prepQ(cur.qs[cur.i]);
   cur.tries=0;cur.locked=false;cur.hinted=false;cur.waiting=false;cur.tk2=(cur.tk2||0)+1;
-  if(q.type==='order'){showOrder(q);return}
+  if(q.type==='order'||q.type==='pal'){showOrder(q);return}
   if(q.type){showTyped(q);return}
   const cls=q.opts.length===2?'duo':'n'+q.opts.length;
   const ol=q.ol||'fr';
@@ -2677,11 +2729,12 @@ function hint(){
   if(cur.locked||cur.hinted||cur.waiting||cur.hintsLeft<=0)return;
   const q=cur.qs[cur.i];cur.hinted=true;cur.hintsLeft--;cur.missed.add(q);
   const b=$('hintb');if(b)b.remove();
-  if(q.type==='order'){
-    const od=cur.od;let p=0;while(p<od.placed.length&&od.placed[p]===p)p++;
-    od.placed=od.placed.slice(0,p);od.placed.push(p);od.cls=null;odDraw();
-    $('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>Je t’aide : l’étape ${p+1} est placée.</p></div>`;
-    if(S.auto)say('Je place l’étape '+(p+1));
+  if(q.type==='order'||q.type==='pal'){
+    const od=cur.od;od.placed=od.placed.slice(0,odFirstBad(q,od.placed));
+    od.placed.push(odTarget(q).find(k=>!od.placed.includes(k)));od.cls=null;odDraw();
+    const t=q.type==='pal'?'Je t’aide : je place le colis suivant.':'Je t’aide : l’étape '+od.placed.length+' est placée.';
+    $('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>${t}</p></div>`;
+    if(S.auto)say(t);
     return;
   }
   if(q.type){
@@ -2700,9 +2753,19 @@ function hint(){
 }
 
 /* ---------- « Dans l’ordre » : on touche les étapes dans l’ordre ---------- */
+const odTarget=q=>q.type==='pal'?q.target:q.items.map((_,k)=>k);
+// bonne place de chaque élément. Palette : lourd en bas, fragile tout en haut (égalité de poids acceptée)
+function odGood(q,pl){
+  if(q.type!=='pal')return pl.map((v,p)=>v===p);
+  return pl.map((k,p)=>{const it=q.items[k],below=pl.slice(0,p);
+    if(it.f)return q.items.every((x,j)=>x.f||below.includes(j));
+    if(below.some(j=>q.items[j].f))return false;
+    return p===0||it.w<=q.items[pl[p-1]].w});
+}
+const odFirstBad=(q,pl)=>{const i=odGood(q,pl).indexOf(false);return i<0?pl.length:i};
 function showOrder(q){
-  let sh;
-  do{sh=shuffle(q.items.map((_,k)=>k))}while(sh.every((v,k)=>v===k));
+  const pal=q.type==='pal';let sh;
+  do{sh=shuffle(q.items.map((_,k)=>k))}while(odGood(q,sh).every(Boolean));
   cur.od={placed:[],pool:sh,cls:null};
   app.innerHTML=`
   <div class="card">
@@ -2714,7 +2777,7 @@ function showOrder(q){
       <span class="pts">⚽ ${cur.pts}</span>
     </div>
     <div class="qline"><span class="big">${q.icon||''}</span><h2>${q.text}</h2>${spk(q.text)}</div>
-    <p class="sm" style="text-align:center">👆 Touche les étapes, de la première à la dernière.</p>
+    <p class="sm" style="text-align:center">${pal?'👆 Touche les colis, du bas vers le haut.':'👆 Touche les étapes, de la première à la dernière.'}</p>
     <div id="lis" class="lis" aria-live="polite"></div>
     <div class="od${calm()?' wait':''}" id="odz"></div>
     ${cur.lean?'':(cur.hintsLeft>0?`<button class="hintb" id="hintb" onclick="hint()" disabled title="Réfléchis d’abord">💡 Indice (${cur.hintsLeft})</button>`:'<p class="fine" style="text-align:center;margin-top:12px">💡 Plus d’indice dans ce jeu</p>')}
@@ -2722,7 +2785,7 @@ function showOrder(q){
     <div id="fb"></div>
   </div>`;
   updBar();odDraw();
-  const sp=[q.text+'. Touche les étapes, de la première à la dernière.','fr'];
+  const sp=[q.text+(pal?'. Touche les colis, du bas vers le haut.':'. Touche les étapes, de la première à la dernière.'),'fr'];
   if(calm()){
     cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
     $('lis').innerHTML='<span>🔊 J’écoute…</span>';
@@ -2731,11 +2794,11 @@ function showOrder(q){
 }
 function odDraw(){
   const q=cur.qs[cur.i],od=cur.od,n=q.items.length,z=$('odz');if(!z)return;
-  const row=(k,cls,num)=>{const it=q.items[k];return `<div class="od-it ${cls}"><button class="od-b" onclick="odTap(${k})" ${cur.locked?'disabled':''}><span class="od-n">${num||''}</span><span class="oi">${it.i}</span><span>${it.t}</span></button>${spk(it.t)}</div>`};
+  const row=(k,cls,num)=>{const it=q.items[k];return `<div class="od-it ${cls}"><button class="od-b" onclick="odTap(${k})" ${cur.locked?'disabled':''}><span class="od-n">${num||''}</span><span class="oi">${it.i}</span><span>${it.t}${it.w?`<small class="od-w">${it.w} kg${it.f?' · fragile':''}</small>`:''}</span></button>${spk(it.say||it.t)}</div>`};
   const slots=[];
   for(let p=0;p<n;p++)slots.push(p<od.placed.length?row(od.placed[p],od.cls&&od.cls[p]||'on',p+1):`<div class="od-empty"><span class="od-n">${p+1}</span></div>`);
   const pool=od.pool.filter(k=>!od.placed.includes(k)).map(k=>row(k,'',''));
-  z.innerHTML=`<div class="od-sl">${slots.join('')}</div>${pool.length?`<p class="od-lb">À placer</p><div class="od-pl">${pool.join('')}</div>`:''}${od.placed.length===n&&!cur.locked?'<button class="nb go od-go" onclick="odCheck()">✅ Vérifier</button>':''}`;
+  z.innerHTML=`<div class="od-sl">${q.type==='pal'?'<p class="od-lb" style="margin:0">⬆️ Le haut</p>'+slots.slice().reverse().join('')+'<div class="od-base">🧱 La palette</div>':slots.join('')}</div>${pool.length?`<p class="od-lb">À placer</p><div class="od-pl">${pool.join('')}</div>`:''}${od.placed.length===n&&!cur.locked?'<button class="nb go od-go" onclick="odCheck()">✅ Vérifier</button>':''}`;
 }
 function odTap(k){
   if(cur.locked||cur.waiting)return;
@@ -2747,7 +2810,7 @@ function odTap(k){
 function odCheck(){
   if(cur.locked||cur.waiting)return;
   const q=cur.qs[cur.i],od=cur.od;actx();stopSay();
-  const good=od.placed.map((v,p)=>v===p);
+  const good=odGood(q,od.placed);
   if(good.every(Boolean)){
     cur.locked=true;beepOk();od.cls=good.map(()=>'good');odDraw();
     const first=cur.tries===0&&!cur.hinted,gain=first?2:1;
@@ -2765,16 +2828,16 @@ function odCheck(){
   cur.tries++;cur.streak=0;updStk();cur.missed.add(q);beepNo();
   if(cur.tries>=2){
     cur.locked=true;recordQ(q,false);reg(false);
-    od.placed=q.items.map((_,k)=>k);od.cls=od.placed.map(()=>'good');odDraw();
+    od.placed=odTarget(q).slice();od.cls=od.placed.map(()=>'good');odDraw();
     feedback(false,q);return;
   }
   od.cls=good.map(g=>g?'good':'bad');odDraw();
-  $('fb').innerHTML='<div class="fb retry">🤔 Presque ! Les bonnes étapes restent en vert.</div>';
+  const bd=q.type==='pal'?q.items[od.placed[good.indexOf(false)]]:null;
+  $('fb').innerHTML='<div class="fb retry">'+(!bd?'🤔 Presque ! Les bonnes étapes restent en vert.':bd.f?'🥚 Le fragile va tout en haut.':'🏋️ Le plus lourd va en bas.')+'</div>';
   const h=$('hintb');if(h&&!h.disabled)h.classList.add('hl');
   cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
   setTimeout(()=>{if(cur&&cur.tk===tk&&!cur.locked){
-    cur.waiting=false;let p=0;while(p<od.placed.length&&od.placed[p]===p)p++;
-    od.placed=od.placed.slice(0,p);od.cls=null;odDraw();
+    cur.waiting=false;od.placed=od.placed.slice(0,odFirstBad(q,od.placed));od.cls=null;odDraw();
     $('fb').innerHTML='<div class="fb retry">💪 Place les autres !</div>';
   }},pace()==='self'?1600:2600);
 }
@@ -2939,7 +3002,10 @@ function recapHtml(g,sq){
   const lang=sq.lang||'fr',qs=g.qs,L=[];let title='📌 Je retiens',flow=false,schema='',kind='';
   const c=(i,b,t,sp,l)=>({i,b,t,c:'y',s:sp||(b+'. '+t),l});
   const miss=[...cur.missed];
-  if(g.id.endsWith('_ord')){
+  if(g.id.endsWith('_pal')){
+    title='🧱 Ma palette stable';
+    L.push(c('🔻','Lourd en bas','le léger en haut'),c('🥚','Fragile tout en haut','jamais en dessous'),c('🏷️','Étiquette visible','sur la palette'));
+  }else if(g.id.endsWith('_ord')){
     title='🔢 Les étapes, dans l’ordre';flow=true;
     cur.qs[cur.qs.length-1].items.forEach((it,k)=>L.push(c(it.i,it.t,'','Étape '+(k+1)+' : '+it.t)));
   }else if(g.id.endsWith('_ecr')){
