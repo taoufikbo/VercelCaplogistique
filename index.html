@@ -257,6 +257,16 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .lis .ok{color:#0e7a55}
 .opts.wait{opacity:.5;pointer-events:none}
 .opts.wait ~ .hintb{opacity:.5;pointer-events:none}
+.typ{display:flex;gap:8px;margin:6px 0 0;align-items:stretch}
+.typ input{flex:1;min-width:0;font-size:24px;padding:12px 14px;border:3px solid var(--ink);border-radius:14px;background:#fff;color:var(--ink);font-family:inherit}
+.typ input:focus{outline:4px solid var(--blu);outline-offset:2px}
+.typ input.good{background:#DDF6EC;border-color:var(--grn)}
+.typ input.bad{background:#FFE4E5;border-color:var(--red)}
+.typ.wait{opacity:.5}
+.typ .nb{white-space:nowrap}
+.model{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0}
+.model .mw{font-size:34px;font-weight:700;letter-spacing:.04em}
+.hintbox .pat{letter-spacing:.15em;font-size:22px}
 .hintb:disabled{opacity:.5;cursor:default;box-shadow:none}
 .hintb.hl{border-color:#2B2B2B;box-shadow:0 0 0 4px #FFF1B8}
 .next:disabled{opacity:.55;cursor:default;box-shadow:none}
@@ -1271,6 +1281,41 @@ BLOCS.forEach(b=>b.seqs.forEach(s=>{
   s.goal=d.g;s.slides=s.slides||[];
   s.slides.push({title:'⭐ À retenir',say:'À retenir.',flow:false,keep:true,cards:d.k.map(c=>({i:c[0],b:c[1],t:c[2],c:'y',s:c[3]||(c[1]+'. '+c[2])}))});
 }));
+/* ---------- exercices à taper au clavier : « J’écris » (un jeu par séquence) ---------- */
+// Mots tirés des fiches (cartes) : recopier, puis écrire sous la dictée. Calculs : tapés au clavier.
+const NUMQ={
+ mat1:[['10 % de 80 ?',8,'Pour 10 %, je divise par 10.','80 ÷ 10 = 8.'],['50 % de 60 ?',30,'50 %, c’est la moitié.','La moitié de 60 = 30.'],['25 % de 40 ?',10,'25 %, c’est le quart.','Le quart de 40 = 10.']],
+ mat2:[['Combien de grammes dans 2,5 kg ?',2500,'1 kg = 1 000 g.','2,5 × 1 000 = 2 500 g.'],['Combien de kg dans 3 t ?',3000,'1 t = 1 000 kg.','3 × 1 000 = 3 000 kg.'],['Combien de cm dans 2 m ?',200,'1 m = 100 cm.','2 × 100 = 200 cm.']],
+ mat3:[['Surface d’une europalette en m² ? (1,2 × 0,8)',0.96,'Surface = longueur × largeur.','1,2 × 0,8 = 0,96 m².'],['5 colis par couche, 4 couches. Combien de colis ?',20,'Colis par couche × nombre de couches.','5 × 4 = 20 colis.']],
+ fra5:[['En quelle année a eu lieu la Révolution française ?',1789,'Le chiffre commence par 17.','1789 : la Révolution française.'],['En quelle année la loi sur la laïcité ?',1905,'Le chiffre commence par 19.','1905 : la loi sur la laïcité.'],['En quelle année le droit de vote des femmes ?',1944,'Le chiffre commence par 19.','1944 : le droit de vote des femmes.']],
+ duree:[['Durée légale du travail, en heures par semaine ?',35,'Le chiffre commence par 3.','35 heures par semaine.'],['Raï fait 45 h. Combien d’heures supplémentaires ?',10,'45 − 35.','45 − 35 = 10 heures sup.']]
+};
+const WORDS={
+ resp:[['responsabilité','Une faute, un dommage et un lien entre les deux.'],['dommage','Une chose cassée ou une personne blessée.'],['contractuelle','Un contrat n’est pas respecté.'],['faute','Une règle n’est pas respectée.']],
+ duree:[['heures supplémentaires','Au-delà de 35 h par semaine.'],['majoration','+ 25 % ou + 50 % selon les heures.']]
+};
+const FILLQ={
+ fra3:[['Complète : « Il ___ un problème. » (a ou à ?)','a','« il a » vient du verbe avoir.','« il a » : le verbe avoir.'],['Complète : « Je vais ___ l’entrepôt. » (a ou à ?)','à','« à l’entrepôt » indique le lieu.','« à » indique le lieu.'],['Complète : « Il ___ en retard. » (est ou et ?)','est','« il est » vient du verbe être.','« il est » : le verbe être.'],['Complète : « Les colis ___ lourds. » (sont ou son ?)','sont','« ils sont » vient du verbe être.','« ils sont » : le verbe être.']]
+};
+function genEcrire(sq){
+  const lang=sq.lang||'fr',seen={},W=(WORDS[sq.id]||[]).map(x=>({w:x[0],t:x[1]}));
+  W.forEach(x=>seen[x.w.toLowerCase()]=1);
+  (sq.slides||[]).filter(sl=>!sl.keep&&sl.cards).forEach(sl=>sl.cards.forEach(c=>{
+    const w=String(c.b||'').replace(/\s*[….?]+$/,'').trim(),k=w.toLowerCase();
+    if(/^[A-Za-zÀ-ÿ0-9’' .,!?-]{3,34}$/.test(w)&&/[A-Za-zÀ-ÿ]/.test(w)&&w.split(' ').length<=6&&!/ \/ /.test(w)&&!seen[k]){seen[k]=1;W.push({w,t:c.t||''})}
+  }));
+  W.sort((a,b)=>(b.w.length>=5)-(a.w.length>=5));        // les mots d'au moins 5 lettres d'abord, ordre des fiches sinon
+  const pick=W.slice(0,5),qs=[];
+  pick.forEach((x,i)=>{
+    if(i<2)qs.push({type:'type',mode:'copy',icon:'⌨️',text:'Recopie le mot : '+x.w,show:x.w,sub:x.t,answers:[x.w],hl:lang,why:'On écrit : '+x.w+'.'});
+    else qs.push({type:'type',mode:'dict',icon:'🎧',text:'Écoute et écris le mot n°'+(i-1),hear:x.w,hl:lang,answers:[x.w],why:'Le mot est : '+x.w+'.'});
+  });
+  (FILLQ[sq.id]||[]).forEach(n=>qs.push({type:'type',mode:'fill',strict:true,icon:'✏️',text:n[0],answers:[n[1]],hint:n[2],why:n[3]}));
+  (NUMQ[sq.id]||[]).forEach(n=>qs.push({type:'type',mode:'num',num:true,icon:'🧮',text:n[0],answers:[String(n[1])],hint:n[2],why:n[3]}));
+  return qs.length>=3?{id:sq.id+'_ecr',icon:'⌨️',name:'J’écris',c:'#4F72B8',qs}:null;
+}
+BLOCS.forEach(b=>b.seqs.forEach(sq=>{const g=genEcrire(sq);if(g)sq.games.push(g)}));
+
 const goalHtml=s=>s.goal?`<div class="aim"><span class="big" style="font-size:34px">🎯</span><p>${s.goal}</p>${spk(s.goal)}</div>`:'';
 
 const findBloc=id=>BLOCS.find(b=>b.id===id);
@@ -1560,7 +1605,7 @@ let RING=null;
 function hubSet(k){const h=$('hub');if(!h||!RING)return;h.innerHTML=(k==null||!RING.items[k])?RING.center:RING.items[k]}
 // cfg : {center:{html,onclick?,aria?}, items:[{icon,label,full?,sub?,c,p,onclick,aria}]}
 function ringHtml(cfg){
-  const items=cfg.items,n=items.length,w=n<=4?30:n<=6?28:n<=7?26:24,R=Math.min(37,50-w/2-1);
+  const items=cfg.items,n=items.length,w=n<=4?30:n<=6?28:n<=7?26:n<=9?24:22,R=Math.min(37,50-w/2-1);
   RING={center:cfg.center.html,items:items.map(it=>`<span class="hi">${it.icon}</span><b class="hn">${it.full||it.label}</b><span class="hs">${it.sub||''}</span>`)};
   const hub=cfg.center.onclick
     ?`<button class="hub" id="hub" onclick="${cfg.center.onclick}" aria-label="${cfg.center.aria||''}">${cfg.center.html}</button>`
@@ -1756,7 +1801,7 @@ function recordQ(q,ok){
   noteMastery();
   save();
 }
-const fmtOf=q=>q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
+const fmtOf=q=>q.type?'type':q.hear?'hear':q.viz?'viz':q.opts.length===2?'bin':q.story?'story':'qcm';
 // évite deux fois le même format d'affilée quand c'est possible
 function mixFormats(list){
   const out=[],rest=list.slice();let prev=null;
@@ -2107,7 +2152,7 @@ function reg(ok){
 function easeQueue(){
   if(cur.g.seq)return;
   const rest=cur.qs.slice(cur.i+1);if(rest.length<2)return;
-  const e=q=>(q.opts.length===2?0:1)+(S.qm[q.id]&&S.qm[q.id].b>=2?0:1);
+  const e=q=>(q.opts&&q.opts.length===2?0:1)+(S.qm[q.id]&&S.qm[q.id].b>=2?0:1);
   cur.qs=cur.qs.slice(0,cur.i+1).concat(rest.sort((a,b)=>e(a)-e(b)));
 }
 
@@ -2120,7 +2165,7 @@ function play(id){
 }
 function prepQ(q){
   const gm=cur.mission&&QIDX.get(q.id)?QIDX.get(q.id).g:cur.g;
-  if(gm.mix&&q.opts.length>=3){
+  if(gm.mix&&q.opts&&q.opts.length>=3){
     const right=q.opts[q.ok],order=shuffle(q.opts);
     q.opts=order;q.ok=order.indexOf(right);
   }
@@ -2130,6 +2175,7 @@ function showQ(){
   stopSay();window.scrollTo(0,0);
   const q=prepQ(cur.qs[cur.i]);
   cur.tries=0;cur.locked=false;cur.hinted=false;cur.waiting=false;cur.tk2=(cur.tk2||0)+1;
+  if(q.type){showTyped(q);return}
   const cls=q.opts.length===2?'duo':'n'+q.opts.length;
   const ol=q.ol||'fr';
   app.innerHTML=`
@@ -2182,7 +2228,8 @@ function hold(text,lang,done){
 }
 function unlockQ(){
   cur.waiting=false;
-  const o=document.querySelector('.opts');if(o)o.classList.remove('wait');
+  const o=document.querySelector('.opts,.typ');if(o)o.classList.remove('wait');
+  const ti=$('ti');if(ti){ti.disabled=false;try{ti.focus({preventScroll:true})}catch(e){}}
   const l=$('lis');if(l)l.innerHTML='<span class="ok">👉 À toi !</span>';
   armHint(3000);
 }
@@ -2194,6 +2241,13 @@ function hint(){
   if(cur.locked||cur.hinted||cur.waiting||cur.hintsLeft<=0)return;
   const q=cur.qs[cur.i];cur.hinted=true;cur.hintsLeft--;cur.missed.add(q);
   const b=$('hintb');if(b)b.remove();
+  if(q.type){
+    const a=q.answers[0],pat=a.split('').map((ch,k)=>k===0||ch===' '?ch:'_').join(' ');
+    const t=q.num?(q.hint||'Pose le calcul.'):`Le mot commence par « ${a[0]} » et a ${a.replace(/ /g,'').length} lettres.<br><b class="pat">${pat}</b>`;
+    $('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>${t}</p></div>`;
+    if(S.auto)say(q.num?(q.hint||'Pose le calcul.'):'Le mot commence par '+a[0]);
+    return;
+  }
   if(q.hint){$('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>${q.hint}</p>${spk(q.hint)}</div>`;if(S.auto)say(q.hint);return}
   const wrong=q.opts.map((_,k)=>k).filter(k=>k!==q.ok&&!$('o'+k).querySelector('.ans').disabled);
   if(!wrong.length)return;
@@ -2201,6 +2255,85 @@ function hint(){
   el.classList.add('gone');el.querySelector('.ans').disabled=true;
   if(S.auto)say('Une mauvaise réponse est enlevée');
 }
+/* ---------- questions à taper au clavier ---------- */
+const fold=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,"'").replace(/[^a-z0-9' ]/g,'').replace(/\s+/g,' ').trim();
+const lower=t=>String(t).toLowerCase().replace(/[’']/g,"'").replace(/\s+/g,' ').trim();
+function numOf(raw){const t=String(raw).replace(/(\d)\s+(?=\d)/g,'$1').replace(',','.');const m=t.match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
+function showTyped(q){
+  const hl=q.hl||'fr';
+  const mdl=q.mode==='copy'?`<div class="model"><span class="mw">${esc(q.show)}</span>${spk(q.show,hl)}</div>${q.sub?`<p class="sm" style="text-align:center">${q.sub}</p>`:''}`
+           :q.mode==='dict'?`<div class="listen"><button class="spk huge" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(q.hear)}" data-l="${hl}" aria-label="Écouter le mot">🔊</button><span class="show">🎧</span></div>`:'';
+  app.innerHTML=`
+  <div class="card">
+    ${crumbs('🎮 '+cur.g.name)}
+    <div class="gtop">
+      <button class="back" onclick="${cur.mission?'home()':`openSeq('${ctx.bid}','${ctx.sid}')`}" aria-label="Retour">⬅️</button>
+      <div class="pbar"><i style="width:${cur.i/cur.qs.length*100}%"></i></div>
+      <span class="stk" id="stk" aria-live="polite">${cur.streak>=2?cur.streak+' de suite ✔':''}</span>
+      <span class="pts">⚽ ${cur.pts}</span>
+    </div>
+    <div class="qline"><span class="big">${q.icon||''}</span><h2>${q.text}</h2>${spk(q.mode==='copy'?q.text.replace(/ : .*$/,''):q.text)}</div>
+    ${mdl}
+    <div id="lis" class="lis" aria-live="polite"></div>
+    <div class="typ${calm()?' wait':''}">
+      <input id="ti" type="text" inputmode="${q.num?'decimal':'text'}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Ta réponse" placeholder="${q.num?'Ton résultat':'Écris ici'}" ${calm()?'disabled':''} onkeydown="if(event.key==='Enter')checkTyped()">
+      <button class="nb go" id="tv" onclick="checkTyped()">✅ Vérifier</button>
+    </div>
+    ${cur.lean?'':(cur.hintsLeft>0?`<button class="hintb" id="hintb" onclick="hint()" disabled title="Réfléchis d’abord">💡 Indice (${cur.hintsLeft})</button>`:'<p class="fine" style="text-align:center;margin-top:12px">💡 Plus d’indice dans ce jeu</p>')}
+    <div id="hint"></div>
+    <div id="fb"></div>
+  </div>`;
+  updBar();
+  const sp=q.mode==='dict'?[q.hear,hl]:q.mode==='copy'?[q.text.replace(/ : .*$/,'')+'. '+q.show,hl==='en'?'fr':'fr']:[q.text,'fr'];
+  if(calm()){
+    cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
+    $('lis').innerHTML='<span>🔊 J’écoute…</span>';
+    hold(sp[0],sp[1],()=>{if(cur&&cur.tk===tk&&cur.waiting)unlockQ()});
+  }else{
+    armHint(4000);if(S.auto)say(sp[0],sp[1]);
+    const ti=$('ti');if(ti)try{ti.focus({preventScroll:true})}catch(e){}
+  }
+}
+function checkTyped(){
+  if(!cur||cur.locked||cur.waiting)return;
+  const q=cur.qs[cur.i],inp=$('ti');if(!q||!q.type||!inp)return;
+  const raw=inp.value.trim();if(!raw){inp.focus();return}
+  actx();stopSay();
+  let ok,exact=false;
+  if(q.num){const n=numOf(raw);ok=n!==null&&q.answers.some(a=>Math.abs(n-parseFloat(a))<1e-9)}
+  else if(q.strict){ok=q.answers.some(a=>lower(a)===lower(raw));exact=ok}
+  else{ok=q.answers.some(a=>fold(a)===fold(raw));exact=ok&&q.answers.some(a=>lower(a)===lower(raw))}
+  if(ok){
+    cur.locked=true;inp.disabled=true;inp.classList.add('good');beepOk();
+    const first=cur.tries===0&&!cur.hinted,gain=first?2:1;
+    recordQ(q,first);reg(first);
+    cur.pts+=gain;
+    if(first){cur.first++;cur.streak++}else cur.streak=0;
+    const r=inp.getBoundingClientRect();
+    const fl=document.createElement('span');fl.className='fl';fl.textContent='+'+gain+' ⚽';
+    fl.style.left=(r.left+r.width/2)+'px';fl.style.top=(r.top+window.scrollY)+'px';
+    document.body.appendChild(fl);setTimeout(()=>fl.remove(),1000);
+    confetti(r.left+r.width/2,r.top+r.height/2,first?40:15);
+    updStk();
+    feedback(true,q,(!q.num&&!exact)?'Attention aux accents : on écrit « '+q.answers[0]+' ».':'');
+  }else{
+    cur.tries++;cur.streak=0;updStk();cur.missed.add(q);
+    beepNo();inp.classList.add('bad');
+    if(cur.tries>=2){
+      cur.locked=true;inp.disabled=true;recordQ(q,false);reg(false);
+      feedback(false,q);
+    }else{
+      const msg=q.num?'🤔 Pas tout à fait. Refais le calcul.':'🤔 Presque ! Regarde bien chaque lettre.';
+      $('fb').innerHTML='<div class="fb retry">'+msg+'</div>';
+      const h=$('hintb');if(h&&!h.disabled)h.classList.add('hl');
+      if(calm()){
+        cur.waiting=true;inp.disabled=true;const tk=cur.tk=(cur.tk||0)+1;
+        setTimeout(()=>{if(cur&&cur.tk===tk&&!cur.locked){cur.waiting=false;inp.disabled=false;inp.classList.remove('bad');inp.select();inp.focus()}},pace()==='self'?800:1800);
+      }else{inp.classList.remove('bad');inp.select()}
+    }
+  }
+}
+
 function pick(k){
   if(cur.locked||cur.waiting)return;
   actx();stopSay();
@@ -2235,15 +2368,15 @@ function pick(k){
     }
   }
 }
-function feedback(ok,q){
+function feedback(ok,q,note){
   const msg=ok?PRAISE[Math.floor(Math.random()*PRAISE.length)]:"Pas encore. Regarde.";
   const lastQ=cur.i===cur.qs.length-1;
   $('fb').innerHTML=`<div class="fb ${ok?'ok':'ko'}">
     <div class="fbt">${ok?'🎉':'💡'} <b>${msg}</b></div>
-    <div class="why"><p>${q.why}</p>${spk(q.why)}</div>
+    <div class="why"><p>${q.why}${note?' <b>'+note+'</b>':''}</p>${spk(q.why)}</div>
     <button class="next" id="nxt" onclick="nextQ()" ${calm()?'disabled':''}>${calm()?'🔊 J’écoute…':lastQ?'🏁 Terminer':'Suivant ➡️'}</button></div>`;
   $('fb').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
-  const speech=(ok?msg+' ':'La bonne réponse : '+q.opts[q.ok].t+'. ')+q.why;
+  const speech=(ok?msg+' ':'La bonne réponse : '+(q.type?q.answers[0]:q.opts[q.ok].t)+'. ')+q.why;
   if(calm()){
     const tk=cur.ftk=(cur.ftk||0)+1;
     hold(speech,'fr',()=>{if(cur&&cur.ftk===tk){const n=$('nxt');if(n){n.disabled=false;n.textContent=lastQ?'🏁 Terminer':'Suivant ➡️'}}});
