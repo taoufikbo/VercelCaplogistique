@@ -257,6 +257,7 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .lis .ok{color:#0e7a55}
 .opts.wait{opacity:.5;pointer-events:none}
 .opts.wait ~ .hintb{opacity:.5;pointer-events:none}
+.hintb:disabled{opacity:.5;cursor:default;box-shadow:none}
 .hintb.hl{border-color:#2B2B2B;box-shadow:0 0 0 4px #FFF1B8}
 .next:disabled{opacity:.55;cursor:default;box-shadow:none}
 .top{display:flex;gap:10px;align-items:stretch}
@@ -2114,7 +2115,7 @@ function easeQueue(){
 let cur=null;
 function play(id){
   const s=findSeq(ctx.bid,ctx.sid),g=s.games.find(x=>x.id===id);
-  cur={g,s,qs:g.seq?g.qs:shuffle(g.qs),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false};
+  cur={g,s,qs:g.seq?g.qs:shuffle(g.qs),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,hintsLeft:3};
   showQ();
 }
 function prepQ(q){
@@ -2128,7 +2129,7 @@ function prepQ(q){
 function showQ(){
   stopSay();window.scrollTo(0,0);
   const q=prepQ(cur.qs[cur.i]);
-  cur.tries=0;cur.locked=false;cur.hinted=false;cur.waiting=false;
+  cur.tries=0;cur.locked=false;cur.hinted=false;cur.waiting=false;cur.tk2=(cur.tk2||0)+1;
   const cls=q.opts.length===2?'duo':'n'+q.opts.length;
   const ol=q.ol||'fr';
   app.innerHTML=`
@@ -2150,7 +2151,7 @@ function showQ(){
         <button class="ans" onclick="pick(${k})"><span class="oi">${o.i||''}</span><span>${o.t}</span></button>
         <button class="spk" onclick="say(this.dataset.t,this.dataset.l)" data-t="${esc(o.t)}" data-l="${o.l||ol}" aria-label="Écouter">🔊</button>
       </div>`).join('')}</div>
-    ${q.opts.length>=3&&!cur.lean?'<button class="hintb" id="hintb" onclick="hint()">💡 Indice</button>':''}
+    ${q.opts.length>=3&&!cur.lean?(cur.hintsLeft>0?`<button class="hintb" id="hintb" onclick="hint()" disabled title="Réfléchis d’abord">💡 Indice (${cur.hintsLeft})</button>`:'<p class="fine" style="text-align:center;margin-top:12px">💡 Plus d’indice dans ce jeu</p>'):''}
     <div id="hint"></div>
     <div id="fb"></div>
   </div>`;
@@ -2164,7 +2165,7 @@ function showQ(){
     cur.waiting=true;const tk=cur.tk=(cur.tk||0)+1;
     $('lis').innerHTML='<span>🔊 J’écoute…</span>';
     hold(sp[0],sp[1],()=>{if(cur&&cur.tk===tk&&cur.waiting)unlockQ()});
-  }else if(S.auto)say(sp[0],sp[1]);
+  }else{armHint(4000);if(S.auto)say(sp[0],sp[1])}
 }
 /* ---------- rythme calme ---------- */
 const calm=()=>S.calm!==false;
@@ -2183,12 +2184,15 @@ function unlockQ(){
   cur.waiting=false;
   const o=document.querySelector('.opts');if(o)o.classList.remove('wait');
   const l=$('lis');if(l)l.innerHTML='<span class="ok">👉 À toi !</span>';
+  armHint(3000);
 }
+// le bouton Indice se débloque un peu après le début : on réfléchit d’abord
+function armHint(ms){const tk=cur.tk2;setTimeout(()=>{if(cur&&cur.tk2===tk){const b=$('hintb');if(b)b.disabled=false}},ms)}
 const PRAISE=["Bravo !","Yes !","Excellent !","Top !","Bien joué !","Gagné !"];
 function updStk(){const e=$('stk');if(e)e.textContent=cur.streak>=2?cur.streak+' de suite ✔':''}
 function hint(){
-  if(cur.locked||cur.hinted||cur.waiting)return;
-  const q=cur.qs[cur.i];cur.hinted=true;cur.missed.add(q);
+  if(cur.locked||cur.hinted||cur.waiting||cur.hintsLeft<=0)return;
+  const q=cur.qs[cur.i];cur.hinted=true;cur.hintsLeft--;cur.missed.add(q);
   const b=$('hintb');if(b)b.remove();
   if(q.hint){$('hint').innerHTML=`<div class="hintbox"><span class="big" style="font-size:34px">💡</span><p>${q.hint}</p>${spk(q.hint)}</div>`;if(S.auto)say(q.hint);return}
   const wrong=q.opts.map((_,k)=>k).filter(k=>k!==q.ok&&!$('o'+k).querySelector('.ans').disabled);
@@ -2308,7 +2312,7 @@ function finish(){
 function review(){
   const qs=cur.qs.filter(q=>cur.missed.has(q));
   if(!qs.length)return;
-  cur={g:cur.g,s:cur.s,qs,i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:true};
+  cur={g:cur.g,s:cur.s,qs,i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:true,hintsLeft:2};
   showQ();
 }
 function finishReview(){
