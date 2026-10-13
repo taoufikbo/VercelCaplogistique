@@ -263,6 +263,21 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .typ input.good{background:#DDF6EC;border-color:var(--grn)}
 .typ input.bad{background:#FFE4E5;border-color:var(--red)}
 .typ.wait{opacity:.5}
+.pgoal{position:relative;height:130px;border:4px solid var(--ink);border-bottom:0;border-radius:14px 14px 0 0;background:repeating-linear-gradient(0deg,#f4f1e8 0 10px,#e3ddc9 10px 12px),#f4f1e8;overflow:hidden}
+.pgoal .pl{position:absolute;top:0;bottom:0;width:2px;background:rgba(31,36,48,.25)}
+.pgoal .l1{left:33.3%}.pgoal .l2{left:66.6%}
+.pk{position:absolute;left:50%;top:28%;font-size:46px;line-height:1;transform:translateX(-50%);transition:left .35s}
+.pb{position:absolute;left:50%;bottom:4%;font-size:30px;line-height:1;transform:translateX(-50%);transition:left .35s,bottom .35s}
+.paim{position:relative;height:46px;margin:0 0 6px;background:#d8cfb4;border:3px solid var(--ink);border-radius:0 0 23px 23px}
+.paim .pz{position:absolute;top:0;bottom:0;width:3px;background:var(--grn)}
+.paim .z1{left:35%}.paim .z2{left:65%}
+.paim .pmark{position:absolute;left:50%;top:3px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:var(--ink);border:3px solid #fff;box-shadow:0 0 0 2px var(--ink)}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mc{position:relative;aspect-ratio:1;border-radius:14px;border:3px solid var(--ink);background:var(--blu);color:#fff;font-size:38px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0}
+.mc .mq{display:none;align-items:center;justify-content:center;text-align:center;color:var(--ink);line-height:1.1;padding:4px;width:100%;height:100%}
+.mc .mw2{font-size:15px;font-weight:700}
+.mc.up{background:#fff}.mc.up .mf{display:none}.mc.up .mq{display:flex}
+.mc.ok{background:#DDF6EC;border-color:var(--grn)}
 .typ .nb{white-space:nowrap}
 .model{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0}
 .model .mw{font-size:34px;font-weight:700;letter-spacing:.04em}
@@ -1906,7 +1921,7 @@ function finishMission(){
   S.mission={day:t,n,ok};save();
   if(firstToday){
     addTk(1);const nf=unlockFilm();
-    S.rw.bonus={d:t,bowl:false,film:false,fid:nf?nf.id:FILMS[t%FILMS.length].id};save();
+    S.rw.bonus={d:t,bowl:false,film:false,pen:false,memo:false,fid:nf?nf.id:FILMS[t%FILMS.length].id};save();
   }
   const tom=[...QIDX.values()].filter(e=>S.qm[e.q.id]&&S.qm[e.q.id].due<=t+1).length;
   const mas=[...QIDX.values()].filter(e=>S.qm[e.q.id]&&S.qm[e.q.id].b>=3).length;
@@ -1941,7 +1956,7 @@ const DEFAULT_CAT=()=>[{id:'bowling',icon:'🎳',name:'Sortie bowling',cost:7,on
 function ensureRw(){
   const r=S.rw=Object.assign({goal:'bowling',hist:[],films:[],best:0,ask:null},S.rw||{});
   r.tk=Object.assign({e:0,s:0},r.tk||{});
-  r.bonus=Object.assign({d:-1,bowl:false,film:false,fid:null},r.bonus||{});
+  r.bonus=Object.assign({d:-1,bowl:false,film:false,pen:false,memo:false,fid:null},r.bonus||{});
   if(!Array.isArray(r.cat)||!r.cat.length)r.cat=DEFAULT_CAT();
   // les récompenses de base (non supprimables) sont ajoutées si elles manquent, ex. sauvegarde créée avant la glace
   DEFAULT_CAT().forEach(d=>{if(!r.cat.some(c=>c.id===d.id))r.cat.push(d)});
@@ -1971,6 +1986,8 @@ function bonusHtml(){
   const bn=S.rw.bonus;if(bn.d!==dayNum())return '';
   const b=[];
   if(!bn.bowl)b.push(`<button class="nb go" onclick="miniBowl()">🎳 Bonus bowling</button>`);
+  if(!bn.pen)b.push(`<button class="nb go" onclick="miniPen()">⚽ Tirs au but</button>`);
+  if(!bn.memo)b.push(`<button class="nb go" onclick="miniMemo()">🧠 Mémo</button>`);
   if(!bn.film)b.push(`<button class="nb go" onclick="filmPlay('${bn.fid}',true)">🎬 Séance du jour</button>`);
   return b.length?`<div class="giftb"><p><b>🎁 Mon cadeau du jour</b></p><div class="btns">${b.join('')}</div></div>`:'';
 }
@@ -2002,9 +2019,13 @@ function recompenses(){
   <h3 class="rwt">🎮 Mes bonus</h3>
   <div class="card"><div class="btns" style="justify-content:flex-start">
     ${bn.d===t&&!bn.bowl?`<button class="nb go" onclick="miniBowl()">🎳 Bonus bowling</button>`:`<span class="sm">🎳 Bonus bowling : après ma mission</span>`}
+    ${bn.d===t&&!bn.pen?`<button class="nb go" onclick="miniPen()">⚽ Tirs au but</button>`:`<span class="sm">⚽ Tirs au but : ${bn.d===t?'fait aujourd’hui ✔':'après ma mission'}</span>`}
+    ${bn.d===t&&!bn.memo?`<button class="nb go" onclick="miniMemo()">🧠 Mémo</button>`:`<span class="sm">🧠 Mémo : ${bn.d===t?'fait aujourd’hui ✔':'après ma mission'}</span>`}
     ${bn.d===t&&!bn.film?`<button class="nb go" onclick="filmPlay('${bn.fid}',true)">🎬 Séance du jour</button>`:`<span class="sm">🎬 Séance du jour : après ma mission</span>`}
   </div>
   ${S.rw.best?`<p class="sm">Mon meilleur score au bowling : ${S.rw.best} quilles</p>`:''}
+  ${S.rw.bestPen!=null?`<p class="sm">Mon meilleur score aux tirs au but : ${S.rw.bestPen} sur 5</p>`:''}
+  ${S.rw.bestMemo?`<p class="sm">Mon meilleur Mémo : ${S.rw.bestMemo} essais</p>`:''}
   ${films.length?`<p class="al" style="margin:10px 0 4px"><b>🍿 Ma salle de cinéma</b></p><div class="opts2">${films.map(f=>`<button class="ab" onclick="filmPlay('${f.id}')">${f.icon} ${f.title}</button>`).join('')}</div>`:''}
   </div>
   ${S.rw.hist.length?`<h3 class="rwt">🌟 Mes souvenirs</h3><div class="card"><ul class="bilan">${S.rw.hist.map(h=>`<li>${h.i} ${esc(h.n)} · ${h.d} ✔</li>`).join('')}</ul></div>`:''}
@@ -2114,6 +2135,101 @@ function bowlEnd(){
     <p>${S.rw.best>sc?`Mon meilleur score : ${S.rw.best}`:'C’est mon meilleur score !'} ${spk('Bravo ! '+sc+' quilles.')}</p>
     <div class="btns"><button class="nb go" onclick="recompenses()">🎁 Mes récompenses</button><button class="nb" onclick="home()">🏠 Accueil</button></div></div>`;
   updBar();beepOk();confetti(innerWidth/2,innerHeight/3,30);
+}
+// ---- bonus 3 : tirs au but (5 tirs ; on vise avec la balle qui bouge, le gardien plonge au hasard)
+let P=null;
+function miniPen(){
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null,v:'rw'};
+  P={k:0,goals:0,x:0,t0:performance.now(),busy:false};
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="recompenses()" aria-label="Retour">⬅️</button><h2>⚽ Tirs au but</h2>${spk('Tirs au but. Touche Tirer quand la balle est dans le coin que tu veux.')}</div>
+  <div class="card">
+    <div class="pgoal" aria-hidden="true"><i class="pl l1"></i><i class="pl l2"></i><span class="pk" id="pk">🧤</span><span class="pb" id="pb">⚽</span></div>
+    <div class="paim" aria-hidden="true"><i class="pz z1"></i><i class="pz z2"></i><span class="pmark" id="pmk"></span></div>
+    <p id="pinfo" class="fresh" role="status">Tir 1 sur 5 · 0 but</p>
+    <p id="pmsg" class="sm" role="status">Touche Tirer quand la balle est dans le coin que tu veux.</p>
+    <button class="nb go" id="pgo" style="display:block;margin:10px auto 0;min-width:180px" onclick="penShoot()">⚽ Tirer</button>
+  </div>`;
+  updBar();
+  const per=(reduce||S.easy)?3600:1900;
+  bowlIv=setInterval(()=>{P.x=Math.sin((performance.now()-P.t0)/per*2*Math.PI);const e=$('pmk');if(e)e.style.left=(50+P.x*44)+'%'},40);
+}
+function penShoot(){
+  if(!P||P.busy)return;P.busy=true;actx();
+  const x=P.x,post=Math.abs(x)>0.93,zone=x<-.34?0:x>.34?2:1,kz=rnd(3),C=[17,50,83];
+  const kp=$('pk'),bp=$('pb');
+  if(kp)kp.style.left=C[kz]+'%';
+  if(bp){bp.style.left=(post?(x<0?3:97):C[zone])+'%';bp.style.bottom='62%'}
+  let msg;
+  if(post){msg='Poteau ! Presque.';beepNo()}
+  else if(kz===zone){msg='Arrêté par le gardien !';beepNo()}
+  else{P.goals++;msg='BUT ! 🎉';beepOk();confetti(innerWidth/2,innerHeight/3,25)}
+  P.k++;
+  $('pmsg').textContent=msg;
+  $('pinfo').textContent=P.k>=5?'Fini !':`Tir ${P.k+1} sur 5 · ${P.goals} but${P.goals>1?'s':''}`;
+  setTimeout(()=>{
+    if(!$('pgo'))return;
+    if(P.k>=5){penEnd();return}
+    const k2=$('pk'),b2=$('pb');if(k2)k2.style.left='50%';if(b2){b2.style.left='50%';b2.style.bottom='4%'}
+    P.busy=false;
+  },1100);
+}
+function penEnd(){
+  stopAnim();
+  const g=P.goals;if(S.rw.bestPen==null||g>S.rw.bestPen)S.rw.bestPen=g;
+  if(S.rw.bonus.d===dayNum())S.rw.bonus.pen=true;save();
+  const t=g>=4?'Champion ! ':g>=2?'Bien joué ! ':'Tu progresses ! ';
+  app.innerHTML=`
+  <div class="card endc"><div class="big">⚽</div><h2>${t}${g} but${g>1?'s':''} sur 5</h2>
+    <p>${spk(t+g+' buts sur 5.')}</p>
+    <div class="btns"><button class="nb go" onclick="recompenses()">🎁 Mes récompenses</button><button class="nb" onclick="home()">🏠 Accueil</button></div></div>`;
+  updBar();beepOk();confetti(innerWidth/2,innerHeight/3,g*12+10);
+}
+// ---- bonus 4 : mémo des mots du métier (6 paires : pictogramme + mot, tirées du glossaire)
+let M=null;
+function miniMemo(){
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null,v:'rw'};
+  const pool=Object.values(GLOSSAIRE).filter(g=>g.t.length<=14&&!/[()]/.test(g.t));
+  const six=shuffle(pool).slice(0,6);
+  const cards=shuffle(six.flatMap((g,i)=>[{p:i,h:g.i,w:false,t:g.t},{p:i,h:g.t,w:true,t:g.t}]));
+  M={cards,open:[],found:0,moves:0,busy:false,done:{}};
+  app.innerHTML=`
+  <div class="gtop"><button class="back" onclick="recompenses()" aria-label="Retour">⬅️</button><h2>🧠 Mémo</h2>${spk('Mémo. Retrouve chaque image avec son mot.')}</div>
+  <div class="card">
+    <p id="minfo" class="fresh" role="status">0 essai · 0 paire sur 6</p>
+    <div class="mgrid">${cards.map((c,i)=>`<button class="mc" id="mc${i}" onclick="memoTap(${i})" aria-label="Carte ${i+1}"><span class="mf" aria-hidden="true">?</span><span class="mq ${c.w?'mw2':''}">${c.h}</span></button>`).join('')}</div>
+    <p class="sm" style="text-align:center;margin-top:8px">Touche deux cartes : une image et son mot.</p>
+  </div>`;
+  updBar();
+}
+function memoTap(i){
+  if(!M||M.busy||M.done[i]||M.open.includes(i))return;
+  actx();
+  const el=$('mc'+i);if(!el)return;
+  el.classList.add('up');M.open.push(i);
+  if(M.open.length<2)return;
+  M.moves++;
+  const [a,b]=M.open,ok=M.cards[a].p===M.cards[b].p;
+  if(ok){
+    M.done[a]=M.done[b]=true;M.found++;M.open=[];
+    $('mc'+a).classList.add('ok');$('mc'+b).classList.add('ok');beepOk();
+    if(S.auto)say(M.cards[a].t);
+  }else{
+    M.busy=true;beepNo();
+    setTimeout(()=>{if(!M)return;[a,b].forEach(k=>{const e=$('mc'+k);if(e)e.classList.remove('up')});M.open=[];M.busy=false},900);
+  }
+  const inf=$('minfo');if(inf)inf.textContent=`${M.moves} essai${M.moves>1?'s':''} · ${M.found} paire${M.found>1?'s':''} sur 6`;
+  if(M.found>=6)setTimeout(memoEnd,700);
+}
+function memoEnd(){
+  if(!M||!$('minfo'))return;
+  const n=M.moves;if(!S.rw.bestMemo||n<S.rw.bestMemo)S.rw.bestMemo=n;
+  if(S.rw.bonus.d===dayNum())S.rw.bonus.memo=true;save();
+  app.innerHTML=`
+  <div class="card endc"><div class="big">🧠</div><h2>Bravo ! ${n} essai${n>1?'s':''}</h2>
+    <p>${S.rw.bestMemo<n?`Mon meilleur : ${S.rw.bestMemo} essais`:'C’est mon meilleur score !'} ${spk('Bravo ! '+n+' essais.')}</p>
+    <div class="btns"><button class="nb go" onclick="recompenses()">🎁 Mes récompenses</button><button class="nb" onclick="home()">🏠 Accueil</button></div></div>`;
+  updBar();beepOk();confetti(innerWidth/2,innerHeight/3,40);
 }
 // ---- bonus 2 : mini-cinéma (une nouvelle séance débloquée chaque jour de mission)
 function filmPlay(id){
