@@ -307,6 +307,22 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .od-n:empty{display:none}
 .od-empty{display:flex;align-items:center;min-height:52px;padding:0 12px;border:3px dashed #9aa1ad;border-radius:16px;opacity:.7}
 .od-go{display:block;margin:14px auto 0}
+.parcb{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:64px;margin:0 0 14px;padding:10px 16px;border-radius:18px;background:#E3EEFF;border:3px solid var(--blu);font-weight:700;font-size:20px;text-align:left;box-shadow:0 4px 0 rgba(0,0,0,.14)}
+.parcb small{display:block;font-size:15px;font-weight:400}
+.parcb.ok{background:#DDF6EC;border-color:var(--grn);box-shadow:none}
+.pc-sl{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.pc-st{display:flex;border:3px solid var(--ink);border-radius:16px;overflow:hidden;background:#fff;min-height:60px}
+.pc-st.nx{background:#FFF0B3;border-color:#C99A00}
+.pc-st.dn{background:#DDF6EC;border-color:var(--grn)}
+.pc-b{flex:1;display:flex;align-items:center;gap:10px;padding:8px 12px;text-align:left;font-weight:700;min-height:56px}
+.pc-s{display:block;font-weight:400;font-size:15px;color:#444}
+.pc-st .spk{width:46px;height:auto;border-radius:0;box-shadow:none}
+.pc-n{flex:none;min-width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:17px}
+.pc-st.dn .pc-n{background:var(--grn)}
+.pc-days{display:flex;flex-wrap:wrap;gap:6px}
+.pc-d{min-width:44px;height:44px;border-radius:12px;border:3px solid #9aa1ad;background:#fff;font-weight:700;font-size:17px}
+.pc-d.dn{background:#DDF6EC;border-color:var(--grn)}
+.pc-d.on{border-color:var(--ink);box-shadow:0 0 0 3px #FFF1B8}
 .od-w{display:block;font-weight:400;font-size:15px;color:#555}
 .od-it.good .od-w{color:#fff}
 .od-base{background:#C79A5B;border:3px solid #7A5A2E;border-radius:10px;text-align:center;font-weight:700;padding:8px;color:#3b2a10}
@@ -2018,11 +2034,12 @@ const viewSwitch=()=>`<div class="vsw" role="group" aria-label="Choisir la vue">
 
 /* ---------- accueil ---------- */
 function home(){
-  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null};
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null};PARCCTX=null;
   const t=total(),m=maxStars(),pct=t/m,lv=level(pct);
   app.innerHTML=`
   <div class="top"><div class="sign"><h1>🚚 Mon CAP Logistique</h1></div></div>
   ${missionHtml()}
+  ${parcHtml()}
   ${progHtml()}
   ${viewSwitch()}
   ${S.view==='carte'?stepHtml('🕸️','Explore la carte')+carteHtml():stepHtml('1️⃣','Ou choisis une matière')+ringHtml(homeRing())}
@@ -2074,7 +2091,7 @@ function freshLine(sq){
   return f?`<p class="fresh">${f.icon} ${f.txt}${f.n?' : '+f.n+' question'+(f.n>1?'s':''):''} · ${m} % maîtrisé</p>`:'';
 }
 function openSeq(bid,sid){
-  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid,sid};
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid,sid};PARCCTX=null;
   S.last={bid,sid};save();
   const b=findBloc(bid),s=findSeq(bid,sid);
   app.innerHTML=`
@@ -2096,7 +2113,7 @@ function card(c,l){
 function fiche(n){
   stopSay();window.scrollTo(0,0);
   const s=findSeq(ctx.bid,ctx.sid),sl=s.slides[n],last=n===s.slides.length-1;
-  if(last){S.seen=S.seen||{};if(!S.seen[ctx.sid]){S.seen[ctx.sid]=true;save()}}
+  if(last){S.seen=S.seen||{};if(!S.seen[ctx.sid]){S.seen[ctx.sid]=true;save()}if(PARCCTX)parcMark(PARCCTX.d,0)}
   const body=sl.svg
     ?`<div class="art ${sl.cls||''}">${sl.svg}</div><p class="hint">👆 Touche un dessin pour l’écouter</p>`
     :`<div class="cards">${sl.cards.map((c,k)=>(k&&sl.flow?'<div class="arw">⬇️</div>':'')+card(c,s.lang)).join('')}</div><p class="hint">👆 Touche une carte pour l’écouter</p>`;
@@ -2110,7 +2127,7 @@ function fiche(n){
     <div class="nav">
       <button class="nb ${n===0?'ghost':''}" onclick="fiche(${n-1})" aria-label="Précédent">⬅️</button>
       <div class="dots">${s.slides.map((_,k)=>`<i class="${k===n?'on':''}"></i>`).join('')}</div>
-      ${last?`<button class="nb go" onclick="openSeq('${ctx.bid}','${ctx.sid}')">🎮 Jouer</button>`:`<button class="nb" onclick="fiche(${n+1})" aria-label="Suivant">➡️</button>`}
+      ${last?(PARCCTX?`<button class="nb go" onclick="parcView(${PARCCTX.d})">🗺️ Mon parcours</button>`:`<button class="nb go" onclick="openSeq('${ctx.bid}','${ctx.sid}')">🎮 Jouer</button>`):`<button class="nb" onclick="fiche(${n+1})" aria-label="Suivant">➡️</button>`}
     </div>
   </div>`;
   updBar();
@@ -2243,6 +2260,112 @@ function missionHtml(){
   const n=buildMission().length;if(!n)return '';
   const mn=n<=5?'2 à 3':'3 à 5';
   return `${welcomeHtml()}<button class="mission" id="mission" onclick="startMission()" aria-label="Ma mission du jour. ${n} questions."><span aria-hidden="true">▶️</span><span>Ma mission du jour<small>${n} questions · ${mn} minutes</small></span></button>`;
+}
+
+/* ---------- parcours : un « bundle » par jour, toutes les matières mêlées ---------- */
+// Un jour = un cours du métier (m) + une autre matière qui s'y rattache (l) + un entraînement « autrement » (p) + une révision éclair.
+// Les jours suivent le fil d'une journée de cariste : réception, chariot, expédition, puis vie de travail. Pas de verrou : on avance à son rythme.
+const PARC0=[
+ {t:'Mon poste',icon:'🦺',m:'rec0',l:'pse2',p:'rec0_ord'},
+ {t:'J’accueille le camion',icon:'🚚',m:'rec1',l:'fra1',p:'rec1_ord'},
+ {t:'Je décharge et je contrôle',icon:'🔍',m:'rec2',l:'mat2',p:'rec2_ecr'},
+ {t:'Je mets en stock',icon:'📦',m:'rec3',l:'mat3',p:'rec3_ord'},
+ {t:'Mon chariot',icon:'🚜',m:'cha1',l:'pse1',p:'cha1_ecr'},
+ {t:'Je démarre mon chariot',icon:'🔑',m:'cha2',l:'mat4',p:'cha2_ord'},
+ {t:'Je conduis en sécurité',icon:'🚦',m:'cha3',l:'ang4',p:'cha3_ecr'},
+ {t:'Fin de poste',icon:'🏁',m:'cha4',l:'pse3',p:'cha4_ord'},
+ {t:'Je prépare une commande',icon:'🛒',m:'exp1',l:'mat1',p:'exp1_ord'},
+ {t:'Je conditionne',icon:'🎁',m:'exp2',l:'fra3',p:'exp2_ecr'},
+ {t:'Je construis la palette',icon:'🧱',m:'exp3',l:'mat3',lg:'mat3_calc',p:'exp3_pal'},
+ {t:'J’expédie',icon:'🚛',m:'exp4',l:'ang3',p:'exp4_ord'},
+ {t:'La chaîne logistique',icon:'🌍',m:'exp5',l:'fra4',p:'exp5_ord'},
+ {t:'Les écogestes',icon:'♻️',m:'exp6',l:'pse5',p:'exp6_ecr'},
+ {t:'Mes droits au travail',icon:'⚖️',m:'resp',mg:'quiz',l:'ang2',p:'resp_ecr'},
+ {t:'Mon équipe',icon:'🤝',m:'eps2',l:'fra2',p:'eps2_ecr'},
+ {t:'Ma santé',icon:'💪',m:'pse4',l:'eps1',p:'pse4_ecr'},
+ {t:'Les mots du métier en anglais',icon:'🔤',m:'ang1',l:'eps3',p:'ang1_ecr'}
+];
+function parcResolve(day){
+  const loc=id=>allSeqs().find(x=>x.sq.id===id);
+  const gl=gid=>{for(const x of allSeqs()){const g=x.sq.games.find(g=>g.id===gid);if(g)return {b:x.b,sq:x.sq,g}}return null};
+  const main=x=>x&&{b:x.b,sq:x.sq,g:x.sq.games.find(g=>g.id===x.sq.id)||x.sq.games[0]};
+  const m=loc(day.m),l=loc(day.l);if(!m||!l)return null;
+  const g1=day.mg?gl(day.mg):main(m),g2=day.lg?gl(day.lg):main(l),g3=gl(day.p);
+  return g1&&g2&&g3?{m,l,g1,g2,g3}:null;
+}
+const PARC=PARC0.filter(d=>parcResolve(d));
+const PSTEPS=['Je découvre','Je joue','Je relie','Autrement','Je révise'];
+let PARCCTX=null;
+const PS=()=>S.path||(S.path={st:{}});
+const parcFlags=d=>{const st=PS().st;return st[d]||(st[d]=[false,false,false,false,false])};
+const dayDone=d=>parcFlags(d).every(Boolean);
+function curDay(){const i=PARC.findIndex((_,d)=>!dayDone(d));return i<0?PARC.length-1:i}
+function parcMark(d,k){
+  const f=parcFlags(d);if(f[k])return;
+  f[k]=true;
+  if(f.every(Boolean)){PS().last=dayNum();toast('🎉 Jour '+(d+1)+' terminé !')}
+  save();
+}
+function parcHtml(){
+  if(!PARC.length)return '';
+  const d=curDay(),all=PARC.every((_,i)=>dayDone(i)),t=dayNum();
+  if(all)return `<button class="parcb" onclick="parcView(${PARC.length-1})"><span class="big" aria-hidden="true">🏆</span><span>Parcours terminé<small>Bravo ! Tu peux tout rejouer.</small></span></button>`;
+  const doneToday=PS().last===t&&d>0&&dayDone(d-1);
+  const n=parcFlags(d).filter(Boolean).length;
+  if(doneToday)return `<div class="parcb ok" role="status"><span aria-hidden="true">✔</span><span>Parcours du jour fait<small>À demain pour le jour ${d+1}</small></span></div>
+    <button class="mini" style="display:block;margin:2px auto 8px" onclick="parcView(${d})">Continuer quand même</button>`;
+  return `<button class="parcb" onclick="parcView(${d})" aria-label="Mon parcours. Jour ${d+1} : ${PARC[d].t}"><span class="big" aria-hidden="true">🗺️</span><span>Mon parcours · jour ${d+1}<small>${PARC[d].icon} ${PARC[d].t} · ${n}/5 étapes</small></span></button>`;
+}
+function parcView(d){
+  stopSay();stopAnim();window.scrollTo(0,0);PARCCTX=null;ctx={bid:null,sid:null};
+  if(d==null)d=curDay();
+  const day=PARC[d],R=parcResolve(day),f=parcFlags(d),nx=f.indexOf(false);
+  const info=[
+    [R.m.sq.icon+' '+R.m.sq.name,'📖',R.m.b.name],
+    [R.g1.g.icon+' '+R.g1.g.name,'🎮',R.m.sq.name],
+    [R.g2.sq.icon+' '+R.g2.sq.name,'🔗',R.g2.b.name],
+    [R.g3.g.icon+' '+R.g3.g.name,'🧩',R.g3.sq.name],
+    ['Quelques questions des jours d’avant','🔁','']
+  ];
+  const rows=info.map((x,k)=>`<div class="pc-st${f[k]?' dn':k===nx?' nx':''}"><button class="pc-b" onclick="parcGo(${d},${k})"><span class="pc-n">${f[k]?'✔':k+1}</span><span class="oi" aria-hidden="true">${x[1]}</span><span><b>${PSTEPS[k]}</b><small class="pc-s">${x[0]}</small></span></button>${spk(PSTEPS[k]+'. '+x[0].replace(/^\S+\s/,''))}</div>`).join('');
+  const chips=PARC.map((_,i)=>`<button class="pc-d${i===d?' on':''}${dayDone(i)?' dn':''}" onclick="parcView(${i})" aria-label="Jour ${i+1}${dayDone(i)?' fait':''}">${dayDone(i)?'✔':i+1}</button>`).join('');
+  app.innerHTML=`
+  <div class="card">
+    <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>${day.icon} Jour ${d+1} : ${day.t}</h2>${spk('Jour '+(d+1)+'. '+day.t)}</div>
+    ${nx<0?`<div class="story"><span class="big">🎉</span><p>Jour terminé ! ${d+1<PARC.length?'À demain, ou continue si tu veux.':'Parcours terminé !'}</p></div>`:'<p class="sm" style="text-align:center">👆 Une étape à la fois. Commence par la première.</p>'}
+    <div class="pc-sl">${rows}</div>
+    ${nx<0&&d+1<PARC.length?`<button class="nb go" style="display:block;margin:14px auto 0" onclick="parcView(${d+1})">➡️ Jour ${d+2}</button>`:''}
+    <p class="od-lb">Mes jours</p>
+    <div class="pc-days">${chips}</div>
+  </div>`;
+  updBar();
+}
+function parcGo(d,k){
+  const R=parcResolve(PARC[d]);
+  if(k===4){parcReview(d);return}
+  if(k===0){ctx={bid:R.m.b.id,sid:R.m.sq.id};PARCCTX={d,k};fiche(0);return}
+  const x=k===1?R.g1:k===2?R.g2:R.g3;
+  ctx={bid:x.b.id,sid:x.sq.id};play(x.g.id);cur.parc={d,k};
+}
+// révision éclair : les questions les plus en retard parmi les cours déjà vus, sinon quelques questions de ces cours
+function parcReview(d){
+  const seen=new Set();
+  for(let i=0;i<=d;i++){const x=parcResolve(PARC[i]);seen.add(x.m.sq.id);seen.add(x.g2.sq.id)}
+  const all=[...QIDX.values()].filter(e=>seen.has(e.s.id));
+  let pool=all.filter(e=>S.qm[e.q.id]).sort((a,b)=>S.qm[a.q.id].due-S.qm[b.q.id].due).slice(0,4);
+  if(pool.length<4){const ids=new Set(pool.map(e=>e.q.id));pool=pool.concat(shuffle(all.filter(e=>!ids.has(e.q.id))).slice(0,4-pool.length))}
+  if(!pool.length)return;
+  ctx={bid:null,sid:null};
+  cur={g:{id:'_parcrev',icon:'🔁',name:'Je révise',mix:true},s:null,qs:mixFormats(pool).map(e=>e.q),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,mission:true,parcRev:{d},cf:0,cs:0,hintsLeft:3};
+  showQ();
+}
+function finishParcRev(){
+  stopSay();window.scrollTo(0,0);
+  const d=cur.parcRev.d,nok=cur.first,n=cur.qs.length;parcMark(d,4);
+  app.innerHTML=`<div class="card endc"><span class="big">🔁</span><h2>Révision faite ✔</h2>
+    <p>${nok} bonne${nok>1?'s':''} réponse${nok>1?'s':''} du premier coup sur ${n}. ${spk('Révision faite')}</p>
+    <div class="btns"><button class="nb go" onclick="parcView(${d})">🗺️ Mon parcours</button><button class="nb" onclick="home()">🏠 Accueil</button></div></div>`;
+  updBar();beepOk();confetti(innerWidth/2,innerHeight/3,30);
 }
 function welcomeHtml(){
   if(!absent())return '';
@@ -3045,6 +3168,7 @@ function recapHtml(g,sq){
 }
 
 function finish(){
+  if(cur.parcRev){finishParcRev();return}
   if(cur.mission){finishMission();return}
   if(cur.review){finishReview();return}
   stopSay();window.scrollTo(0,0);
@@ -3053,6 +3177,7 @@ function finish(){
   const record=st>(S.stars[g.id]||0);
   if(record){S.stars[g.id]=st;save()}
   const nb=checkBadges();
+  if(cur.parc)parcMark(cur.parc.d,cur.parc.k);
   const title=st===3?'BUT ! Champion !':st===2?'Bien joué !':'Tu progresses !';
   const games=cur.s.games,idx=games.indexOf(g),nxt=games[idx+1];
   const all=total()===maxStars();
@@ -3065,6 +3190,7 @@ function finish(){
     ${all?'<p class="big">🏆</p><h2>Tu as toutes les étoiles !</h2>':''}
     ${recapHtml(g,cur.s)}
     <div class="btns">
+      ${cur.parc?`<button class="nb go" onclick="parcView(${cur.parc.d})">🗺️ Mon parcours</button>`:''}
       ${cur.missed.size?`<button class="nb go" onclick="review()">🔁 Revoir mes erreurs (${cur.missed.size})</button>`:''}
       <button class="nb" onclick="play('${g.id}')">🔄 Rejouer</button>
       ${nxt?`<button class="nb go" onclick="play('${nxt.id}')">${nxt.icon} Suivant</button>`:''}
