@@ -78,7 +78,21 @@ h2{font-size:22px;margin:0;flex:1;line-height:1.3}
 .fb.ok{background:#DDF6EC;border:3px solid var(--grn)}
 .fb.ko{background:#FFF0D6;border:3px solid var(--org)}
 .fb.retry{background:#FFF0D6;border:3px solid var(--org);font-weight:700;text-align:center}
-.fbt{font-size:22px;margin-bottom:6px}
+.fbt{font-size:22px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.cp{display:flex;align-items:flex-end;gap:10px;margin:8px 0}
+.cp-b{position:relative;flex:1;display:flex;align-items:center;gap:8px;background:#fff;border:3px solid var(--ink);border-radius:18px;padding:10px 12px;font-weight:700;font-size:19px}
+.cp-b::before{content:"";position:absolute;left:-12px;bottom:14px;width:0;height:0;border:9px solid transparent;border-right-color:var(--ink);border-left:0}
+.cp-b span{flex:1}
+.capi.cheer{animation:capihop .6s ease-in-out 2}
+@keyframes capihop{0%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+.dsh-top b{white-space:nowrap}
+.dsh-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dsh-sk{white-space:nowrap;background:#FFF0D6;border:3px solid var(--org);border-radius:999px;padding:4px 12px;font-weight:700;font-size:16px}
+.dn-tr{display:flex;align-items:center;justify-content:center;margin:10px 0 4px}
+.dn-n{width:52px;height:52px;border-radius:50%;border:3px solid #9aa1ad;background:#fff;font-size:24px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.dn-n.nx{border-color:#C99A00;background:#FFF0B3;box-shadow:0 0 0 4px #FFF1B8}
+.dn-n.dn{background:var(--grn);border-color:#0e7a55;color:#fff;font-weight:700}
+.dn-l{width:12px;height:4px;background:#cfd6e0;flex:none}
 .why{display:flex;align-items:center;gap:10px}
 .why p{margin:0;flex:1}
 .next{display:block;margin:14px auto 0;background:var(--ink);color:#fff;border-radius:14px;padding:14px 28px;font-weight:700;font-size:20px;box-shadow:0 5px 0 #000}
@@ -2038,8 +2052,8 @@ function home(){
   const t=total(),m=maxStars(),pct=t/m,lv=level(pct);
   app.innerHTML=`
   <div class="top"><div class="sign"><h1>🚚 Mon CAP Logistique</h1></div></div>
+  ${dashHtml()}
   ${missionHtml()}
-  ${parcHtml()}
   ${progHtml()}
   ${viewSwitch()}
   ${S.view==='carte'?stepHtml('🕸️','Explore la carte')+carteHtml():stepHtml('1️⃣','Ou choisis une matière')+ringHtml(homeRing())}
@@ -2201,6 +2215,7 @@ function recordQ(q,ok){
   else{m.b=m.b>=2?1:0;m.due=t+LEIT[m.b]}                          // erreur : retour boîte 0 ou 1, jamais en dessous de 0
   if(!S.today||S.today.d!==t)S.today={d:t,n:0};
   S.today.n++;S.lastDay=t;
+  S.act=S.act||[];if(!S.act.includes(t)){S.act.push(t);if(S.act.length>90)S.act.shift()}
   noteMastery();
   save();
 }
@@ -2306,15 +2321,50 @@ function parcMark(d,k){
   if(f.every(Boolean)){PS().last=dayNum();toast('🎉 Jour '+(d+1)+' terminé !')}
   save();
 }
-function parcHtml(){
+// ---- Capi, le personnage qui accompagne (SVG sans dépendance) : happy, cheer, think, oops
+function capi(m,px){
+  m=m||'happy';px=px||64;
+  const mouth={
+    happy:'<path d="M41 80 Q50 88 59 80" fill="none" stroke="#5a2d1a" stroke-width="3.5" stroke-linecap="round"/>',
+    cheer:'<path d="M39 78 Q50 98 61 78 Z" fill="#8B2E2E" stroke="#5a2d1a" stroke-width="2.5" stroke-linejoin="round"/>',
+    think:'<ellipse cx="55" cy="83" rx="4" ry="3.5" fill="#5a2d1a"/>',
+    oops:'<path d="M42 85 Q50 78 58 85" fill="none" stroke="#5a2d1a" stroke-width="3.5" stroke-linecap="round"/>'}[m]||'';
+  const eyes=m==='cheer'
+    ?'<path d="M34 72 Q40 63 46 72 M54 72 Q60 63 66 72" fill="none" stroke="#2B2B2B" stroke-width="3.5" stroke-linecap="round"/>'
+    :`<circle cx="40" cy="70" r="4" fill="#2B2B2B"/><circle cx="60" cy="70" r="4" fill="#2B2B2B"/><circle cx="41.5" cy="68.5" r="1.3" fill="#fff"/><circle cx="61.5" cy="68.5" r="1.3" fill="#fff"/>`;
+  const extra=m==='oops'?'<path d="M80 52 q5 8 0 12 q-5 -4 0 -12z" fill="#7FC8F8"/><path d="M33 62 L45 65 M67 62 L55 65" stroke="#5a2d1a" stroke-width="2.5" stroke-linecap="round"/>'
+    :m==='think'?'<path d="M33 64 L45 62 M55 62 L67 64" stroke="#5a2d1a" stroke-width="2.5" stroke-linecap="round"/>':'';
+  return `<svg class="capi ${m}" width="${px}" height="${Math.round(px*1.1)}" viewBox="0 0 100 110" role="img" aria-label="Capi, le cariste" style="flex:none"><path d="M20 110 Q50 92 80 110 Z" fill="#F28C28"/><circle cx="50" cy="68" r="26" fill="#F5CBA7"/><circle cx="33" cy="78" r="5" fill="#F4A9A0" opacity=".7"/><circle cx="67" cy="78" r="5" fill="#F4A9A0" opacity=".7"/>${eyes}${mouth}${extra}<rect x="45" y="24" width="10" height="14" rx="4" fill="#E0A800"/><path d="M22 56 A28 28 0 0 1 78 56 Z" fill="#F5C518"/><rect x="16" y="54" width="68" height="8" rx="4" fill="#E0A800"/></svg>`;
+}
+const capiSays=(m,t)=>`<div class="cp">${capi(m,72)}<div class="cp-b"><span>${t}</span>${spk(t)}</div></div>`;
+function streakN(){const a=new Set(S.act||[]);let t=dayNum(),n=0;if(!a.has(t))t--;while(a.has(t)){n++;t--}return n}
+const PICO=['📖','🎮','🔗','🧩','🔁'];
+// ---- tableau de bord du jour : Capi, la série, les 5 étapes, un seul gros bouton « continuer »
+function dashHtml(){
   if(!PARC.length)return '';
-  const d=curDay(),all=PARC.every((_,i)=>dayDone(i)),t=dayNum();
-  if(all)return `<button class="parcb" onclick="parcView(${PARC.length-1})"><span class="big" aria-hidden="true">🏆</span><span>Parcours terminé<small>Bravo ! Tu peux tout rejouer.</small></span></button>`;
-  const doneToday=PS().last===t&&d>0&&dayDone(d-1);
-  const n=parcFlags(d).filter(Boolean).length;
-  if(doneToday)return `<div class="parcb ok" role="status"><span aria-hidden="true">✔</span><span>Parcours du jour fait<small>À demain pour le jour ${d+1}</small></span></div>
-    <button class="mini" style="display:block;margin:2px auto 8px" onclick="parcView(${d})">Continuer quand même</button>`;
-  return `<button class="parcb" onclick="parcView(${d})" aria-label="Mon parcours. Jour ${d+1} : ${PARC[d].t}"><span class="big" aria-hidden="true">🗺️</span><span>Mon parcours · jour ${d+1}<small>${PARC[d].icon} ${PARC[d].t} · ${n}/5 étapes</small></span></button>`;
+  const d=curDay(),all=PARC.every((_,i)=>dayDone(i)),t=dayNum(),f=parcFlags(d),nx=f.indexOf(false);
+  const doneToday=PS().last===t&&d>0&&dayDone(d-1),sk=streakN();
+  const day=PARC[d],n=f.filter(Boolean).length;
+  let mood='happy',msg;
+  if(all){mood='cheer';msg='Parcours terminé ! Tu es un vrai pro.'}
+  else if(doneToday){mood='cheer';msg='Bravo, ton jour est fait ! À demain.'}
+  else if(absent())msg='Content de te revoir ! On reprend doucement.';
+  else if(!S.act||!S.act.length)msg='Salut ! Moi, c’est Capi. On y va ?';
+  else if(n===0)msg='Jour '+(d+1)+' : '+day.t+'. On y va ?';
+  else if(n<5)msg='Super, il reste '+(5-n)+' étape'+(5-n>1?'s':'')+' !';
+  const d0=doneToday?d-1:d,fl=parcFlags(d0);
+  const track=PICO.map((ic,k)=>{const on=doneToday?true:fl[k],cls=on?'dn':k===nx?'nx':'';
+    return `<button class="dn-n ${cls}" ${nx<0&&!doneToday?'':`onclick="parcGo(${d0},${k})"`} aria-label="${PSTEPS[k]}${on?' : fait':''}">${on?'✔':ic}</button>`}).join('<i class="dn-l"></i>');
+  const go=all?`<button class="parcb" onclick="parcView(${PARC.length-1})"><span class="big" aria-hidden="true">🏆</span><span>Rejouer un jour<small>Choisis dans Mes jours</small></span></button>`
+    :doneToday?`<button class="mini" style="display:block;margin:8px auto 0" onclick="parcView(${d})">Continuer quand même</button>`
+    :`<button class="mission" onclick="parcGo(${d},${nx})" aria-label="Continuer : ${PSTEPS[nx]}"><span aria-hidden="true">▶️</span><span>${PICO[nx]} ${PSTEPS[nx]}<small>Jour ${d+1} · ${day.icon} ${day.t}</small></span></button>`;
+  return `<div class="card dsh">
+    <div class="dsh-top"><b>☀️ Aujourd’hui</b><span class="dsh-sk" aria-label="${sk} jour${sk>1?'s':''} de suite">${sk>0?'🔥 '+sk+' jour'+(sk>1?'s':''):'🌱 On démarre'}</span></div>
+    ${capiSays(mood,msg)}
+    <div class="dn-tr" role="group" aria-label="Les 5 étapes du jour">${track}</div>
+    ${go}
+    <button class="mini" style="display:block;margin:6px auto 0" onclick="parcView(${all?PARC.length-1:doneToday?d-1:d})">🗺️ Voir mon jour</button>
+  </div>`;
 }
 function parcView(d){
   stopSay();stopAnim();window.scrollTo(0,0);PARCCTX=null;ctx={bid:null,sid:null};
@@ -3078,10 +3128,10 @@ function pick(k){
   }
 }
 function feedback(ok,q,note){
-  const msg=ok?PRAISE[Math.floor(Math.random()*PRAISE.length)]:"Pas encore. Regarde.";
+  const msg=ok?(cur.streak>=3?'Série de '+cur.streak+' ! Tu es en feu !':PRAISE[Math.floor(Math.random()*PRAISE.length)]):['Pas grave, regarde.','On apprend, regarde !','Presque ! Regarde.'][cur.i%3];
   const lastQ=cur.i===cur.qs.length-1;
   $('fb').innerHTML=`<div class="fb ${ok?'ok':'ko'}">
-    <div class="fbt">${ok?'🎉':'💡'} <b>${msg}</b></div>
+    <div class="fbt">${capi(ok?'cheer':'oops',46)} <b>${msg}</b></div>
     <div class="why"><p>${q.why}${note?' <b>'+note+'</b>':''}</p>${spk(q.why)}</div>
     <button class="next" id="nxt" onclick="nextQ()" ${calm()?'disabled':''}>${calm()?'🔊 J’écoute…':lastQ?'🏁 Terminer':'Suivant ➡️'}</button></div>`;
   $('fb').scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
@@ -3184,6 +3234,7 @@ function finish(){
   app.innerHTML=`
   <div class="card endc">
     <div class="bigstars" aria-label="${st} étoiles sur 3">${[1,2,3].map(k=>`<span class="${k<=st?'on':''}" style="animation-delay:${k*.35}s">★</span>`).join('')}</div>
+    ${capiSays(st===3?'cheer':'happy',st===3?'Je suis trop fier de toi !':st===2?'Beau travail, continue comme ça !':'Chaque essai te fait progresser. On y retourne ?')}
     <h2>${st===3?'⚽🥅 ':''}${title}</h2>
     <p>⚽ ${cur.pts} / ${max} &nbsp; ${spk(title)}</p>
     ${nb.length?`<div class="newbd">🏅 Nouveau badge : ${nb.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
