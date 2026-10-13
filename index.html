@@ -92,6 +92,21 @@ h2{font-size:22px;margin:0;flex:1;line-height:1.3}
 .dn-n{width:52px;height:52px;border-radius:50%;border:3px solid #9aa1ad;background:#fff;font-size:24px;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .dn-n.nx{border-color:#C99A00;background:#FFF0B3;box-shadow:0 0 0 4px #FFF1B8}
 .dn-n.dn{background:var(--grn);border-color:#0e7a55;color:#fff;font-weight:700}
+.cl-g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cl-h span{text-align:center;font-weight:700;color:#555}
+.cl-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:22px;text-transform:capitalize}
+.cl-c{position:relative;min-height:54px;border:3px solid #cfd6e0;border-radius:12px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;padding:2px}
+.cl-c.off{background:transparent;border-color:transparent;opacity:.55}
+.cl-c.fut{background:#E3EEFF;border-color:var(--blu)}
+.cl-c.late{background:#FFF0D6;border-color:var(--org)}
+.cl-c.dn{background:#DDF6EC;border-color:var(--grn)}
+.cl-c.td{border-color:var(--ink);box-shadow:0 0 0 3px #FFF1B8}
+.cl-d{font-size:14px;line-height:1}
+.cl-i{font-size:18px;line-height:1.2}
+.cl-w{font-size:12px;line-height:1;color:#555}
+.cl-a{position:absolute;right:4px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--grn)}
+.cl-s{margin:8px 0 4px}
+.cl-s .cl-c{min-height:62px}
 .dn-l{width:12px;height:4px;background:#cfd6e0;flex:none}
 .why{display:flex;align-items:center;gap:10px}
 .why p{margin:0;flex:1}
@@ -2324,7 +2339,7 @@ function startMission(){
   const list=buildMission();if(!list.length)return;
   ctx={bid:null,sid:null};
   const nw=list.filter(e=>e.isNew).pop();if(nw){S.last={bid:nw.b.id,sid:nw.s.id};save()}
-  cur={g:{id:'_mission',icon:'▶️',name:'Ma mission du jour',mix:true},s:null,qs:list.map(e=>e.q),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,mission:true,cf:0,cs:0};
+  cur={g:{id:'_mission',icon:'▶️',name:'Ma mission du jour',mix:true},s:null,qs:altQs(list.map(e=>e.q)),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,mission:true,cf:0,cs:0};
   showQ();
 }
 function missionHtml(){
@@ -2368,7 +2383,7 @@ function parcResolve(day){
   const g1=day.mg?gl(day.mg):main(m),g2=day.lg?gl(day.lg):main(l),g3=gl(day.p);
   return g1&&g2&&g3?{m,l,g1,g2,g3}:null;
 }
-const PARC=PARC0.filter(d=>parcResolve(d));
+const PARC=PARC0.filter(d=>parcResolve(d)).map((d,i)=>{const mx=d.m+'_mix';return i%2===1&&allGames().some(g=>g.id===mx)?Object.assign({},d,{p:mx}):d});
 const PSTEPS=['Je découvre','Je joue','Je relie','Autrement','Je révise'];
 let PARCCTX=null;
 const PS=()=>S.path||(S.path={st:{}});
@@ -2420,12 +2435,60 @@ function dashHtml(){
     :`<button class="mission" onclick="parcGo(${d},${nx})" aria-label="Continuer : ${PSTEPS[nx]}"><span aria-hidden="true">▶️</span><span>${PICO[nx]} ${PSTEPS[nx]}<small>Jour ${d+1} · ${day.icon} ${day.t}</small></span></button>`;
   return `<div class="card dsh">
     <div class="dsh-top"><b>☀️ Aujourd’hui</b><span class="dsh-sk" aria-label="${sk} jour${sk>1?'s':''} de suite">${sk>0?'🔥 '+sk+' jour'+(sk>1?'s':''):'🌱 On démarre'}</span></div>
+    ${weekStrip()}
     ${capiSays(mood,msg)}
     <div class="dn-tr" role="group" aria-label="Les 5 étapes du jour">${track}</div>
     ${go}
     <button class="mini" style="display:block;margin:6px auto 0" onclick="parcView(${all?PARC.length-1:doneToday?d-1:d})">🗺️ Voir mon jour</button>
+    <button class="mini" style="display:block;margin:6px auto 0" onclick="CALM=null;calView()">📅 Mon calendrier</button>
   </div>`;
 }
+
+/* ---------- calendrier : le plan du parcours posé sur les vraies dates ---------- */
+// Un jour de parcours par jour d'étude (lundi-vendredi par défaut). Aucun verrou : un jour « à rattraper » reste ouvert, sans reproche.
+const DOW=['L','M','M','J','V','S','D'],MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const dUTC=n=>new Date(n*864e5);
+const dowOf=n=>(dUTC(n).getUTCDay()+6)%7;   // 0 = lundi
+const studyDays=()=>{const a=PS().dows;return a&&a.length?a:[0,1,2,3,4]};
+function planStart(){const ps=PS();if(ps.start==null){ps.start=dayNum();save()}return ps.start}
+// date -> index du jour de parcours prévu, ou -1
+function planOf(n){
+  const sd=studyDays(),st=planStart();if(n<st||!sd.includes(dowOf(n)))return -1;
+  let c=0;for(let x=st;x<n;x++)if(sd.includes(dowOf(x)))c++;
+  return c<PARC.length?c:-1;
+}
+function calCell(n,strip){
+  const p=planOf(n),t=dayNum(),d=dUTC(n).getUTCDate(),act=(S.act||[]).includes(n);
+  const done=p>=0&&dayDone(p),cls=(n===t?' td':'')+(p<0?' off':done?' dn':n<t?' late':' fut');
+  const inner=`${strip?`<span class="cl-w">${DOW[dowOf(n)]}</span>`:''}<span class="cl-d">${d}</span>${p>=0?`<span class="cl-i">${done?'✔':PARC[p].icon}</span>`:''}${act?'<i class="cl-a"></i>':''}`;
+  if(p<0)return `<div class="cl-c${cls}" aria-label="${d}, pas d’étude">${inner}</div>`;
+  return `<button class="cl-c${cls}" onclick="parcView(${p})" aria-label="${d} ${MOIS[dUTC(n).getUTCMonth()]} : jour ${p+1}, ${PARC[p].t}${done?', fait':n<t?', à rattraper':''}">${inner}</button>`;
+}
+const weekStrip=()=>{const t=dayNum(),m=t-dowOf(t);return `<div class="cl-g cl-s" role="group" aria-label="Ma semaine">${Array.from({length:7},(_,k)=>calCell(m+k,true)).join('')}</div>`};
+let CALM=null;
+function calView(dm){
+  stopSay();stopAnim();window.scrollTo(0,0);ctx={bid:null,sid:null};PARCCTX=null;
+  const now=dUTC(dayNum());if(!CALM)CALM={y:now.getUTCFullYear(),m:now.getUTCMonth()};
+  if(dm){let m=CALM.m+dm,y=CALM.y;while(m<0){m+=12;y--}while(m>11){m-=12;y++}CALM={y,m}}
+  const first=Date.UTC(CALM.y,CALM.m,1)/864e5,nd=new Date(Date.UTC(CALM.y,CALM.m+1,0)).getUTCDate(),lead=dowOf(first);
+  const cells=Array.from({length:lead},()=>'<div></div>').concat(Array.from({length:nd},(_,k)=>calCell(first+k,false))).join('');
+  const sd=studyDays();
+  const tg=DOW.map((l,i)=>`<button class="pc-d${sd.includes(i)?' on dn':''}" onclick="calToggle(${i})" aria-pressed="${sd.includes(i)}" aria-label="${['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'][i]}">${l}</button>`).join('');
+  app.innerHTML=`
+  <div class="card">
+    <div class="gtop"><button class="back" onclick="home()" aria-label="Retour">⬅️</button><h2>📅 Mon calendrier</h2>${spk('Mon calendrier')}</div>
+    <div class="cl-nav"><button class="nb" onclick="calView(-1)" aria-label="Mois précédent">◀️</button><b>${MOIS[CALM.m]} ${CALM.y}</b><button class="nb" onclick="calView(1)" aria-label="Mois suivant">▶️</button></div>
+    <div class="cl-g cl-h">${DOW.map(l=>`<span>${l}</span>`).join('')}</div>
+    <div class="cl-g">${cells}</div>
+    <p class="sm" style="margin:10px 0 2px">✔ fait · icône : le jour prévu · 🟧 à rattraper · ● j’ai travaillé ce jour-là</p>
+    <p class="od-lb">Mes jours d’étude</p>
+    <div class="pc-days">${tg}</div>
+    <button class="mini" style="display:block;margin:14px auto 0" onclick="calRestart()">🔄 Recommencer le plan aujourd’hui</button>
+  </div>`;
+  updBar();
+}
+function calToggle(i){const ps=PS(),a=studyDays().slice(),k=a.indexOf(i);if(k>=0){if(a.length>1)a.splice(k,1)}else a.push(i);ps.dows=a.sort((x,y)=>x-y);save();calView()}
+function calRestart(){PS().start=dayNum();save();calView()}
 function parcView(d){
   stopSay();stopAnim();window.scrollTo(0,0);PARCCTX=null;ctx={bid:null,sid:null};
   if(d==null)d=curDay();
@@ -2466,7 +2529,7 @@ function parcReview(d){
   if(pool.length<4){const ids=new Set(pool.map(e=>e.q.id));pool=pool.concat(shuffle(all.filter(e=>!ids.has(e.q.id))).slice(0,4-pool.length))}
   if(!pool.length)return;
   ctx={bid:null,sid:null};
-  cur={g:{id:'_parcrev',icon:'🔁',name:'Je révise',mix:true},s:null,qs:mixFormats(pool).map(e=>e.q),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,mission:true,parcRev:{d},cf:0,cs:0,hintsLeft:3};
+  cur={g:{id:'_parcrev',icon:'🔁',name:'Je révise',mix:true},s:null,qs:altQs(mixFormats(pool).map(e=>e.q)),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,mission:true,parcRev:{d},cf:0,cs:0,hintsLeft:3};
   showQ();
 }
 function finishParcRev(){
@@ -2878,9 +2941,17 @@ function easeQueue(){
 
 /* ---------- moteur de jeu ---------- */
 let cur=null;
+
+// alternance : une question à choix sur trois devient une carte à glisser (même id : la mémoire de la question est conservée)
+const altOK=q=>!q.type&&q.opts&&q.opts.length>=3&&!q.hear&&!q.viz&&!q.story&&!q.ol;
+function toSwipe(q){
+  const good=q.opts[q.ok],wrong=shuffle(q.opts.filter((_,j)=>j!==q.ok))[0],val=Math.random()<.5,o=val?good:wrong;
+  return Object.assign({},q,{type:'swipe',say:q.text+' '+o.t,prop:o.t,pi:o.i||'',val,answers:[val?'Juste':'Faux'],why:(val?'':'Non : '+good.t+'. ')+q.why});
+}
+function altQs(qs){let k=0;return qs.map((q,i)=>{if(!altOK(q))return q;k++;return k%3===2&&qs[i-1]&&qs[i-1].type!=='swipe'?toSwipe(q):q})}
 function play(id){
   const s=findSeq(ctx.bid,ctx.sid),g=s.games.find(x=>x.id===id);
-  cur={g,s,qs:g.seq?g.qs:shuffle(g.qs),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,hintsLeft:3};
+  cur={g,s,qs:g.seq?g.qs:altQs(shuffle(g.qs)),i:0,pts:0,first:0,tries:0,locked:false,streak:0,missed:new Set(),review:false,hintsLeft:3};
   showQ();
 }
 function prepQ(q){
