@@ -262,6 +262,9 @@ body.hc button:focus-visible{outline:5px solid #0000FF;outline-offset:2px}
 .typ input:focus{outline:4px solid var(--blu);outline-offset:2px}
 .typ input.good{background:#DDF6EC;border-color:var(--grn)}
 .typ input.bad{background:#FFE4E5;border-color:var(--red)}
+.recap{background:#fff;border:3px solid #E4DCC5;border-radius:16px;padding:12px;margin:14px 0;text-align:left}
+.recap .rt{margin:0 0 8px;font-size:20px}
+.recap .cards{margin-top:6px}
 .typ.wait{opacity:.5}
 .pgoal{position:relative;height:130px;border:4px solid var(--ink);border-bottom:0;border-radius:14px 14px 0 0;background:repeating-linear-gradient(0deg,#f4f1e8 0 10px,#e3ddc9 10px 12px),#f4f1e8;overflow:hidden}
 .pgoal .pl{position:absolute;top:0;bottom:0;width:2px;background:rgba(31,36,48,.25)}
@@ -1323,7 +1326,7 @@ function genEcrire(sq){
   const pick=W.slice(0,5),qs=[];
   pick.forEach((x,i)=>{
     if(i<2)qs.push({type:'type',mode:'copy',icon:'⌨️',text:'Recopie le mot : '+x.w,show:x.w,sub:x.t,answers:[x.w],hl:lang,why:'On écrit : '+x.w+'.'});
-    else qs.push({type:'type',mode:'dict',icon:'🎧',text:'Écoute et écris le mot n°'+(i-1),hear:x.w,hl:lang,answers:[x.w],why:'Le mot est : '+x.w+'.'});
+    else qs.push({type:'type',mode:'dict',icon:'🎧',text:'Écoute et écris le mot n°'+(i-1),hear:x.w,sub:x.t,hl:lang,answers:[x.w],why:'Le mot est : '+x.w+'.'});
   });
   (FILLQ[sq.id]||[]).forEach(n=>qs.push({type:'type',mode:'fill',strict:true,icon:'✏️',text:n[0],answers:[n[1]],hint:n[2],why:n[3]}));
   (NUMQ[sq.id]||[]).forEach(n=>qs.push({type:'type',mode:'num',num:true,icon:'🧮',text:n[0],answers:[String(n[1])],hint:n[2],why:n[3]}));
@@ -2521,6 +2524,52 @@ function pauseScreen(){
   if(S.auto)say(msg);
 }
 
+/* ---------- « Je retiens » : le récap à la fin de chaque jeu ---------- */
+const NUM=['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣'];
+// jeux du droit du travail : la diapositive-schéma de la fiche qui aide à retenir (id de jeu -> index de diapositive)
+const SCHEMA={
+  resp:{relier:0,quiz:1,mots:0,fd:0,intrus:1,engagee:0,enquete:0,ines:2},
+  duree:{planning:0,vf:0,hs:1,limites:0,respecte:0,repos:3,pourcent:1,paie:2,mission:1}
+};
+function recapHtml(g,sq){
+  const lang=sq.lang||'fr',qs=g.qs,L=[];let title='📌 Je retiens',flow=false,schema='';
+  const c=(i,b,t,sp,l)=>({i,b,t,c:'y',s:sp||(b+'. '+t),l});
+  const miss=[...cur.missed];
+  if(g.id.endsWith('_ecr')){
+    title='✍️ Les mots et les calculs à retenir';
+    const seen={};
+    qs.filter(q=>q.mode==='copy'||q.mode==='dict').forEach(q=>{const w=q.answers[0];if(!seen[w]&&L.length<4){seen[w]=1;L.push(c('✏️',w,q.sub||'',w+(q.sub?'. '+q.sub:'')))}});
+    qs.filter(q=>q.mode==='num'||q.mode==='fill').slice(0,2).forEach(q=>L.push(c(q.num?'🧮':'✏️',q.num?'Le calcul':'À retenir',q.why)));
+  }else{
+    const st={};qs.forEach(q=>{const m=/^Étape (\d+) : (.+?)\.?$/.exec(q.why||'');if(m)st[m[1]]=m[2]});
+    const ks=Object.keys(st).map(Number).sort((a,b)=>a-b);
+    if(ks.length>=3){
+      title='🔢 Les étapes, dans l’ordre';flow=true;
+      ks.forEach(k=>L.push(c(NUM[k-1]||'▪️',st[k],'','Étape '+k+' : '+st[k])));
+    }else if(qs.some(q=>q.hear)){
+      title=lang==='en'?UK+' Les mots à retenir':'📌 Je retiens';
+      const seen={},order=miss.filter(q=>q.hear).concat(qs);
+      order.forEach(q=>{const m=/^(.+?) = (.+?)\.?$/.exec(q.why||'');if(m&&!seen[m[1]]&&L.length<5){seen[m[1]]=1;L.push(c(lang==='en'?UK:'📌',m[1],m[2],m[1],'en'))}});
+    }else if(miss.length){
+      title='📌 Ce que je retiens';
+      const seen={};
+      miss.forEach(q=>{
+        const ok=q.opts[q.ok],bin=q.opts.length===2,key=q.text+'|'+ok.t;
+        if(seen[key]||L.length>=3)return;seen[key]=1;
+        L.push(bin?c(ok.i||'✅',q.text,q.why):c(ok.i||q.icon||'💡',ok.t,q.why));
+      });
+    }else{
+      const keep=(sq.slides||[]).find(sl=>sl.keep);
+      if(keep){title='⭐ À retenir';keep.cards.forEach(k=>L.push(Object.assign({},k)))}
+    }
+    const si=SCHEMA[sq.id]&&SCHEMA[sq.id][g.id],sl=si!=null&&(sq.slides||[])[si];
+    if(sl&&sl.svg)schema=`<p class="al" style="margin:12px 0 4px"><b>🖼️ Le schéma</b></p><div class="art ${sl.cls||''}">${sl.svg}</div><p class="hint">👆 Touche un dessin pour l’écouter</p>`;
+  }
+  if(!L.length&&!schema)return '';
+  const cards=L.map((k,i)=>(i&&flow?'<div class="arw">⬇️</div>':'')+card(k,k.l||lang)).join('');
+  return `<div class="recap"><h3 class="rt">${title}</h3>${cards?`<div class="cards">${cards}</div><p class="hint">👆 Touche une carte pour l’écouter</p>`:''}${schema}${sq.slides&&sq.slides.length?`<button class="mini" style="display:block;margin:10px auto 0" onclick="fiche(0)">📘 Revoir la fiche</button>`:''}</div>`;
+}
+
 function finish(){
   if(cur.mission){finishMission();return}
   if(cur.review){finishReview();return}
@@ -2540,6 +2589,7 @@ function finish(){
     <p>⚽ ${cur.pts} / ${max} &nbsp; ${spk(title)}</p>
     ${nb.length?`<div class="newbd">🏅 Nouveau badge : ${nb.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
     ${all?'<p class="big">🏆</p><h2>Tu as toutes les étoiles !</h2>':''}
+    ${recapHtml(g,cur.s)}
     <div class="btns">
       ${cur.missed.size?`<button class="nb go" onclick="review()">🔁 Revoir mes erreurs (${cur.missed.size})</button>`:''}
       <button class="nb" onclick="play('${g.id}')">🔄 Rejouer</button>
