@@ -1144,6 +1144,124 @@ const BLOCS=[
 
 /* ---------- accès aux données ---------- */
 /* ---------- objectifs « Je saurai… » et écran « À retenir » (FALC) ---------- */
+/* ---------- schémas : un dessin par cours, généré à partir du contenu de la fiche ---------- */
+const X=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const wrap=(t,n)=>{const L=[];let c='';String(t).split(' ').forEach(w=>{if(c&&(c+' '+w).length>n){L.push(c);c=w}else c=c?c+' '+w:w});if(c)L.push(c);return L};
+const FILL=['#F0D27A','#BBD0F5','#B9E3D0','#F6C9B0','#DCCEF3'];
+const svl=(t,l,inner)=>`<g class="hot" role="button" tabindex="0" data-t="${esc(t)}" data-l="${l||'fr'}" onclick="say(this.dataset.t,this.dataset.l)" onkeydown="if(event.key==='Enter')say(this.dataset.t,this.dataset.l)">${inner}</g>`;
+const tl=(x,y,arr,size,col,w,anchor,lh)=>arr.map((l,i)=>T(x,y+i*lh,size,X(l),col,w,anchor)).join('');
+// étapes : cases numérotées reliées par des flèches
+function bFlow(b,y){
+  let o='',cy=y;
+  b.steps.forEach((st,i)=>{
+    const ll=wrap(st[1],19),sl=wrap(st[2]||'',27),f=FILL[i%FILL.length];
+    const h=Math.max(62,18+ll.length*24+(sl.length?sl.length*19+6:0)+10),mid=cy+h/2;
+    o+=sv((st[1]+'. '+(st[2]||'')).trim(),R(10,cy,380,h,f)+`<circle cx="34" cy="${cy+h/2}" r="15" fill="#1F2430"/>`+T(34,cy+h/2+6,17,i+1,'#fff',800)
+      +T(80,mid+13,34,st[0])+tl(112,cy+32,ll,19,'#1F2430',800,'start',24)+tl(112,cy+32+(ll.length-1)*24+22,sl,15,'#1F2430',400,'start',19));
+    cy+=h;if(i<b.steps.length-1){o+=AR(200,cy+2,200,cy+18);cy+=22}
+  });
+  return {o,h:cy-y};
+}
+// tuiles : 2 colonnes (la dernière en pleine largeur si le nombre est impair)
+function bTiles(b,y){
+  let o='',cy=y;const it=b.items;
+  for(let i=0;i<it.length;i+=2){
+    const row=it.slice(i,i+2),full=row.length===1,W=full?380:185,ln=full?30:15,ls=full?44:21;
+    const hs=row.map(t=>16+40+wrap(t[1],ln).length*20+wrap(t[2]||'',ls).length*17+16),h=Math.max(...hs);
+    row.forEach((t,k)=>{
+      const x=full?10:(k?205:10),cx=x+W/2,f=FILL[(i+k)%FILL.length],a=wrap(t[1],ln),c=wrap(t[2]||'',ls);
+      o+=sv((t[1]+'. '+(t[2]||'')).trim(),R(x,cy,W,h,f)+T(cx,cy+52,38,t[0])+tl(cx,cy+78,a,17,'#1F2430',800,'middle',20)+tl(cx,cy+78+a.length*20+2,c,13,'#1F2430',400,'middle',17));
+    });
+    cy+=h+12;
+  }
+  return {o,h:cy-y-12};
+}
+// tableau : un repère à gauche, l'explication à droite
+function bRows(b,y){
+  let o='',cy=y;const lw=b.lw||150,lc=b.lc||12,rc=b.rc||20,ls=b.ls||18,rs=b.rs||15,rx=lw+24;
+  b.rows.forEach((r,i)=>{
+    const a=wrap(r[0],lc),c=wrap(r[1],rc),h=Math.max(54,Math.max(a.length*(ls+4),c.length*(rs+4))+22),f=FILL[i%FILL.length];
+    const mid=cy+h/2,say_=b.lang==='en'?svl(r[0],'en',''):'';
+    const inner=R(10,cy,lw,h,f)+tl(10+lw/2,mid-(a.length-1)*(ls+4)/2+ls*0.35,a,ls,'#1F2430',800,'middle',ls+4)+tl(rx,mid-(c.length-1)*(rs+4)/2+rs*0.35,c,rs,'#1F2430',400,'start',rs+4);
+    o+=b.lang==='en'?svl(r[0],'en',inner):sv(r[0]+' : '+r[1],inner);
+    cy+=h+10;
+  });
+  return {o,h:cy-y-10};
+}
+// règles : une liste cochée (vert) ou barrée (rouge)
+function bChecks(b,y){
+  const yes=b.kind!=='no',n=b.items.map(t=>wrap(t,28)),h=44+n.reduce((a,l)=>a+l.length*19+10,0);
+  let o=R(10,y,380,h,yes?'#DDF6EC':'#FFE4E5',yes?'#36876B':'#B95458')+T(34,y+32,20,X(b.title),'#1F2430',800,'start');
+  let cy=y+54;
+  b.items.forEach((t,i)=>{o+=sv(b.title+' : '+t,T(34,cy+4,18,yes?'✅':'❌')+tl(62,cy+4,n[i],16,'#1F2430',400,'start',19));cy+=n[i].length*19+10});
+  return {o,h};
+}
+// panneaux : forme et couleur
+function bSigns(b,y){
+  const S=(cx,cy,shape,lab,sub)=>sv(lab+' : '+sub,shape+T(cx,cy+66,17,X(lab),'#1F2430',800)+T(cx,cy+86,14,X(sub),'#1F2430',400));
+  const r=(cx,cy)=>`<circle cx="${cx}" cy="${cy}" r="40" fill="#fff" stroke="#B95458" stroke-width="10"/><line x1="${cx-28}" y1="${cy+28}" x2="${cx+28}" y2="${cy-28}" stroke="#B95458" stroke-width="9" stroke-linecap="round"/>`;
+  const bl=(cx,cy)=>`<circle cx="${cx}" cy="${cy}" r="42" fill="#4F72B8" stroke="#1F2430" stroke-width="4"/>`+T(cx,cy+14,40,'✔','#fff',800);
+  const tr=(cx,cy)=>`<polygon points="${cx},${cy-44} ${cx+48},${cy+38} ${cx-48},${cy+38}" fill="#F0D27A" stroke="#1F2430" stroke-width="5" stroke-linejoin="round"/>`+T(cx,cy+26,40,'!','#1F2430',800);
+  const sq=(cx,cy)=>`<rect x="${cx-40}" y="${cy-40}" width="80" height="80" rx="12" fill="#36876B" stroke="#1F2430" stroke-width="4"/>`+T(cx,cy+14,38,'🚪');
+  const y1=y+52,y2=y+192;
+  const o=S(100,y1,r(100,y1),'Rond rouge','interdit')+S(300,y1,bl(300,y1),'Rond bleu','obligatoire')+S(100,y2,tr(100,y2),'Triangle jaune','danger')+S(300,y2,sq(300,y2),'Carré vert','sortie ou secours');
+  return {o,h:282};
+}
+const BLK={flow:bFlow,tiles:bTiles,rows:bRows,checks:bChecks,signs:bSigns};
+function buildSchema(spec){
+  let y=10,o='';
+  spec.b.forEach((b,i)=>{
+    if(b.title&&b.k!=='checks'){o+=T(200,y+22,19,X(b.title),'#1F2430',800);y+=36}
+    const r=BLK[b.k](b,y);o+=r.o;y+=r.h+(i<spec.b.length-1?24:10);
+  });
+  return `<svg viewBox="0 0 400 ${y}" role="img" aria-label="${X(spec.t)}">${DEFS}${o}</svg>`;
+}
+const F=(steps)=>({k:'flow',steps}),TI=(items)=>({k:'tiles',items}),RO=(rows,o)=>Object.assign({k:'rows',rows},o||{}),CK=(title,items,kind)=>({k:'checks',title,items,kind});
+const SCH={
+ rec0:{t:'Le chemin des marchandises',b:[F([['📥','Réception','on décharge et on contrôle'],['📦','Stockage','on range les palettes'],['🛒','Préparation','on prépare les commandes'],['📤','Expédition','on envoie aux clients']])]},
+ rec1:{t:'Accueillir le chauffeur',b:[F([['🤝','J’accueille le chauffeur','poliment'],['📄','Je demande les documents','bon de livraison'],['🔍','Je compare','avec la commande'],['🚪','J’indique le quai','où décharger']])]},
+ rec2:{t:'Décharger et contrôler',b:[F([['🔢','Quantité','je compte les colis'],['👀','État','colis abîmé, mouillé, ouvert ?'],['🏷️','Référence','bon produit, bonne étiquette ?'],['⚠️','Un problème ?','j’écris les réserves sur le BL avant le départ du chauffeur'],['🙋','Je préviens','mon responsable']])]},
+ rec3:{t:'Mettre en stock',b:[F([['✅','Palette contrôlée','étiquette lisible'],['📍','Je lis l’emplacement','allée, travée, niveau'],['⬇️','Je range','au bon endroit : lourd en bas'],['💻','J’enregistre l’entrée','le stock est à jour']]),RO([['FIFO','premier entré, premier sorti'],['FEFO','premier périmé, premier sorti'],['A-03-2','allée A, travée 03, niveau 2']],{title:'Les règles de rangement',lw:110,lc:8})]},
+ cha1:{t:'Les catégories de chariots',b:[TI([['🛒','Catégorie 1A','transpalette porté : palettes au sol'],['🏗️','Catégorie 1B','gerbeur porté : lève en hauteur'],['🚜','Catégorie 3','chariot élévateur frontal'],['🪪','CACES','certificat de conduite en sécurité']])]},
+ cha2:{t:'Avant de démarrer',b:[F([['🦺','Mes EPI','gilet, chaussures de sécurité'],['🔍','Tour du chariot','pneus, fourches, fuites'],['💺','Je m’installe','ceinture ou retenue bouclée'],['📣','Je teste','klaxon, freins, feux'],['⚠️','Un défaut ?','je n’utilise pas le chariot et je préviens']])]},
+ cha3:{t:'Conduire en sécurité',b:[CK('Toujours',['Fourches basses, près du sol quand je roule','Vitesse adaptée : je m’arrête si besoin','En marche arrière, je regarde derrière','Piétons prioritaires : je les laisse passer','Klaxon aux croisements','Dans une pente, la charge côté montée']),CK('Jamais',['De passager','Sous une charge levée'],'no')]},
+ cha4:{t:'Fin de poste',b:[F([['⬇️','Fourches au sol',''],['✋','Frein serré',''],['🔑','Clé retirée',''],['🔌','Je mets en charge',''],['📢','Je signale','les anomalies']])]},
+ exp1:{t:'Préparer une commande',b:[F([['📋','Je lis le bon','références et quantités'],['🚶','Je vais à l’emplacement','dans le stock'],['🛒','Je prélève','bonne référence, bonne quantité'],['✅','Je vérifie','avant de partir'],['📤','Je dépose','en zone d’expédition']])]},
+ exp2:{t:'Bien emballer',b:[TI([['📦','Carton adapté','bonne taille, solide'],['🫧','Calage','papier, bulles : pas de casse'],['🏷️','Étiquette','adresse et code-barres lisibles'],['🥂','Fragile','manipuler avec soin'],['☔','Craint l’humidité','garder au sec'],['⬆️','Haut','ne pas retourner']])]},
+ exp3:{t:'Une palette stable',b:[CK('Une palette stable',['Lourd en bas, léger en haut','Pas de débord : les colis restent sur la palette','Couches croisées pour tenir ensemble','Filmage ou cerclage pour tenir la charge','Étiquette visible sur la palette'])]},
+ exp4:{t:'Expédier',b:[F([['📄','Bon de livraison','prêt et complet'],['🏷️','Étiquette','je vérifie'],['🚚','Je charge','avec soin, sans bousculer'],['✍️','Le chauffeur signe',''],['💻','J’enregistre la sortie','le stock est à jour']])]},
+ exp5:{t:'La chaîne logistique',b:[F([['🏭','Fournisseur','fabrique'],['🏬','Entrepôt','stocke et prépare'],['🚛','Transport','livre'],['🏠','Client','reçoit']]),RO([['Carburant plus cher','le transport coûte plus cher'],['Fêtes, soldes','plus de commandes, plus de personnel'],['Bateau en retard','ruptures de stock']],{title:'Un fait, une conséquence',lw:150,lc:13})]},
+ exp6:{t:'Les écogestes',b:[TI([['♻️','Je trie','carton, plastique, bois'],['🔁','Je réutilise','les bons cartons'],['💡','J’éteins','la lumière en partant'],['⚠️','Produits dangereux','dans un bac spécial']])]},
+ fra1:{t:'Parler de mon travail',b:[F([['👋','Bonjour','poliment'],['🙂','Je m’appelle…','je me présente'],['🎓','Je suis en CAP logistique','ma formation'],['🏭','J’ai fait un stage chez…','où'],['💪','J’ai appris à…','ce que je sais faire']])]},
+ fra2:{t:'Lire et comprendre',b:[TI([['👤','Qui ?','les personnes'],['🎬','Quoi ?','ce qui se passe'],['📍','Où ?','le lieu'],['🕗','Quand ?','l’heure, la date']])]},
+ fra3:{t:'Les petits mots qui piègent',b:[RO([['a / à','il a (avoir) · à l’entrepôt (lieu)'],['est / et','il est (être) · et = aussi'],['on / ont','on = nous · ils ont (avoir)'],['son / sont','son = à lui · ils sont (être)'],['ce / se','ce colis · il se lave']],{lw:120,lc:10})]},
+ fra4:{t:'Les valeurs de la République',b:[RO([['Devise','Liberté, Égalité, Fraternité'],['Laïcité','l’État est neutre, chacun est libre de croire ou non'],['Voter','à partir de 18 ans'],['Égalité','filles et garçons ont les mêmes droits'],['Droits et devoirs','je respecte la loi']],{lw:140,lc:12})]},
+ fra5:{t:'Des dates et des lieux',b:[RO([['1789','la Révolution française'],['1905','la loi sur la laïcité'],['1944','le droit de vote des femmes'],['2002','l’euro en pièces et billets'],['Ports','Le Havre, Marseille : grands ports de France']],{lw:100,lc:8,rc:24})]},
+ mat1:{t:'Calculer vite',b:[RO([['10 %','je divise par 10'],['50 %','la moitié'],['25 %','le quart'],['Proportionnalité','je cherche ce que vaut 1']],{lw:178,lc:16})]},
+ mat2:{t:'Les conversions',b:[RO([['1 kg','= 1 000 g'],['1 t','= 1 000 kg'],['1 m','= 100 cm'],['1 L','= 1 000 mL'],['1 h','= 60 min']],{lw:110,lc:8,ls:22,rs:22,rc:14})]},
+ mat3:{t:'Palette, surface, volume',b:[RO([['Europalette','1,20 m × 0,80 m'],['Surface','longueur × largeur'],['Volume','longueur × largeur × hauteur'],['Colis sur une palette','par couche × nombre de couches']],{lw:150,lc:12})]},
+ mat4:{t:'Les pictogrammes de danger',b:[TI([['🔥','Inflammable','loin des flammes'],['☠️','Toxique','dangereux pour la santé'],['🧪','Corrosif','attaque la peau'],['🌿','Environnement','ne pas jeter dans la nature'],['💥','Explosif','chocs et chaleur interdits'],['🏷️','Étiquette et FDS','j’y lis les consignes']])]},
+ eps1:{t:'Santé et effort',b:[TI([['🏃','Échauffement','avant l’effort'],['💧','Boire','avant, pendant, après'],['🤸','Étirements','après l’effort'],['😴','Dormir','8 à 10 h'],['🥗','Bien manger','fruits, légumes']])]},
+ eps2:{t:'L’esprit d’équipe',b:[TI([['🤝','Fair-play','respecter les règles et les adversaires'],['🟨','L’arbitre','j’accepte sa décision'],['📣','J’encourage','mes coéquipiers'],['👥','Les rôles','joueur, arbitre, coach']])]},
+ eps3:{t:'Le sport dans le monde',b:[RO([['Jeux olympiques','tous les 4 ans'],['Paris 2024','les Jeux d’été'],['Coupe du monde de foot','tous les 4 ans'],['Tour de France','course de vélo, chaque été'],['Roland-Garros','tournoi de tennis à Paris']],{lw:160,lc:13})]},
+ pse1:{t:'Protéger mon dos',b:[CK('Je protège mon dos',['Je plie les jambes, dos droit','Charge près du corps','Je tourne avec les pieds, pas avec le dos','Je prends une aide : diable, transpalette','Trop lourd ? Je demande de l’aide'])]},
+ pse2:{t:'Danger, risque, protection',b:[{k:'signs',title:'Les panneaux'},RO([['Danger','ce qui peut faire mal'],['Dommage','la blessure'],['EPI','équipement de protection individuelle'],['Prévention','j’évite l’accident']],{title:'Les mots à connaître',lw:130,lc:10})]},
+ pse3:{t:'Agir en urgence',b:[F([['🛑','Protéger','pour qu’il n’y ait pas d’autre blessé'],['📞','Alerter','j’appelle les secours'],['🩹','Secourir','je fais les bons gestes']]),RO([['15','SAMU, urgence médicale'],['18','pompiers'],['17','police'],['112','urgence européenne']],{title:'Les numéros',lw:90,lc:5,ls:24})]},
+ pse4:{t:'Ma santé',b:[TI([['😴','Dormir','8 à 10 h'],['📵','Écrans','des pauses, pas avant de dormir'],['💧','Boire de l’eau','moins de sucre'],['🚭','Tabac, alcool, drogues','dangereux, surtout au travail et sur la route'],['🗣️','J’en parle','à un adulte de confiance']])]},
+ pse5:{t:'Consommer malin',b:[TI([['🛡️','Garantie légale','2 ans pour un produit neuf'],['🛒','Achat en ligne','14 jours pour changer d’avis'],['🍎','Nutri-Score','de A (meilleur) à E'],['♻️','Je trie','verre, plastique, carton'],['💡','J’économise','l’énergie']])]},
+ ang1:{t:'Warehouse words',b:[RO([['warehouse','l’entrepôt'],['box','le carton'],['pallet','la palette'],['forklift','le chariot élévateur'],['truck','le camion'],['order','la commande'],['delivery note','le bon de livraison'],['loading dock','le quai']],{lw:170,lc:14,lang:'en'})]},
+ ang2:{t:'Introducing myself',b:[RO([['Hello! My name is…','Bonjour, je m’appelle…'],['I am a student.','Je suis élève.'],['I work in a warehouse.','Je travaille dans un entrepôt.'],['I am learning logistics.','J’apprends la logistique.'],['Nice to meet you!','Enchanté !']],{lw:200,lc:17,ls:16,rc:16,lang:'en'})]},
+ ang3:{t:'At the dock',b:[RO([['Where is the loading dock?','Où est le quai ?'],['Please sign here.','Signez ici, s’il vous plaît.'],['The delivery is late.','La livraison est en retard.'],['Be careful!','Attention !'],['Can you help me?','Pouvez-vous m’aider ?']],{lw:200,lc:17,ls:16,rc:16,lang:'en'})]},
+ ang4:{t:'Safety signs',b:[RO([['Danger','danger'],['Exit','sortie'],['Fire','incendie'],['First aid','premiers secours'],['No smoking','interdit de fumer'],['Wet floor','sol mouillé']],{lw:170,lc:14,lang:'en'})]}
+};
+// une diapositive « schéma » avant l'écran « À retenir » (les cours du droit ont déjà leurs dessins)
+BLOCS.forEach(b=>b.seqs.forEach(sq=>{
+  const sp=SCH[sq.id];if(!sp||(sq.slides||[]).some(sl=>sl.svg))return;
+  sq.slides=sq.slides||[];
+  sq.schema={title:'🖼️ Le schéma',say:'Le schéma. Touche une case pour l’écouter.',svg:buildSchema(sp)};
+  sq.slides.push(sq.schema);
+}));
+
 const GOALS={
  rec0:{g:"Je saurai dire le chemin des marchandises dans l’entrepôt.",k:[
   ["📦","4 étapes","Réception, stockage, préparation, expédition."],
@@ -2532,7 +2650,7 @@ const SCHEMA={
   duree:{planning:0,vf:0,hs:1,limites:0,respecte:0,repos:3,pourcent:1,paie:2,mission:1}
 };
 function recapHtml(g,sq){
-  const lang=sq.lang||'fr',qs=g.qs,L=[];let title='📌 Je retiens',flow=false,schema='';
+  const lang=sq.lang||'fr',qs=g.qs,L=[];let title='📌 Je retiens',flow=false,schema='',kind='';
   const c=(i,b,t,sp,l)=>({i,b,t,c:'y',s:sp||(b+'. '+t),l});
   const miss=[...cur.missed];
   if(g.id.endsWith('_ecr')){
@@ -2551,7 +2669,7 @@ function recapHtml(g,sq){
       const seen={},order=miss.filter(q=>q.hear).concat(qs);
       order.forEach(q=>{const m=/^(.+?) = (.+?)\.?$/.exec(q.why||'');if(m&&!seen[m[1]]&&L.length<5){seen[m[1]]=1;L.push(c(lang==='en'?UK:'📌',m[1],m[2],m[1],'en'))}});
     }else if(miss.length){
-      title='📌 Ce que je retiens';
+      kind='miss';title='📌 Ce que je retiens';
       const seen={};
       miss.forEach(q=>{
         const ok=q.opts[q.ok],bin=q.opts.length===2,key=q.text+'|'+ok.t;
@@ -2560,9 +2678,10 @@ function recapHtml(g,sq){
       });
     }else{
       const keep=(sq.slides||[]).find(sl=>sl.keep);
-      if(keep){title='⭐ À retenir';keep.cards.forEach(k=>L.push(Object.assign({},k)))}
+      kind='keep';if(keep){title='⭐ À retenir';keep.cards.forEach(k=>L.push(Object.assign({},k)))}
     }
     const si=SCHEMA[sq.id]&&SCHEMA[sq.id][g.id],sl=si!=null&&(sq.slides||[])[si];
+    if(!sl&&sq.schema&&(kind==='miss'||kind==='keep'))schema=`<p class="al" style="margin:12px 0 4px"><b>🖼️ Le schéma</b></p><div class="art">${sq.schema.svg}</div><p class="hint">👆 Touche une case pour l’écouter</p>`;
     if(sl&&sl.svg)schema=`<p class="al" style="margin:12px 0 4px"><b>🖼️ Le schéma</b></p><div class="art ${sl.cls||''}">${sl.svg}</div><p class="hint">👆 Touche un dessin pour l’écouter</p>`;
   }
   if(!L.length&&!schema)return '';
